@@ -1,0 +1,339 @@
+"""Tier 2: the Procedural layer (LLM orchestrator).
+
+Owner: Rudraksh
+
+A hand-written ReAct loop: the LLM reasons, calls a tool, reads the result, and repeats until it
+gives a final answer. Every step is recorded in a trace so each claim in the answer can be traced
+back to the tool result it came from.
+
+The LLM is reached through the OpenAI-compatible chat API, which Groq and Ollama both provide:
+    IAGENT_PROVIDER = groq (default) | ollama
+    IAGENT_MODEL    = model name (defaults below)
+    GROQ_API_KEY    = your Groq key (in .env, never committed)
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Optional, Protocol
+
+from .tools import ToolRegistry
+
+PROMPT_PATH = Path(__file__).parent / "prompts" / "system.md"
+
+PROVIDERS = {
+    "groq": {"base_url": "https://api.groq.com/openai/v1", "key_env": "GROQ_API_KEY",
+             "default_model": "openai/gpt-oss-20b"},
+    "ollama": {"base_url": "http://localhost:11434/v1", "key_env": None,
+               "default_model": "llama3.1:8b"},
+}
+
+
+class ToolCallFormatError(Exception):
+    """The model produced a tool call the API could not parse."""
+
+
+class LLM(Protocol):
+    model: str
+
+    def complete(self, messages: list[dict], tools: Optional[list[dict]]) -> dict:
+        """Return {"content": str | None, "tool_calls": [{"id", "name", "arguments"}]}."""
+
+
+class OpenAICompatibleLLM:
+    def __init__(self, provider: Optional[str] = None, model: Optional[str] = None, temperature: float = 0.0):
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            pass
+        import openai
+
+        self.provider = provider or os.getenv("IAGENT_PROVIDER", "groq")
+        cfg = PROVIDERS[self.provider]
+        self.model = model or os.getenv("IAGENT_MODEL") or cfg["default_model"]
+        key = os.getenv(cfg["key_env"]) if cfg["key_env"] else "ollama"
+        if not key:
+            raise RuntimeError(f"{cfg['key_env']} is not set. Put it in a .env file (see .env.example).")
+        self.temperature = temperature
+        self._openai = openai
+        self.client = openai.OpenAI(base_url=cfg["base_url"], api_key=key, max_retries=4)
+
+    def complete(self, messages: list[dict], tools: Optional[list[dict]]) -> dict:
+        kwargs: dict[str, Any] = {"model": self.model, "messages": messages, "temperature": self.temperature}
+        if tools:
+            kwargs.update(tools=tools, tool_choice="auto")
+        try:
+            resp = self.client.chat.completions.create(**kwargs)
+        except self._openai.BadRequestError as e:
+            if "tool" in str(e).lower():
+                raise ToolCallFormatError(str(e)) from e
+            raise
+        msg = resp.choices[0].message
+        calls = [{"id": c.id, "name": c.function.name, "arguments": c.function.arguments or "{}"}
+                 for c in (msg.tool_calls or [])]
+        return {"content": msg.content, "tool_calls": calls}
+
+
+@dataclass
+class AgentResult:
+    question: str
+    answer: str
+    trace: list[dict] = field(default_factory=list)
+    belief_changes: list[str] = field(default_factory=list)
+
+    @property
+    def tools_called(self) -> list[str]:
+        return [s["name"] for s in self.trace if s["type"] == "tool_call"]
+
+
+class Agent:
+    def __init__(self, tools: ToolRegistry, llm: LLM, system_prompt: Optional[str] = None,
+                 max_steps: int = 12, max_format_retries: int = 2, self_check: bool = True,
+                 max_self_checks: int = 4):
+        self.tools = tools
+        self.llm = llm
+        self.system_prompt = system_prompt or PROMPT_PATH.read_text(encoding="utf-8")
+        self.max_steps = max_steps
+        self.max_format_retries = max_format_retries
+        self.self_check = self_check
+        self.max_self_checks = max_self_checks
+        self.reset()
+
+    def reset(self) -> None:
+        self.messages: list[dict] = [{"role": "system", "content": self.system_prompt}]
+        self.history: list[dict] = []      # trace steps of earlier turns in this conversation
+        self.user_turns: list[str] = []
+
+    def ask(self, question: str) -> AgentResult:
+        """One user turn. Conversation history is kept between calls, so multi-turn scenarios work."""
+        store = self.tools.store
+        v_before = store.snapshot(f"before: {question}")
+        self.messages.append({"role": "user", "content": question})
+        self.user_turns.append(question)
+        self.tools.open_conflicts.clear()
+        trace: list[dict] = []
+        answer = None
+        format_errors = 0
+        self_checks = 0
+
+        for step in range(1, self.max_steps + 1):
+            try:
+                reply = self.llm.complete(self.messages, self.tools.schemas)
+            except ToolCallFormatError as e:
+                format_errors += 1
+                trace.append({"step": step, "type": "error", "text": f"malformed tool call: {e}"[:300]})
+                if format_errors > self.max_format_retries:
+                    break
+                self.messages.append({"role": "user", "content":
+                                      "Your last tool call was rejected: " + _api_error_detail(e) +
+                                      " Call the tool again with arguments that match its schema exactly."})
+                continue
+
+            if not reply["tool_calls"] and reply["content"]:
+                # Small models sometimes write a tool call as text instead of calling it.
+                calls, leftover = extract_text_tool_calls(reply["content"], self.tools.names)
+                if calls:
+                    trace.append({"step": step, "type": "note", "text": f"parsed {len(calls)} tool call(s) from text"})
+                    reply = {"content": leftover or None, "tool_calls": calls}
+
+            if not reply["tool_calls"]:
+                candidate = (reply["content"] or "").strip()
+                self.messages.append({"role": "assistant", "content": candidate})
+                problems = self.check_answer(candidate, trace) if self.self_check else []
+                if problems and self_checks < self.max_self_checks:
+                    self_checks += 1
+                    trace.append({"step": step, "type": "draft", "text": candidate})
+                    trace.append({"step": step, "type": "self_check", "text": " ".join(problems)})
+                    self.messages.append({"role": "user", "content": "[Self-check] " + " ".join(problems)})
+                    continue
+                answer = candidate
+                trace.append({"step": step, "type": "answer", "text": answer})
+                break
+
+            if reply["content"]:
+                trace.append({"step": step, "type": "thought", "text": reply["content"].strip()})
+            self.messages.append({"role": "assistant", "content": reply["content"], "tool_calls": [
+                {"id": c["id"], "type": "function", "function": {"name": c["name"], "arguments": c["arguments"]}}
+                for c in reply["tool_calls"]]})
+            for call in reply["tool_calls"]:
+                result = self.tools.execute(call["name"], call["arguments"])
+                trace.append({"step": step, "type": "tool_call", "name": call["name"],
+                              "arguments": _parse(call["arguments"]), "result": json.loads(result)})
+                self.messages.append({"role": "tool", "tool_call_id": call["id"], "content": result})
+
+        if answer is None:
+            # Out of steps: ask for a final answer with tools disabled.
+            self.messages.append({"role": "user", "content": "Stop calling tools and give your final answer now."})
+            try:
+                answer = (self.llm.complete(self.messages, None)["content"] or "").strip()
+            except ToolCallFormatError:
+                answer = ""
+            trace.append({"step": self.max_steps + 1, "type": "answer", "text": answer})
+            self.messages.append({"role": "assistant", "content": answer})
+
+        self.history.extend(trace)
+        v_after = store.snapshot(f"after: {question}")
+        return AgentResult(question=question, answer=answer, trace=trace,
+                           belief_changes=store.diff(v_before, v_after))
+
+    def check_answer(self, answer: str, trace: list[dict]) -> list[str]:
+        """Epistemic validation: compare a draft answer with what actually happened in the layers.
+
+        Returns a list of problems to send back to the LLM; empty means the answer is accepted.
+        Evidence gathered in earlier turns of the same conversation counts.
+        """
+        trace = self.history + trace
+        problems = []
+        if not answer:
+            problems.append("Your reply was empty. Call a tool if you need more information, "
+                            "otherwise give your final answer.")
+            return problems
+        updated = any(s["type"] == "tool_call" and s["name"] == "update_belief" and s["result"].get("ok")
+                      for s in trace)
+        checked_memory = any(s["type"] == "tool_call" and s["name"] in _MEMORY_READS for s in trace)
+        if not checked_memory:
+            problems.append("You have not checked memory yet. Call query_beliefs (and get_pose if "
+                            "the question is about your route or location) before answering.")
+        recorded_user = any(s["type"] == "tool_call" and s["name"] == "record_user_belief" and s["result"].get("ok")
+                            for s in trace)
+        stated = [m.group(0) for q in self.user_turns if (m := _USER_STATES.search(q))]
+        if stated and not recorded_user:
+            problems.append(f"The user told you what they believe (\"{stated[0]}...\"), but you have not called "
+                            f"the record_user_belief tool. Writing that you recorded it does not record it. Make "
+                            f"the tool call now, e.g. record_user_belief(entity=\"item_07\", "
+                            f"property=\"color\", value=\"green\", evidence=\"<the user's words>\") "
+                            f"with the entity, property and value from the user's message.")
+        observed = _observed_entities(trace)
+        unseen = sorted({e for e in _ENTITY_ID.findall(answer.lower()) if e not in observed})
+        if unseen and not _SAYS_UNKNOWN.search(answer):
+            problems.append(f"No memory record or sensor reading mentions {', '.join(unseen)}. Do not give "
+                            f"{'it' if len(unseen) == 1 else 'them'} properties seen on other objects; if you "
+                            f"have no information, say so.")
+        for entity in self.tools.unverified_map_entities(answer, trace):
+            problems.append(f"Your answer relies on the static map for {entity['subject']} "
+                            f"({entity['predicate']} = {entity['value']}, {entity['age_s']} s old) without a live "
+                            f"reading. {entity['how_to_check']} before answering.")
+        if _ANNOUNCES_ACTION.search(answer):
+            problems.append("You described actions you are going to take but did not take them. Call the "
+                            "tools now, then answer from their results.")
+        if _CLAIMS_UPDATE.search(answer) and not updated:
+            problems.append("You said you updated a belief, but you never called update_belief, "
+                            "so memory is unchanged. Call update_belief now, or do not claim it.")
+        for c in self.tools.actionable_conflicts():
+            stored = ", ".join(f"{x['perspective']} says {x['stored_value']}" for x in c["conflicts"])
+            if c["confirmed"]:
+                problems.append(f"Unresolved conflict: {c['sensor']} observed {c['subject']}.{c['predicate']} = "
+                                f"{c['observed']}, but memory has {stored}. Record your observation before "
+                                f"answering by calling update_belief with entity=\"{c['subject']}\", "
+                                f"property=\"{c['predicate']}\", value=\"{c['observed']}\", "
+                                f"source=\"{c['sensor']}\", a confidence and a reason.")
+            else:
+                problems.append(f"Unconfirmed conflict: one {c['sensor']} reading gave {c['subject']}."
+                                f"{c['predicate']} = {c['observed']}, but memory has {stored}. Read the sensor "
+                                f"again; if it agrees, call update_belief, otherwise trust the readings that agree.")
+        return problems
+
+
+_MEMORY_READS = {"query_beliefs", "get_provenance"}
+_USER_STATES = re.compile(r"\bI (left|put|placed|dropped|moved|think|believe|thought|saw|remember|"
+                          r"painted|parked|stored)\b[^.?!]{0,60}", re.IGNORECASE)
+_ENTITY_ID = re.compile(r"\b[a-z]+_\d+\b")
+_SAYS_UNKNOWN = re.compile(r"\b(don't know|do not know|no (memory )?records?|no information|unknown|not (able|found)|"
+                           r"unable|cannot (determine|provide)|can't (determine|provide)|no data|don't have|"
+                           r"do not have|no (sensor )?readings?)\b", re.IGNORECASE)
+_CLAIMS_UPDATE = re.compile(r"\b(i\s+(have\s+)?updated|i've updated|updated my (belief|memory)|"
+                            r"i\s+(have\s+)?(recorded|downgraded))", re.IGNORECASE)
+_ANNOUNCES_ACTION = re.compile(r"\b(i will|i'll|let me|i am going to|i'm going to)\s+(now\s+|first\s+)?"
+                               r"(check|verify|read|use|query|look|scan|update|record|confirm|inspect|call)\b",
+                               re.IGNORECASE)
+
+
+def run_baseline(llm: LLM, memory: list[dict], question_turns: list[str]) -> AgentResult:
+    """Baseline for evaluation: the same LLM, memory pasted in as plain text, and no tools.
+
+    It cannot read sensors or update memory, so it shows what the three-layer design adds.
+    """
+    facts = "\n".join(f"- {m['subject']}.{m['predicate']} = {m['obj']} (perspective {m['perspective']}, "
+                      f"source {m['source']}, confidence {m['confidence']})" for m in memory)
+    messages = [{"role": "system", "content":
+                 "You are the reasoning module of a mobile robot. Your stored knowledge:\n" + facts +
+                 "\nAnswer the user's questions in 2 to 5 sentences."}]
+    answer = ""
+    for q in question_turns:
+        messages.append({"role": "user", "content": q})
+        answer = (llm.complete(messages, None)["content"] or "").strip()
+        messages.append({"role": "assistant", "content": answer})
+    return AgentResult(question=question_turns[-1], answer=answer,
+                       trace=[{"step": 1, "type": "answer", "text": answer}])
+
+
+def extract_text_tool_calls(text: str, tool_names: list[str]) -> tuple[list[dict], str]:
+    """Find tool calls written as text, e.g. '-update_belief {"subject": ...}'.
+
+    Returns (calls, remaining_text). Only a known tool name directly followed by a JSON object counts.
+    """
+    decoder = json.JSONDecoder()
+    pattern = re.compile(r"\b(" + "|".join(map(re.escape, tool_names)) + r")\b\s*(\(\s*)?(?=\{)")
+    calls, spans, pos = [], [], 0
+    while (m := pattern.search(text, pos)):
+        try:
+            args, end = decoder.raw_decode(text, m.end())
+        except json.JSONDecodeError:
+            pos = m.end()
+            continue
+        if isinstance(args, dict):
+            calls.append({"id": f"text_call_{len(calls)}", "name": m.group(1), "arguments": json.dumps(args)})
+            spans.append((m.start(), end))
+        pos = end
+    leftover, last = [], 0
+    for a, b in spans:
+        leftover.append(text[last:a])
+        last = b
+    leftover.append(text[last:])
+    return calls, re.sub(r"\s*-\s*$", "", "".join(leftover)).strip()
+
+
+_NON_EVIDENCE_KEYS = ("note", "advice", "error", "ignored_arguments")
+
+
+def _observed_entities(trace: list[dict]) -> set[str]:
+    """Entity ids that appear in data a tool returned.
+
+    Explanatory fields such as "No provenance records for 'crate_07'" are skipped: a tool saying it
+    knows nothing about something is not evidence about it.
+    """
+    found: set[str] = set()
+
+    def walk(x):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k not in _NON_EVIDENCE_KEYS:
+                    walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+        elif isinstance(x, str):
+            found.update(_ENTITY_ID.findall(x.lower()))
+    for step in trace:
+        if step["type"] == "tool_call" and step["result"].get("ok"):
+            walk(step["result"].get("data"))
+    return found
+
+
+def _api_error_detail(e: Exception) -> str:
+    text = str(e)
+    for marker in ("'message': '", '"message": "'):
+        if marker in text:
+            return text.split(marker, 1)[1].split(marker[-1], 1)[0][:300]
+    return text[:300]
+
+
+def _parse(arguments: str) -> Any:
+    try:
+        return json.loads(arguments or "{}")
+    except json.JSONDecodeError:
+        return arguments

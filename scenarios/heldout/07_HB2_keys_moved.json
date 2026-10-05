@@ -1,0 +1,62 @@
+{
+  "id": "HB2_keys_moved",
+  "type": "B",
+  "description": "False-belief test. The user put keys_09 in Room_110 this morning; bot_05 later moved them to Room_112.",
+  "world": {
+    "robot": {
+      "room": "Room_110",
+      "facing": {}
+    },
+    "objects": {
+      "keys_09": {
+        "type": "keys",
+        "room": "Room_112",
+        "color": "silver"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "keys_09",
+      "predicate": "located_at",
+      "obj": "Room_112",
+      "perspective": "agent:bot_05",
+      "source": "bot_05_log",
+      "confidence": 0.9,
+      "age_s": 3600,
+      "reason": "bot_05 logged action moved keys_09 from Room_110 to Room_112"
+    }
+  ],
+  "turns": [
+    "I put keys_09 on the desk in Room 110 this morning. Are they still here?",
+    "Where do I believe keys_09 are, and where are they really?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "110"
+      ],
+      [
+        "112"
+      ]
+    ],
+    "tools_required": [
+      "record_user_belief",
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "keys_09",
+        "predicate": "located_at",
+        "perspective": "user",
+        "value_contains": "110"
+      },
+      {
+        "subject": "keys_09",
+        "predicate": "located_at",
+        "perspective": "agent:bot_05",
+        "value": "Room_112"
+      }
+    ]
+  }
+}

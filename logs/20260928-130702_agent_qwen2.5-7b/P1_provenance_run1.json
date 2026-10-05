@@ -1,0 +1,82 @@
+{
+  "scenario": "P1_provenance",
+  "type": "provenance",
+  "mode": "agent",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Where did you learn that box_01 is blue, and how long ago was that recorded?",
+      "answer": "I learned that box_01 is blue from the report by another robot, specifically \"bot_02\". This information was recorded 1 hour ago, as it was logged 3600 seconds ago.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "property": "color",
+            "entity": "box_01"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "perspective": "agent:bot_02",
+                  "old_value": null,
+                  "new_value": "blue",
+                  "old_confidence": null,
+                  "new_confidence": 0.9,
+                  "source": "bot_02_log",
+                  "reason": "bot_02 logged action painted_blue on item box_01",
+                  "age_s": 3600
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "answer",
+          "text": "I learned that box_01 is blue from the report by another robot, specifically \"bot_02\". This information was recorded 1 hour ago, as it was logged 3600 seconds ago."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_02', 'bot 02']",
+      "passed": true,
+      "detail": "found ['bot_02']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['hour', '3600', '60 minutes']",
+      "passed": true,
+      "detail": "found ['hour', '3600']"
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": true,
+  "rescored": "2026-10-05 21:44"
+}

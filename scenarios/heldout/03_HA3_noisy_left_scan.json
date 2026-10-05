@@ -1,0 +1,80 @@
+{
+  "id": "HA3_noisy_left_scan",
+  "type": "A",
+  "description": "The first LiDAR reading to the left is a spurious 14 cm spike; the following readings (310, 305 cm) agree with the map that route_G is clear.",
+  "world": {
+    "robot": {
+      "room": "Room_120",
+      "facing": {
+        "left": "route_G"
+      }
+    },
+    "routes": {
+      "route_G": {
+        "from": "Room_120",
+        "to": "Room_124",
+        "length_cm": 700
+      }
+    },
+    "lidar_script": {
+      "route_G": [
+        14,
+        310,
+        305
+      ]
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_G",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 120
+    },
+    {
+      "subject": "route_G",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 86400
+    }
+  ],
+  "turns": [
+    "Before you set off, check whether route_G is safe to drive."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "clear",
+        "safe"
+      ]
+    ],
+    "answer_excludes": [
+      "not clear",
+      "not safe",
+      "unsafe"
+    ],
+    "tool_min_counts": {
+      "read_lidar": 2
+    },
+    "beliefs": [
+      {
+        "subject": "route_G",
+        "predicate": "status",
+        "perspective": "self",
+        "value_not": "blocked"
+      },
+      {
+        "subject": "route_G",
+        "predicate": "status",
+        "perspective": "map",
+        "min_confidence": 0.9
+      }
+    ]
+  }
+}

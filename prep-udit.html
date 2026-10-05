@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Udit's Mid-sem Prep</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F4F6F8; --surface:#FFFFFF; --ink:#16202B; --muted:#586473; --line:#D9DFE6; --soft:#EAEEF2;
+  --decl:#3A4AA6; --decl-bg:#E9ECFA; --proc:#0B7A70; --proc-bg:#E1F3F0; --sens:#A95A0B; --sens-bg:#FBEEDD;
+  --flag:#B3261E; --flag-bg:#FBE7E5; --ok:#1E7B3A; --ok-bg:#E3F4E8; --code-bg:#EEF1F5;
+}
+@media (prefers-color-scheme: dark){
+  :root{ color-scheme:dark;
+    --bg:#0F151C; --surface:#161E27; --ink:#E4E9EF; --muted:#9AA6B4; --line:#2A3542; --soft:#1C2530;
+    --decl:#9AA7F2; --decl-bg:#1D2346; --proc:#5CCFC2; --proc-bg:#10302D; --sens:#F0AE62; --sens-bg:#3A2710;
+    --flag:#F28B82; --flag-bg:#3D1A18; --ok:#7FD69A; --ok-bg:#15301E; --code-bg:#111922; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex Sans",system-ui,"Segoe UI",sans-serif;padding-inline:16px;padding-block:36px 70px}
+main{max-width:820px;margin:0 auto}
+h1,h2,h3{font-family:"Archivo",system-ui,sans-serif;text-wrap:balance;line-height:1.2}
+h1{font-size:clamp(28px,5vw,40px);font-weight:800;margin:6px 0 10px}
+h2{font-size:23px;margin:0 0 12px}
+h3{font-size:17px;margin:20px 0 8px}
+p{margin:0 0 12px}
+section{padding-block:30px;border-top:1px solid var(--line);scroll-margin-top:10px}
+.eyebrow,.no{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.no{display:block;margin-bottom:4px}
+.eyebrow.me{color:var(--c)}
+.lede{font-size:18px;color:var(--muted)}
+a{color:var(--c)}
+a:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+code{font-family:"IBM Plex Mono",Consolas,monospace;font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font:12.8px/1.55 "IBM Plex Mono",Consolas,monospace;margin:0 0 10px}
+pre code{background:none;padding:0}
+ul,ol{padding-left:22px;margin:0 0 12px}
+li{margin-bottom:5px}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin:16px 0 24px}
+nav.toc a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line)}
+nav.toc a:hover{color:var(--ink);border-color:var(--ink)}
+.event{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:18px 0 6px}
+.event div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14.5px}
+.event b{display:block;font:500 11px "IBM Plex Mono",monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.role{background:var(--cb);border:1px solid var(--c);border-radius:10px;padding:16px 18px;margin:0 0 14px}
+.role p:last-child{margin:0}
+.files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.files code{background:var(--surface);border:1px solid var(--c);color:var(--c)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:12px}
+.card p,.card li{font-size:15px}
+.card p:last-child,.card ul:last-child,.card ol:last-child{margin:0}
+.card h3{margin-top:0}
+.explain{font-size:15px;margin:0 0 4px}
+.core{counter-reset:c;list-style:none;padding:0;display:grid;gap:8px}
+.core li{counter-increment:c;position:relative;padding:10px 14px 10px 46px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:15px;margin:0}
+.core li::before{content:counter(c);position:absolute;left:12px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--soft);font:600 12px "IBM Plex Mono",monospace;display:grid;place-items:center;color:var(--muted)}
+.flow{display:grid;gap:8px}
+.flow div{display:grid;grid-template-columns:150px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14.5px}
+.flow b{font:500 12px "IBM Plex Mono",monospace;color:var(--muted);padding-top:2px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 16px;margin-bottom:8px}
+details[open]{padding-bottom:12px}
+summary{cursor:pointer;padding:11px 0;font-weight:600}
+details p,details li{font-size:15px}
+details p:last-child{margin:0}
+.honest{color:var(--flag);font-weight:600}
+.say{background:var(--surface);border-left:4px solid var(--c);border-radius:0 10px 10px 0;padding:14px 18px;font-size:16px;margin-bottom:12px}
+.say p:last-child{margin:0}
+.note{background:var(--soft);border-radius:10px;padding:12px 16px;margin:0 0 12px;font-size:15px}
+.note p:last-child{margin:0}
+.checks{display:grid;gap:6px}
+.check{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:15px}
+.check input{margin-top:5px;accent-color:var(--c);flex:none;width:16px;height:16px}
+.check input:checked + label{color:var(--muted);text-decoration:line-through}
+.when{font:500 11px "IBM Plex Mono",monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px}
+.others{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.others a{font-size:14px;border:1px solid var(--line);border-radius:99px;padding:3px 12px;text-decoration:none;color:var(--muted);background:var(--surface)}
+@media (max-width:560px){.flow div{grid-template-columns:1fr;gap:0}}
+
+:root{--c:var(--sens);--cb:var(--sens-bg)}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow me">I, Agent · mid-sem prep · World and evaluation</div>
+  <h1>Udit's prep guide</h1>
+  <p class="lede">Everything you need to explain your part and answer questions about the whole project at the mid-sem flash talk.</p>
+  <div class="event">
+    <div><b>When</b>Tue 6 Oct, 4:00–5:30+ PM</div>
+    <div><b>Where</b>D-LT10 · slots drawn at random</div>
+    <div><b>Format</b>3–4 min · 3 slides or a video · 1–2 presenters</div>
+    <div><b>Rule</b>All three must attend; absence = 0</div>
+  </div>
+  <nav class="toc" aria-label="Sections">
+    <a href="#role">Your role</a><a href="#core">What everyone must know</a><a href="#concepts">Your part in depth</a><a href="#code">Your code</a><a href="#connects">How it connects</a><a href="#run">See it working</a><a href="#qa">Questions you'll get</a><a href="#teach">Your teach-back</a><a href="#pitch">Your 30-second pitch</a><a href="#todo">Checklist</a>
+  </nav>
+
+  <section id="role">
+    <span class="no">01</span>
+    <h2>Your role</h2>
+    <div class="role"><p>You own the <strong>world</strong> (the simulated building and its sensors) and the <strong>evidence</strong> that the project works: the 10 scenarios that are our data, the automatic checks, the baseline comparison, the results, and the demo script. When the evaluators ask about data and evaluation, the answers come from your code.</p><div class="files"><code>i_agent/sensorimotor.py</code><code>i_agent/scenario.py</code><code>i_agent/evaluation.py</code><code>scenarios/*.json</code><code>run_scenario.py</code><code>evaluate.py</code></div></div>
+  </section>
+
+  <section id="core">
+    <span class="no">02</span>
+    <h2>What everyone must know</h2>
+    <p>Any of you can be asked about any part. Be able to say each of these without notes.</p>
+    <ol class="core"><li><strong>The problem in one line:</strong> an LLM controlling a robot trusts old information (an old map says clear when a box blocks the way) and mixes up who believes what (user thinks red, camera sees brown, log says blue).</li><li><strong>The design:</strong> three separate layers. <strong>Memory</strong> (Siddh) holds beliefs and their history. The <strong>brain</strong> (Rudraksh) is an LLM that reasons. The <strong>world</strong> (Udit) is a simulated building with sensors. The brain can reach the other two <em>only through 8 tools</em>, so every claim is traceable.</li><li><strong>Scenario A:</strong> map says route_A is clear, LiDAR says blocked at 12 cm. The agent must trust the sensor, update memory, lower trust in the map (1.0 → 0.3) and explain.</li><li><strong>Scenario B:</strong> user says red, camera sees brown under yellow light, bot_02's log says blue. The agent keeps all three separate.</li><li><strong>Data:</strong> no downloaded dataset. We wrote 10 scenario files, each a hidden world plus initial beliefs plus user messages plus expected behaviour.</li><li><strong>Model:</strong> <code>qwen2.5:7b</code>, open-weight, run locally with Ollama, in a hand-written ReAct loop. (<code>gpt-oss-20b</code> on Groq is the alternative; Groq dropped Llama 3.)</li><li><strong>Evaluation:</strong> four checks per run (answer, tools, memory, grounding) against a <em>baseline</em> (same model, memory pasted as text, no tools). Agent: 9/10 correct answers. Baseline: 5/10, and it says <em>"Yes, my route is clear"</em> in Scenario A. <em>Update these numbers if the 5-run evaluation changes them.</em></li><li><strong>Milestones:</strong> 1 (layers and data formats), 2 (tool calling) and 3 (Scenario A) are done; 4 (Scenario B) is mostly done (B1 and B2 pass, B3 still to fix).</li></ol>
+  </section>
+
+  <section id="concepts">
+    <span class="no">03</span>
+    <h2>Your part in depth</h2>
+    <div class="card"><h3>Ground truth vs perception</h3><p><code>MockEnv</code> knows the truth (where obstacles and objects really are, the true colours) but reveals it only through sensors, which can be wrong in realistic ways. The agent never sees the ground truth.</p></div><div class="card"><h3>LiDAR</h3><p>Distance to the nearest obstacle in a direction. Under 50 cm counts as "blocked". A scenario can script a list of readings to simulate noise: A3 gives 9 cm, then 240 and 245 cm.</p></div><div class="card"><h3>Camera and lighting</h3><p>Lists objects in the robot's room with their <em>perceived</em> colour. Yellow light maps blue → brown and red → orange; dim light maps blue → black. That is how Scenario B's "camera sees brown" happens.</p></div><div class="card"><h3>Bumper and clock</h3><p><code>move()</code> fails with a bumper hit if the route has an obstacle. Sensor reads advance the simulated clock by 1 s and moves by 5 s.</p></div><div class="card"><h3>Scenario file = data</h3><p>Four parts: <code>world</code> (hidden truth), <code>memory</code> (starting beliefs with source, confidence and age), <code>turns</code> (user messages), and <code>expect</code> (what a correct agent must do).</p></div><div class="card"><h3>Four checks</h3><p><strong>answer</strong>: required words appear (e.g. "blocked" and "map"). <strong>tools</strong>: required tools were called (e.g. <code>read_lidar</code>, <code>update_belief</code>; LiDAR at least twice in A3). <strong>memory</strong>: the final graph is correct (e.g. self = blocked, map confidence ≤ 0.5). <strong>grounding</strong>: every colour in the answer appears in a tool result or the user's words.</p></div><div class="card"><h3>Baseline and ablation</h3><p>The <strong>baseline</strong> is the same LLM with memory pasted as text and no tools. It shows what the architecture adds. The <strong>ablation</strong> (<code>--no-self-check</code>) turns one safeguard off to measure its effect.</p></div><div class="card"><h3>Pass rate and rescoring</h3><p>Each scenario is run N times (default 5). A run passes only if every check passes. <code>--rescore</code> re-checks saved logs after an expectation changes, without calling the LLM again.</p></div>
+  </section>
+
+  <section id="code">
+    <span class="no">04</span>
+    <h2>Your code, explained</h2>
+    <p>Excerpts from the real files, trimmed slightly. Open the full files alongside.</p>
+    <h3>The LiDAR sensor: <code>MockEnv.read_lidar()</code></h3><pre><code>def read_lidar(self, direction=&quot;front&quot;):
+    t = self.clock.tick(1)
+    route_id = self.robot[&quot;facing&quot;].get(direction)
+    if route_id is None:                     # nothing in that direction
+        payload = {&quot;status&quot;: &quot;no_route&quot;, &quot;note&quot;: &quot;... not an obstacle reading.&quot;, ...}
+    else:
+        script = self._lidar_script.get(route_id)
+        if script:                           # scripted noise, e.g. [9, 240, 245]
+            distance = script.pop(0) if len(script) &gt; 1 else script[0]
+        elif route.get(&quot;obstacle_cm&quot;) is not None:
+            distance = route[&quot;obstacle_cm&quot;]  # the hidden truth
+        else:
+            distance = route.get(&quot;length_cm&quot;, 800)
+        payload = {&quot;route&quot;: route_id, &quot;distance_cm&quot;: distance,
+                   &quot;status&quot;: &quot;blocked&quot; if distance &lt; 50 else &quot;clear&quot;}
+    return SensorReading(sensor=f&quot;lidar_{direction}&quot;, t=t, payload=payload)
+
+LIGHTING_SHIFT = {&quot;yellow&quot;: {&quot;blue&quot;: &quot;brown&quot;, &quot;red&quot;: &quot;orange&quot;, ...}, ...}</code></pre><p class="explain">The truth (<code>obstacle_cm</code>) stays inside the world. The agent only gets a reading. Scripted readings let us test noise deterministically, and the lighting table is how the camera can be wrong.</p><h3>A scenario file: A1, abridged</h3><pre><code>{
+  &quot;id&quot;: &quot;A1_route_blocked&quot;,
+  &quot;world&quot;:  {&quot;robot&quot;: {&quot;room&quot;: &quot;Room_101&quot;, &quot;facing&quot;: {&quot;front&quot;: &quot;route_A&quot;}},
+             &quot;routes&quot;: {&quot;route_A&quot;: {&quot;from&quot;: &quot;Room_101&quot;, &quot;to&quot;: &quot;Room_102&quot;, &quot;obstacle_cm&quot;: 12}}},
+  &quot;memory&quot;: [{&quot;subject&quot;: &quot;route_A&quot;, &quot;predicate&quot;: &quot;status&quot;, &quot;obj&quot;: &quot;clear&quot;,
+              &quot;perspective&quot;: &quot;map&quot;, &quot;source&quot;: &quot;Default_Map&quot;, &quot;confidence&quot;: 1.0, &quot;age_s&quot;: 86400}],
+  &quot;turns&quot;:  [&quot;Is your route clear? Justify your response by inspecting your internal system layers.&quot;],
+  &quot;expect&quot;: {&quot;answer_mentions&quot;: [[&quot;blocked&quot;, &quot;obstruction&quot;, &quot;obstacle&quot;], [&quot;map&quot;]],
+             &quot;tools_required&quot;: [&quot;read_lidar&quot;, &quot;update_belief&quot;],
+             &quot;beliefs&quot;: [{&quot;subject&quot;: &quot;route_A&quot;, &quot;predicate&quot;: &quot;status&quot;, &quot;perspective&quot;: &quot;self&quot;, &quot;value&quot;: &quot;blocked&quot;},
+                         {&quot;subject&quot;: &quot;route_A&quot;, &quot;predicate&quot;: &quot;status&quot;, &quot;perspective&quot;: &quot;map&quot;, &quot;max_confidence&quot;: 0.5}]}
+}</code></pre><p class="explain">This is what "our data" means. The memory says clear, the world says there's an obstacle at 12 cm, and <code>expect</code> says a correct agent must mention "blocked" and "map", call the LiDAR and update its belief, and end with self = blocked and the map's confidence at 0.5 or below.</p>
+  </section>
+
+  <section id="connects">
+    <span class="no">05</span>
+    <h2>How your part connects to the others</h2>
+    <div class="flow"><div><b>Your world is used by</b><span><code>tools.py</code> (Rudraksh) only: <code>read_lidar</code>, <code>read_camera</code>, <code>get_pose</code>, <code>move</code>. The LLM never sees <code>MockEnv</code> directly.</span></div><div><b>Your loader builds</b><span>Everything for a run: <code>build_world()</code> creates the clock, Siddh's <code>BeliefStore</code> with the starting beliefs, your <code>MockEnv</code>, and Rudraksh's <code>ToolRegistry</code>.</span></div><div><b>Your evaluation calls</b><span>Rudraksh's <code>Agent</code> or <code>run_baseline()</code>, then reads Siddh's final graph for the memory checks.</span></div><div><b>Your outputs</b><span>JSON logs per run and <code>summary.md</code> / <code>summary.csv</code> in <code>logs/</code>. These are the "10 test logs" deliverable and the numbers on the slides.</span></div></div>
+  </section>
+
+  <section id="run">
+    <span class="no">06</span>
+    <h2>See it working</h2>
+    <pre><code>python -m pytest tests/test_sensorimotor.py tests/test_scenarios.py -v
+python run_scenario.py --list
+python evaluate.py --provider ollama --model qwen2.5:7b                   # 5 runs each, ~1-2 h
+python evaluate.py --provider ollama --model qwen2.5:7b --no-self-check
+python evaluate.py --provider ollama --model qwen2.5:7b --baseline
+python evaluate.py --rescore logs/&lt;folder&gt;</code></pre>
+    <div class="note"><p><strong>What to look for:</strong> Open the newest <code>logs/&lt;time&gt;_agent_qwen2.5-7b/summary.md</code>. Its <code>pass_rate</code> and per-check columns are the numbers for the slides. Compare the <strong>answer</strong> column with the baseline's: that is the fair comparison, since the baseline cannot use tools.</p></div>
+  </section>
+
+  <section id="qa">
+    <span class="no">07</span>
+    <h2>Questions you'll get</h2>
+    <p>Practise answering out loud in 2–3 sentences, then open each one to compare. Answers marked in red are honest admissions: say them plainly rather than bluffing.</p>
+    <details><summary>What is your data?</summary><p>We wrote 10 scenario files. Each defines a hidden world, the robot's starting beliefs with sources and ages, the user's messages, and the expected behaviour. They cover both spec scenarios plus noise, stale beliefs, missing objects, false beliefs, conflicting reports, unknown objects and provenance. Sensors produce new readings during each run.</p></details><details><summary>Is a mock environment realistic enough?</summary><p>The spec asks for a mock, to avoid hardware debugging. Each scenario isolates one failure mode, and sensors can be wrong in realistic ways: noisy LiDAR, colour shifts from lighting. <span class="honest">It is simplified: rooms and routes, not continuous space.</span> The point is to test the agent's reasoning, not perception.</p></details><details><summary>How do you score an answer?</summary><p>Four automatic checks: required words in the answer, required tools called, the final memory state, and grounding (no colour in the answer that isn't in a tool result). A run passes only if all pass. We chose keyword and state checks over an LLM judge because they are deterministic and transparent.</p></details><details><summary>Why does the baseline score 0/10?</summary><p>It has no tools, so it can't pass the tool or memory checks by design. The fair comparison is the answer column: 9/10 for the agent vs 5/10 for the baseline. In Scenario A, the baseline says "Yes, my route is clear", which is wrong.</p></details><details><summary>Did you change tests after seeing results?</summary><p><span class="honest">Yes, twice, both for H1, and both are documented.</span> It now accepts either memory tool, since the intent is "consulted memory". And we added "I don't know" phrasings the checker had missed on a correct answer. We re-scored the saved logs with <code>--rescore</code>. All other expectations are unchanged.</p></details><details><summary>Any weaknesses in your evaluation?</summary><p>A4's answer check accepts words as broad as "no" and "not", so it's too lenient. Keyword checks can miss correct paraphrases. And small run counts make pass rates noisy, which is why we run 5 times.</p></details><details><summary>What does the ablation show?</summary><p>It runs the same suite with the self-check switched off, to measure how much that safeguard contributes. <em>Fill in the number after tonight's run.</em></p></details><details><summary>How long does evaluation take?</summary><p>About 1–2 minutes per scenario on the local 7B model, so roughly 15–20 minutes per pass of 10 scenarios. Groq is faster but limited to about 200k tokens per day on the free tier.</p></details>
+    <h3>Questions any of you could get</h3>
+    <details><summary>What is your data?</summary><p>We have no downloaded dataset. Our data is 10 scenario files we wrote. Each defines a hidden world (obstacles, objects, lighting), the robot's starting beliefs with sources and ages, the user's messages, and the expected behaviour. Sensors generate new readings during each run.</p></details><details><summary>How do you know it isn't hallucinating?</summary><p>Every fact must come through a tool call, and we log every call. Three mechanisms check it: memory refuses to store values the agent never observed; a self-check rejects answers that claim actions that weren't taken or describe unobserved objects; and the evaluation checks that every colour or value in the answer appears in some tool result.</p></details><details><summary>What doesn't work yet?</summary><p>B3: the agent trusts the newer of two robot reports correctly, but doesn't mention the older one. One answer check (A4) is too lenient. And the demo UI and model comparison are planned after mid-sem.</p></details>
+    <p style="margin-top:10px">More are in the FAQ section of <a href="project-handbook.html#faq">project-handbook.html</a>.</p>
+  </section>
+
+  <section id="teach">
+    <span class="no">08</span>
+    <h2>Your teach-back: explain Siddh's layer (memory)</h2>
+    <p>On Monday, explain this layer in 1 minute while its owner listens and corrects you. It is the best preparation for surprise questions. Cover these points:</p>
+    <ul><li>Beliefs are graph edges: entity → property → value, keyed by perspective (user / self / map / agent).</li><li>Perspectives sit side by side, so the user's "red" and bot_02's "blue" never overwrite each other.</li><li>Every change goes into the SQLite provenance table with its source and reason.</li><li>Conflict rule: if a sensor contradicts the map, the map's confidence × 0.3. User and other-robot beliefs are never lowered.</li><li>Snapshots before and after each question, with a diff of what changed.</li></ul>
+  </section>
+
+  <section id="pitch">
+    <span class="no">09</span>
+    <h2>Your 30-second pitch</h2>
+    <p>The organisers require a statement of each member's contribution. If you are asked "what did you do?", say this (in your own words):</p>
+    <div class="say"><p>"I built the simulated world and the evaluation. The world knows the truth but shows it only through sensors that can mislead: noisy LiDAR, and colours shifted by yellow light. Our data is 10 scenarios I wrote, each scored automatically on four checks. Against a baseline of the same model without our layers, our agent gets 9 out of 10 right versus 5, and the baseline wrongly says the blocked route is clear."</p></div>
+  </section>
+
+  <section id="todo">
+    <span class="no">10</span>
+    <h2>Checklist</h2>
+    <p>Ticks are saved in this browser only.</p>
+    <div class="checks"><div class="when">Sunday 4 Oct</div><div class="check"><input type="checkbox" id="udit-t0"><label for="udit-t0">Start the 5-run evaluation tonight (it runs for 1–2 hours), then the <code>--no-self-check</code> run</label></div><div class="check"><input type="checkbox" id="udit-t1"><label for="udit-t1">Read the handbook: Part 1 (sections 1.4, 1.8) and Part 2 (evaluation)</label></div><div class="check"><input type="checkbox" id="udit-t2"><label for="udit-t2">Run <code>pytest tests/test_sensorimotor.py tests/test_scenarios.py -v</code></label></div><div class="check"><input type="checkbox" id="udit-t3"><label for="udit-t3">Read <code>sensorimotor.py</code>, one scenario file, and <code>run_checks()</code> in <code>evaluation.py</code></label></div><div class="check"><input type="checkbox" id="udit-t4"><label for="udit-t4">Build the 3 slides with screenshots, including the contributions</label></div><div class="when">Monday 5 Oct</div><div class="check"><input type="checkbox" id="udit-t5"><label for="udit-t5">Put the 5-run numbers and the ablation result on the slides</label></div><div class="check"><input type="checkbox" id="udit-t6"><label for="udit-t6">Upload <code>TeamName.pptx</code> to the Drive folder and check it opens</label></div><div class="check"><input type="checkbox" id="udit-t7"><label for="udit-t7">Teach-back: explain Siddh's layer in 1 minute</label></div><div class="check"><input type="checkbox" id="udit-t8"><label for="udit-t8">Answer every question on this page out loud, then rehearse the talk 3 times</label></div><div class="when">Tuesday 6 Oct</div><div class="check"><input type="checkbox" id="udit-t9"><label for="udit-t9">Arrive at D-LT10 before 4:00 PM</label></div></div>
+    <p style="margin-top:18px">Teammates' guides:</p>
+    <div class="others"><a href="prep-siddh.html">Siddh: Memory layer</a><a href="prep-rudraksh.html">Rudraksh: Brain layer</a><a href="project-handbook.html">Full handbook</a></div>
+  </section>
+</main>
+<script>
+document.querySelectorAll('.check input').forEach(function(box){
+  var k = 'iagent-prep-' + box.id;
+  try { var v = localStorage.getItem(k); if (v !== null) box.checked = v === '1'; } catch (e) {}
+  box.addEventListener('change', function(){ try { localStorage.setItem(k, box.checked ? '1' : '0'); } catch (e) {} });
+});
+</script>
+</body>
+</html>

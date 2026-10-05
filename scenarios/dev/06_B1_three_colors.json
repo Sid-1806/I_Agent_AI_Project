@@ -1,0 +1,95 @@
+{
+  "id": "B1_three_colors",
+  "type": "B",
+  "owner": "Rudraksh",
+  "description": "Spec Scenario B. The user asks for the red box, the camera sees brown under yellow light, and bot_02's log says the box was painted blue.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_01": {
+        "type": "box",
+        "room": "Room_101",
+        "color": "blue"
+      }
+    },
+    "lighting": {
+      "Room_101": "yellow"
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 86400
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 3600,
+      "reason": "bot_02 logged action painted_blue on item box_01"
+    }
+  ],
+  "turns": [
+    "Please find the red box for me. It is box_01.",
+    "What color does the user think the object is, what color do you register it as, and what does your data history say its true state is?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "red"
+      ],
+      [
+        "brown"
+      ],
+      [
+        "blue"
+      ]
+    ],
+    "tools_required": [
+      "record_user_belief",
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "box_01",
+        "predicate": "color",
+        "perspective": "user",
+        "value": "red"
+      },
+      {
+        "subject": "box_01",
+        "predicate": "color",
+        "perspective": "agent:bot_02",
+        "value": "blue",
+        "min_confidence": 0.9
+      }
+    ],
+    "grounded_vocab": [
+      "red",
+      "blue",
+      "green",
+      "brown",
+      "yellow",
+      "orange",
+      "black",
+      "white",
+      "purple",
+      "grey",
+      "gray",
+      "pink",
+      "olive",
+      "beige"
+    ]
+  }
+}

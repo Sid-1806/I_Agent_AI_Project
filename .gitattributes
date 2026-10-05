@@ -1,0 +1,2 @@
+# Frozen held-out scenarios are hashed byte-for-byte: never convert their line endings.
+scenarios/heldout/*.json -text

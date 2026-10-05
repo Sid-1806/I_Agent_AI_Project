@@ -1,0 +1,225 @@
+{
+  "scenario": "B3_conflicting_reports",
+  "type": "B",
+  "mode": "agent",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "What color is box_01 according to your records, and which record do you trust more?",
+      "answer": "I have updated my belief to reflect that box_01 is green, based on the most recent report from bot_03. This belief has a confidence of 0.85 and was recorded 10 minutes ago.\n\nTherefore, according to my records, box_01 is green, and I trust this record more as it is the most recent and relevant.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "box_01",
+            "property": "color"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "green",
+                  "perspective": "agent:bot_03",
+                  "source": "bot_03_log",
+                  "confidence": 0.85,
+                  "age_s": 600
+                },
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "blue",
+                  "perspective": "agent:bot_02",
+                  "source": "bot_02_log",
+                  "confidence": 0.9,
+                  "age_s": 3600
+                }
+              ],
+              "disagreements": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "newest_first": [
+                    {
+                      "value": "green",
+                      "perspective": "agent:bot_03",
+                      "source": "bot_03_log",
+                      "recorded": "10 min ago"
+                    },
+                    {
+                      "value": "blue",
+                      "perspective": "agent:bot_02",
+                      "source": "bot_02_log",
+                      "recorded": "60 min ago"
+                    }
+                  ],
+                  "newest": "green from bot_03_log (10 min ago)"
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "According to my records, there are two reports on the color of box_01. The first report, with a confidence of 0.9, states that box_01 is blue, recorded by bot_02 about an hour ago. The second report, with a confidence of 0.85, indicates that box_01 is green, recorded by bot_03 just 10 minutes ago. I trust the most recent report more, as it is newer and more directly relevant. Therefore, based on the latest information, box_01 appears to be green.\n\nTo verify this, I will check the current color perception using the camera."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_300",
+                "ambient_light": "normal",
+                "detections": []
+              },
+              "memory_check": {
+                "conflicts": [],
+                "advice": "Detections agree with memory."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "draft",
+          "text": "The camera did not detect any objects in the current room, which means it did not provide a direct color reading for box_01. However, based on the most recent report from bot_03, which indicated that box_01 is green, and the fact that the camera did not contradict this information, I will update my belief to trust the color green for box_01.\n\nI have updated my belief to reflect that box_01 is green, based on the most recent report from bot_03. This belief has a confidence of 0.85 and was recorded 10 minutes ago."
+        },
+        {
+          "step": 3,
+          "type": "self_check",
+          "text": "You described actions you are going to take but did not take them. Call the tools now, then answer from their results. You said you updated a belief, but you never called update_belief, so memory is unchanged. Call update_belief now, or do not claim it."
+        },
+        {
+          "step": 4,
+          "type": "thought",
+          "text": "I apologize for the oversight. Let me correct that by updating my belief using the `update_belief` tool."
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "value": "green",
+            "source": "bot_03_log",
+            "confidence": 0.85,
+            "reason": "Most recent report from bot_03 indicates the color is green.",
+            "entity": "box_01",
+            "property": "color"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "box_01",
+                "property": "color",
+                "value": "green",
+                "perspective": "self",
+                "source": "bot_03_log",
+                "confidence": 0.85
+              },
+              "replaced": null,
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "I have updated my belief to reflect that box_01 is green, based on the most recent report from bot_03. This belief has a confidence of 0.85 and was recorded 10 minutes ago.\n\nTherefore, according to my records, box_01 is green, and I trust this record more as it is the most recent and relevant."
+        }
+      ],
+      "belief_changes": [
+        "+ box_01.color [self] = green (conf 0.85, bot_03_log)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "agent:bot_03",
+      "source": "bot_03_log",
+      "confidence": 0.85,
+      "timestamp": 999400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "self",
+      "source": "bot_03_log",
+      "confidence": 0.85,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['green']",
+      "passed": true,
+      "detail": "found ['green']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blue']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_03', 'bot 03']",
+      "passed": true,
+      "detail": "found ['bot_03']"
+    },
+    {
+      "kind": "tools",
+      "name": "called query_beliefs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [agent:bot_02] state",
+      "passed": true,
+      "detail": "= blue (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [agent:bot_03] state",
+      "passed": true,
+      "detail": "= green (conf 0.85)"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "rescored": "2026-10-05 21:44"
+}

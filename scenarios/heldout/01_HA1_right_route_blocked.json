@@ -1,0 +1,97 @@
+{
+  "id": "HA1_right_route_blocked",
+  "type": "A",
+  "description": "The planned route lies to the robot's right. The map says it is clear; a LiDAR scan finds an obstacle at 30 cm.",
+  "world": {
+    "robot": {
+      "room": "Room_210",
+      "facing": {
+        "front": "route_C",
+        "right": "route_D"
+      }
+    },
+    "routes": {
+      "route_C": {
+        "from": "Room_210",
+        "to": "Room_211",
+        "length_cm": 700
+      },
+      "route_D": {
+        "from": "Room_210",
+        "to": "Room_214",
+        "length_cm": 900,
+        "obstacle_cm": 30
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_D",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 120
+    },
+    {
+      "subject": "route_D",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 172800
+    },
+    {
+      "subject": "route_C",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 172800
+    }
+  ],
+  "turns": [
+    "Can you continue along your planned route right now? Explain how you know."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "blocked",
+        "obstruction",
+        "obstructed",
+        "obstacle"
+      ]
+    ],
+    "answer_excludes": [
+      "route is clear",
+      "path is clear"
+    ],
+    "tools_required": [
+      "read_lidar",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_D",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "blocked"
+      },
+      {
+        "subject": "route_D",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      },
+      {
+        "subject": "route_C",
+        "predicate": "status",
+        "perspective": "map",
+        "min_confidence": 0.9
+      }
+    ]
+  }
+}

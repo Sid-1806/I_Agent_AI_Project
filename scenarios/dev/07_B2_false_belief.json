@@ -1,0 +1,63 @@
+{
+  "id": "B2_false_belief",
+  "type": "B",
+  "owner": "Rudraksh",
+  "description": "Sally-Anne style false-belief test. The user left box_01 in Room_101; bot_02 later moved it to Room_205 while the user was away.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_01": {
+        "type": "box",
+        "room": "Room_205",
+        "color": "blue"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_205",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 1800,
+      "reason": "bot_02 logged action moved box_01 from Room_101 to Room_205"
+    }
+  ],
+  "turns": [
+    "I left box_01 in Room 101 before lunch. Can you check whether it is still there?",
+    "Where do I think box_01 is, and where is it actually according to your records?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "101"
+      ],
+      [
+        "205"
+      ]
+    ],
+    "tools_required": [
+      "record_user_belief",
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "box_01",
+        "predicate": "located_at",
+        "perspective": "user",
+        "value_contains": "101"
+      },
+      {
+        "subject": "box_01",
+        "predicate": "located_at",
+        "perspective": "agent:bot_02",
+        "value": "Room_205"
+      }
+    ]
+  }
+}

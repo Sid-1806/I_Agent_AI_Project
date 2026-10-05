@@ -1,0 +1,110 @@
+{
+  "id": "HB3_three_robot_reports",
+  "type": "B",
+  "description": "Three robots disagree about crate_11's colour: bot_02 (2 h ago) red, bot_05 (30 min ago) yellow, bot_07 (5 min ago) orange. The crate is not visible from here.",
+  "world": {
+    "robot": {
+      "room": "Room_400",
+      "facing": {}
+    },
+    "objects": {
+      "crate_11": {
+        "type": "crate",
+        "room": "Room_215",
+        "color": "orange"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "crate_11",
+      "predicate": "color",
+      "obj": "red",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 7200
+    },
+    {
+      "subject": "crate_11",
+      "predicate": "color",
+      "obj": "yellow",
+      "perspective": "agent:bot_05",
+      "source": "bot_05_log",
+      "confidence": 0.85,
+      "age_s": 1800
+    },
+    {
+      "subject": "crate_11",
+      "predicate": "color",
+      "obj": "orange",
+      "perspective": "agent:bot_07",
+      "source": "bot_07_log",
+      "confidence": 0.85,
+      "age_s": 300
+    }
+  ],
+  "turns": [
+    "What colour is crate_11 according to your records? Which report do you trust most, and why?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "orange"
+      ],
+      [
+        "yellow"
+      ],
+      [
+        "red"
+      ],
+      [
+        "bot_07",
+        "bot 07"
+      ]
+    ],
+    "tools_any": [
+      [
+        "query_beliefs",
+        "get_provenance"
+      ]
+    ],
+    "beliefs": [
+      {
+        "subject": "crate_11",
+        "predicate": "color",
+        "perspective": "agent:bot_02",
+        "value": "red"
+      },
+      {
+        "subject": "crate_11",
+        "predicate": "color",
+        "perspective": "agent:bot_05",
+        "value": "yellow"
+      },
+      {
+        "subject": "crate_11",
+        "predicate": "color",
+        "perspective": "agent:bot_07",
+        "value": "orange"
+      }
+    ],
+    "grounded_vocab": [
+      "red",
+      "blue",
+      "green",
+      "brown",
+      "yellow",
+      "orange",
+      "black",
+      "white",
+      "purple",
+      "grey",
+      "gray",
+      "pink",
+      "olive",
+      "beige",
+      "maroon"
+    ]
+  }
+}

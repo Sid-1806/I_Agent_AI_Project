@@ -1,0 +1,93 @@
+{
+  "scenario": "A2_route_reopened",
+  "type": "A",
+  "mode": "agent",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Can you take your planned route right now? Check before you answer.",
+      "answer": "I can check my planned route by moving towards it. Currently, I am facing route_B in Room_101. To ensure the path is clear, I will verify using my sensors.\n\nFirst, I will check my memory for any recent reports or beliefs about route_B. If there is no recent information, I will use my sensors to confirm the current state.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_101",
+                "facing": {
+                  "front": "route_B"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "answer",
+          "text": "I can check my planned route by moving towards it. Currently, I am facing route_B in Room_101. To ensure the path is clear, I will verify using my sensors.\n\nFirst, I will check my memory for any recent reports or beliefs about route_B. If there is no recent information, I will use my sensors to confirm the current state."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_B",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 395200.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['clear', 'open', 'free', 'yes']",
+      "passed": true,
+      "detail": "found ['clear']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [map] state",
+      "passed": false,
+      "detail": "confidence 0.9 > 0.5"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,71 @@
+{
+  "id": "A5_stale_belief",
+  "type": "A",
+  "owner": "Siddh",
+  "description": "The agent's own belief that route_A is clear comes from a scan two hours old. Something has since blocked it.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {
+        "front": "route_A"
+      }
+    },
+    "routes": {
+      "route_A": {
+        "from": "Room_101",
+        "to": "Room_102",
+        "length_cm": 800,
+        "obstacle_cm": 20
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 60
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "self",
+      "source": "lidar_front",
+      "confidence": 0.9,
+      "age_s": 7200
+    }
+  ],
+  "turns": [
+    "Can you drive your planned route right now?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "blocked",
+        "obstruction",
+        "obstructed",
+        "obstacle"
+      ]
+    ],
+    "tools_required": [
+      "read_lidar"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_A",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "blocked"
+      }
+    ],
+    "answer_excludes": [
+      "route is clear",
+      "path is clear",
+      "yes, i can"
+    ]
+  }
+}

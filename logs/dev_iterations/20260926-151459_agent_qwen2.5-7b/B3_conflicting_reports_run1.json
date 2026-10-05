@@ -1,0 +1,260 @@
+{
+  "scenario": "B3_conflicting_reports",
+  "type": "B",
+  "mode": "agent",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "What color is box_01 according to your records, and which record do you trust more?",
+      "answer": "I have updated my belief to reflect that box_01 is 'red', based on the static map's record. The confidence in this belief remains at 0.9.\n\nFor future reference, if we receive more recent or direct evidence from another robot, we should re-evaluate the color of box_01. For now, the static map's record is the most reliable source of information.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "thought",
+          "text": "Based on my records, the color of box_01 according to the static map is reported as 'red'. However, the user has recently stated that box_01 is 'blue'. \n\nTo determine which record to trust more, I will check the sensor data from the camera to see the current color of box_01. Let's check the camera now."
+        },
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {
+            "camera": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_300",
+                "ambient_light": "normal",
+                "detections": []
+              },
+              "memory_check": {
+                "conflicts": [],
+                "advice": "Detections agree with memory."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "The camera did not detect any objects in the current room, so it did not provide a direct reading of box_01's color. However, the advice from the memory check indicates that the detections agree with the static map's record. \n\nGiven that the user's belief conflicts with the static map, and the camera did not provide a new reading, I will trust the static map's record for now. The static map reports that box_01 is 'red'. \n\nFor a more accurate confirmation, we should verify this with the camera again in a different room where box_01 is located. However, based on the current information, box_01 is recorded as 'red' in the static map. \n\nTo update my belief, I will call `update_belief` to reflect the static map's record."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "box_01",
+            "property": "color",
+            "value": "red",
+            "source": "static_map",
+            "confidence": 0.9,
+            "reason": "Updating color based on static map record."
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "box_01",
+                "property": "color",
+                "value": "red",
+                "perspective": "self",
+                "source": "static_map",
+                "confidence": 0.9
+              },
+              "replaced": null,
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "draft",
+          "text": "I have updated my belief to reflect that box_01 is 'red', based on the static map's record. The confidence in this belief is 0.9, indicating a high level of certainty.\n\nFor future reference, if the camera detects box_01 in a different room, we should verify its color again. For now, the static map's record is the most reliable source of information."
+        },
+        {
+          "step": 3,
+          "type": "self_check",
+          "text": "You have not checked memory in this turn. Call query_beliefs (and get_pose if the question is about your route or location) before answering."
+        },
+        {
+          "step": 4,
+          "type": "thought",
+          "text": "I will first check the memory to see if there are any existing beliefs about the color of box_01 and my current location. Let's call `query_beliefs` to get the relevant information."
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "box_01",
+            "property": "color"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "blue",
+                  "perspective": "agent:bot_02",
+                  "source": "bot_02_log",
+                  "confidence": 0.9,
+                  "age_s": 3601
+                },
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "green",
+                  "perspective": "agent:bot_03",
+                  "source": "bot_03_log",
+                  "confidence": 0.85,
+                  "age_s": 601
+                },
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "red",
+                  "perspective": "self",
+                  "source": "static_map",
+                  "confidence": 0.9,
+                  "age_s": 0
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "thought",
+          "text": "Based on the memory, there are conflicting reports about the color of box_01:\n- Agent bot_02 reports that box_01 is 'blue' with a confidence of 0.9.\n- Agent bot_03 reports that box_01 is 'green' with a confidence of 0.85.\n- The static map reports that box_01 is 'red' with a confidence of 0.9.\n\nThe static map's record is the most recent and has the highest confidence, but the conflicting reports from other robots suggest that the color might be different. Since the static map's record is the most recent and direct evidence, I will trust it for now.\n\nTo update my belief, I will call `update_belief` to reflect the static map's record of box_01 being 'red'."
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "value": "red",
+            "source": "static_map",
+            "confidence": 0.9,
+            "reason": "Updating belief based on the most recent and direct evidence from the static map.",
+            "entity": "box_01",
+            "property": "color"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "box_01",
+                "property": "color",
+                "value": "red",
+                "perspective": "self",
+                "source": "static_map",
+                "confidence": 0.9
+              },
+              "replaced": {
+                "entity": "box_01",
+                "property": "color",
+                "value": "red",
+                "perspective": "self",
+                "source": "static_map",
+                "confidence": 0.9
+              },
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "answer",
+          "text": "I have updated my belief to reflect that box_01 is 'red', based on the static map's record. The confidence in this belief remains at 0.9.\n\nFor future reference, if we receive more recent or direct evidence from another robot, we should re-evaluate the color of box_01. For now, the static map's record is the most reliable source of information."
+        }
+      ],
+      "belief_changes": [
+        "+ box_01.color [self] = red (conf 0.9, static_map)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "agent:bot_03",
+      "source": "bot_03_log",
+      "confidence": 0.85,
+      "timestamp": 999400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "red",
+      "perspective": "self",
+      "source": "static_map",
+      "confidence": 0.9,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['green']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blue']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_03', 'bot 03']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called query_beliefs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [agent:bot_02] state",
+      "passed": true,
+      "detail": "= blue (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [agent:bot_03] state",
+      "passed": true,
+      "detail": "= green (conf 0.85)"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false
+}

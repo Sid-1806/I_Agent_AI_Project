@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I, Agent Team Workload</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F4F6F8; --surface:#FFFFFF; --ink:#16202B; --muted:#586473; --line:#D9DFE6; --soft:#EAEEF2;
+  --decl:#3A4AA6; --decl-bg:#E9ECFA;
+  --proc:#0B7A70; --proc-bg:#E1F3F0;
+  --sens:#A95A0B; --sens-bg:#FBEEDD;
+  --flag:#B3261E; --flag-bg:#FBE7E5;
+  --code-bg:#EEF1F5;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --bg:#0F151C; --surface:#161E27; --ink:#E4E9EF; --muted:#9AA6B4; --line:#2A3542; --soft:#1C2530;
+    --decl:#9AA7F2; --decl-bg:#1D2346;
+    --proc:#5CCFC2; --proc-bg:#10302D;
+    --sens:#F0AE62; --sens-bg:#3A2710;
+    --flag:#F28B82; --flag-bg:#3D1A18;
+    --code-bg:#111922;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 "IBM Plex Sans",system-ui,"Segoe UI",sans-serif;padding-inline:16px;padding-block:40px 60px}
+main{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:"Archivo",system-ui,sans-serif;text-wrap:balance;line-height:1.2}
+h1{font-size:clamp(28px,5vw,38px);font-weight:800;margin:6px 0 10px}
+h2{font-size:22px;margin:40px 0 12px}
+h3{font-size:18px;margin:0}
+p{margin:0 0 12px;max-width:70ch}
+.eyebrow{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:17px;color:var(--muted)}
+code{font-family:"IBM Plex Mono",Consolas,monospace;font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;margin-top:22px}
+.person{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.p1{--c:var(--decl);--cb:var(--decl-bg)} .p2{--c:var(--proc);--cb:var(--proc-bg)} .p3{--c:var(--sens);--cb:var(--sens-bg)}
+.person .who{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--c)}
+.person .one{font-size:14.5px;color:var(--muted);margin:0}
+.files{display:flex;flex-wrap:wrap;gap:6px}
+.files code{background:var(--cb);color:var(--c)}
+.label{font:500 11.5px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.person ul{margin:0;padding-left:20px;font-size:14.5px}
+.person li{margin-bottom:3px}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{font:500 11.5px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+th.c1{color:var(--decl)} th.c2{color:var(--proc)} th.c3{color:var(--sens)}
+td{min-width:180px}
+td.when{min-width:110px;white-space:nowrap;font-weight:600}
+td.when span{display:block;font-weight:400;color:var(--muted);font-size:13px;white-space:normal}
+tr.mid td{background:var(--flag-bg)}
+tr.mid td.when{color:var(--flag)}
+tr.team td[colspan]{color:var(--muted);font-style:italic}
+
+.check{display:flex;gap:8px;align-items:flex-start}
+.check input{margin-top:4px;accent-color:var(--proc);flex:none}
+.check input:checked + label{color:var(--muted);text-decoration:line-through}
+.check input:focus-visible{outline:2px solid var(--proc);outline-offset:2px}
+.tasks{display:grid;gap:4px}
+
+.talk{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.slot{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:0 10px 10px 0;padding:12px 14px;font-size:14.5px}
+.slot b{display:block;font:500 12px "IBM Plex Mono",monospace;color:var(--c);letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px}
+
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:14.5px}
+.rule h3{font-size:15.5px;margin-bottom:4px}
+.rule p{margin:0}
+.foot{margin-top:28px;font-size:13.5px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">AI course project · 3-person team · Mid-sem target Tue 6 Oct</div>
+  <h1>Who does what</h1>
+  <p class="lede">Each person owns one layer and one shared job. The brain (LLM) layer is the hardest, so its owner also handles integration. The world layer is the lightest, so its owner also runs testing and the demo.</p>
+
+  <div class="people">
+    <section class="person p1">
+      <div class="who">Siddh · Memory</div>
+      <h3>Declarative layer</h3>
+      <p class="one">What the robot believes, and where each belief came from.</p>
+      <div class="files"><code>declarative.py</code><code>data/default_map.json</code></div>
+      <div class="label">Builds</div>
+      <ul>
+        <li>Belief graph in NetworkX</li>
+        <li>SQLite log: source, time, confidence for every change</li>
+        <li><code>query_beliefs</code>, <code>update_belief</code>, <code>get_provenance</code></li>
+        <li>Conflict rule: live sensor &gt; other bot's log &gt; old map</li>
+        <li>Viewpoint tags (user / self / map / bot_02) for Scenario B</li>
+      </ul>
+      <div class="label">Shared job</div>
+      <ul><li>Leads the final report</li></ul>
+    </section>
+
+    <section class="person p2">
+      <div class="who">Rudraksh · Brain</div>
+      <h3>Procedural layer</h3>
+      <p class="one">The LLM that thinks, calls tools, and answers.</p>
+      <div class="files"><code>procedural.py</code><code>tools.py</code><code>prompts/</code></div>
+      <div class="label">Builds</div>
+      <ul>
+        <li>Groq API setup (Llama-3-8B, plus a larger model to compare)</li>
+        <li>ReAct loop: think → call tool → read result → answer</li>
+        <li>Tool definitions the LLM can call</li>
+        <li>System prompt, retries on bad tool calls</li>
+        <li>Step-by-step trace logging</li>
+      </ul>
+      <div class="label">Shared job</div>
+      <ul><li>Integration lead: merges code, keeps <code>main</code> working</li></ul>
+    </section>
+
+    <section class="person p3">
+      <div class="who">Udit · World &amp; tests</div>
+      <h3>Sensorimotor layer</h3>
+      <p class="one">The fake robot world, and proof that the agent works.</p>
+      <div class="files"><code>sensorimotor.py</code><code>scenarios/</code><code>tests/</code></div>
+      <div class="label">Builds</div>
+      <ul>
+        <li>Mock world: grid, obstacles, objects, lighting</li>
+        <li><code>read_lidar</code>, <code>read_camera</code>, <code>move</code></li>
+        <li>Scenario files (the project's "data")</li>
+        <li>Test runner: 5 runs per test, pass rates, saved logs</li>
+        <li>Demo UI (Streamlit, after mid-sem)</li>
+      </ul>
+      <div class="label">Shared job</div>
+      <ul><li>Owns the slides and the demo clip</li></ul>
+    </section>
+  </div>
+
+  <h2>Sprint to mid-sem</h2>
+  <p>Tick tasks off as you go. Ticks are saved in this browser only. Tasks already covered by the first version of the code (26 Sep) are pre-ticked; each owner should read and run their part so they can explain it.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>When</th><th class="c1">Siddh · Memory</th><th class="c2">Rudraksh · Brain</th><th class="c3">Udit · World &amp; tests</th></tr></thead>
+      <tbody>
+        <tr class="team"><td class="when">Sat 26 – Sun 27 Sep<span>Team meeting</span></td><td colspan="3">All three together: confirm roles, agree <code>schemas.py</code> and the tool list, create the repo.</td></tr>
+        <tr>
+          <td class="when">Sat 26 – Sun 27 Sep<span>Setup</span></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t1a" checked><label for="t1a">Draft <code>schemas.py</code> (Belief, SensorReading)</label></div>
+            <div class="check"><input type="checkbox" id="t1b" checked><label for="t1b">Dummy <code>query_beliefs</code> returning hardcoded data</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t2a" checked><label for="t2a">Get a Groq API key, put it in <code>.env</code></label></div>
+            <div class="check"><input type="checkbox" id="t2b" checked><label for="t2b">LLM successfully calls one dummy tool</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t3a"><label for="t3a">GitHub repo, folders, <code>requirements.txt</code></label></div>
+            <div class="check"><input type="checkbox" id="t3b" checked><label for="t3b">Dummy <code>read_lidar</code> returning hardcoded JSON</label></div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="when">Mon 28 – Wed 30 Sep<span>Each part works alone</span></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t1c" checked><label for="t1c">NetworkX graph + SQLite tables</label></div>
+            <div class="check"><input type="checkbox" id="t1d" checked><label for="t1d">Real <code>query_beliefs</code> / <code>update_belief</code>; every write logged</label></div>
+            <div class="check"><input type="checkbox" id="t1e" checked><label for="t1e">Load the map (route_A = clear)</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t2c" checked><label for="t2c">ReAct loop with multiple tools</label></div>
+            <div class="check"><input type="checkbox" id="t2d" checked><label for="t2d">System prompt v1</label></div>
+            <div class="check"><input type="checkbox" id="t2e" checked><label for="t2e">Log every thought and tool call</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t3c" checked><label for="t3c">Mock world with <code>read_lidar</code>, <code>read_camera</code>, <code>move</code></label></div>
+            <div class="check"><input type="checkbox" id="t3d" checked><label for="t3d">Scenario A file: map clear, LiDAR blocked</label></div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="when">Thu 1 – Fri 2 Oct<span>Connect everything</span></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t1f" checked><label for="t1f">Lower map confidence when a sensor disagrees</label></div>
+            <div class="check"><input type="checkbox" id="t1g" checked><label for="t1g">Print the graph before and after</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t2f" checked><label for="t2f">Swap dummies for real layers</label></div>
+            <div class="check"><input type="checkbox" id="t2g" checked><label for="t2g">Tune the prompt until Scenario A passes reliably</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t3e" checked><label for="t3e">Terminal trace printer</label></div>
+            <div class="check"><input type="checkbox" id="t3f" checked><label for="t3f">Script that runs a scenario and saves a log</label></div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="when">Sat 3 Oct<span>Tests, then code freeze</span></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t1h" checked><label for="t1h">Test 10: "where did you learn that?"</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t2h" checked><label for="t2h">Test 9: unknown object, agent says it doesn't know</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t3g" checked><label for="t3g">Tests 1 and 2 (blocked, and the reverse)</label></div>
+          </div></td>
+        </tr>
+        <tr>
+          <td class="when">Sun 4 Oct<span>Talk prep</span></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t1i"><label for="t1i">Slide 1: problem, three layers, data</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t2i"><label for="t2i">Slide 2, model half: LLM, loop, tools</label></div>
+          </div></td>
+          <td><div class="tasks">
+            <div class="check"><input type="checkbox" id="t3h"><label for="t3h">Slide 2, evaluation half</label></div>
+            <div class="check"><input type="checkbox" id="t3i"><label for="t3i">Record a 30–45 s Scenario A clip</label></div>
+          </div></td>
+        </tr>
+        <tr class="team"><td class="when">Mon 5 Oct<span>Rehearse</span></td><td colspan="3">All three: time the talk (under 4 minutes) at least three times. Everyone can answer questions on every layer.</td></tr>
+        <tr class="mid"><td class="when">Tue 6 Oct<span>Mid-sem (date TBC)</span></td><td colspan="3">3–4 minute flash talk: data, models, evaluation, plus the Scenario A clip.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Mid-sem talk: who speaks when</h2>
+  <div class="talk">
+    <div class="slot p1"><b>Siddh · 0:00–1:30</b>The problem, the three layers, and the data (belief format, scenario files).</div>
+    <div class="slot p2"><b>Rudraksh · 1:30–2:15</b>The model, the ReAct loop, and the tools it can call.</div>
+    <div class="slot p3"><b>Udit · 2:15–3:30</b>How you evaluate it, the baseline, the clip, and what's next.</div>
+  </div>
+
+  <h2>After mid-sem</h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>When</th><th class="c1">Siddh · Memory</th><th class="c2">Rudraksh · Brain</th><th class="c3">Udit · World &amp; tests</th></tr></thead>
+      <tbody>
+        <tr><td class="when">7 – 18 Oct<span>Harden Scenario A</span></td><td>Full conflict rule, old beliefs lose confidence over time, graph versions per turn.</td><td>Prompt v2 from feedback. Baseline agent with no tools, to compare.</td><td>Tests 3–5 (noisy sensor, missing object, stale belief). 5 runs each. Streamlit UI.</td></tr>
+        <tr><td class="when">19 Oct – 1 Nov<span>Scenario B</span></td><td>Viewpoint-tagged beliefs, bot_02 log entry.</td><td><code>record_user_belief</code> tool, viewpoint-aware prompt.</td><td>Lighting that changes camera colour. Test 6 (red / brown / blue).</td></tr>
+        <tr><td class="when">2 – 15 Nov<span>All 10 tests · Diwali 8 Nov</span></td><td>Test 8: two bots disagree.</td><td>Test 7: user's false belief. Small vs large model comparison.</td><td>Final results table and charts.</td></tr>
+        <tr><td class="when">16 – 29 Nov<span>Final</span></td><td>Final report.</td><td>Code cleanup, README.</td><td>Final slides, demo, backup video.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Rules for working together</h2>
+  <div class="rules">
+    <div class="rule"><h3>Dummies first</h3><p>On day one, everyone writes fake versions of their functions that return hardcoded data. Nobody waits on anyone else.</p></div>
+    <div class="rule"><h3><code>schemas.py</code> changes together</h3><p>It is the one shared file. Tell the group before changing it.</p></div>
+    <div class="rule"><h3>Own branches, reviewed merges</h3><p>Work on your own branch. Someone else reviews before it goes into <code>main</code>. <code>main</code> must always run.</p></div>
+    <div class="rule"><h3>Daily check-in</h3><p>Until mid-sem, one short message a day: done, doing next, blocked on.</p></div>
+    <div class="rule"><h3>Everyone writes tests</h3><p>Each person designs at least 3 of the 10 test scenarios for their own layer.</p></div>
+    <div class="rule"><h3>Know every layer</h3><p>Evaluators may ask anyone about any part, so explain your layer to the others.</p></div>
+  </div>
+
+  <p class="foot">Mid-sem date and venue are still to be announced; 6 Oct is the working target. The final date is assumed to be late November.</p>
+</main>
+<script>
+document.querySelectorAll('.check input').forEach(function(box){
+  var key='iagent-task-'+box.id;
+  try{ var v = localStorage.getItem(key); if (v !== null) box.checked = v==='1'; }catch(e){}
+  box.addEventListener('change',function(){
+    try{ localStorage.setItem(key, box.checked?'1':'0'); }catch(e){}
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+{
+  "id": "A4_object_missing",
+  "type": "A",
+  "owner": "Udit",
+  "description": "Memory says box_01 is in Room_101, where the robot is. The camera sees no box there (it was moved).",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_01": {
+        "type": "box",
+        "room": "Room_205",
+        "color": "blue"
+      },
+      "chair_03": {
+        "type": "chair",
+        "room": "Room_101",
+        "color": "grey"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 172800
+    }
+  ],
+  "turns": [
+    "Is box_01 here in this room with you? Check before you answer."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "not here",
+        "not in this room",
+        "not in room",
+        "not present",
+        "cannot see",
+        "can't see",
+        "don't see",
+        "do not see",
+        "not visible",
+        "not detect",
+        "did not detect",
+        "didn't detect",
+        "no box",
+        "isn't here",
+        "is not here",
+        "is not in",
+        "isn't in",
+        "not currently in",
+        "not found"
+      ]
+    ],
+    "tools_required": [
+      "read_camera",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "box_01",
+        "predicate": "located_at",
+        "perspective": "self",
+        "value_not": "Room_101",
+        "must_exist": true
+      },
+      {
+        "subject": "box_01",
+        "predicate": "located_at",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "scenario": "A4_object_missing",
+  "type": "A",
+  "mode": "agent",
+  "model": "openai/gpt-oss-20b",
+  "turns": [
+    {
+      "question": "Is box_01 here in this room with you? Check before you answer.",
+      "answer": "",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "subject": "box_01"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "subject": "box_01",
+                  "predicate": "located_at",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "value": "Room_101",
+                  "age_s": 172800
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "error",
+          "text": "malformed tool call: Error code: 400 - {'error': {'message': 'Failed to parse tool call arguments as JSON', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '{\"name\": \"get_pose\", \"arguments\": {\"\"}\"}'}}"
+        },
+        {
+          "step": 3,
+          "type": "answer",
+          "text": ""
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 827200.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['not', 'no', 'cannot see', \"can't see\", \"don't see\", \"isn't\"]",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.located_at [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.located_at [map] state",
+      "passed": false,
+      "detail": "confidence 0.9 > 0.5"
+    }
+  ],
+  "passed": false
+}

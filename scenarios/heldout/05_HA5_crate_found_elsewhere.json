@@ -1,0 +1,50 @@
+{
+  "id": "HA5_crate_found_elsewhere",
+  "type": "A",
+  "description": "The map places crate_03 in Room_301, but it is actually in Room_302 with the robot, where the camera can see it.",
+  "world": {
+    "robot": {
+      "room": "Room_302",
+      "facing": {}
+    },
+    "objects": {
+      "crate_03": {
+        "type": "crate",
+        "room": "Room_302",
+        "color": "green"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "crate_03",
+      "predicate": "located_at",
+      "obj": "Room_301",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 172800
+    }
+  ],
+  "turns": [
+    "Where is crate_03 right now?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "302"
+      ]
+    ],
+    "tools_required": [
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "crate_03",
+        "predicate": "located_at",
+        "perspective": "self",
+        "value_contains": "302"
+      }
+    ]
+  }
+}

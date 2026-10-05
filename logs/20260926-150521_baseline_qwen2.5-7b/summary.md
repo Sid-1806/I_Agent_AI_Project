@@ -1,0 +1,16 @@
+# Results: baseline, qwen2.5:7b, 1 runs per scenario (rescored 2026-09-26 15:55) (rescored 2026-10-05 21:44)
+
+Overall: 0/10 runs passed all checks
+
+| scenario | type | pass_rate | answer | tools | memory | grounding | most_common_failure |
+|---|---|---|---|---|---|---|---|
+| A1_route_blocked | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle'] |
+| A2_route_reopened | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['is clear', 'now clear', 'currently clear', 'route is clear', 'path is clear', 'is open', 'is free', 'yes'] |
+| A3_noisy_lidar | A | 0/1 | 1/1 | 0/1 | 0/1 | - | called read_lidar at least 2x |
+| A4_object_missing | A | 0/1 | 1/1 | 0/1 | 0/1 | - | called read_camera |
+| A5_stale_belief | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle'] |
+| B1_three_colors | B | 0/1 | 0/1 | 0/1 | 0/1 | 1/1 | mentions one of ['brown'] |
+| B2_false_belief | B | 0/1 | 1/1 | 0/1 | 0/1 | - | called record_user_belief |
+| B3_conflicting_reports | B | 0/1 | 1/1 | 0/1 | 0/1 | 1/1 | called query_beliefs |
+| H1_unknown_object | grounding | 0/1 | 1/1 | 0/1 | - | 1/1 | called one of ['query_beliefs', 'get_provenance'] |
+| P1_provenance | provenance | 0/1 | 0/1 | 0/1 | - | - | mentions one of ['hour', '3600', '60 minutes'] |

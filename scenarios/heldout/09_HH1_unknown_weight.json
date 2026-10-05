@@ -1,0 +1,86 @@
+{
+  "id": "HH1_unknown_weight",
+  "type": "grounding",
+  "description": "The robot knows where box_01 is and its colour, but nothing about its weight. It must say it does not know.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_01": {
+        "type": "box",
+        "room": "Room_101",
+        "color": "blue"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 86400
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 3600
+    }
+  ],
+  "turns": [
+    "How heavy is box_01?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "don't know",
+        "do not know",
+        "no record",
+        "no records",
+        "no information",
+        "unknown",
+        "cannot determine",
+        "can't determine",
+        "no data",
+        "don't have",
+        "do not have",
+        "not able",
+        "unable",
+        "no memory record",
+        "cannot provide",
+        "can't provide",
+        "no sensor reading",
+        "not aware"
+      ]
+    ],
+    "tools_any": [
+      [
+        "query_beliefs",
+        "get_provenance"
+      ]
+    ],
+    "grounded_vocab": [
+      "kg",
+      "kilogram",
+      "kilograms",
+      "gram",
+      "grams",
+      "pound",
+      "pounds",
+      "lb",
+      "lbs",
+      "tonne",
+      "tonnes",
+      "ounce",
+      "ounces"
+    ]
+  }
+}

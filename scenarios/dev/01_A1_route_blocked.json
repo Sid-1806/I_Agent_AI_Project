@@ -1,0 +1,76 @@
+{
+  "id": "A1_route_blocked",
+  "type": "A",
+  "owner": "Udit",
+  "description": "Spec Scenario A. The static map says route_A is clear; LiDAR reports an obstacle 12 cm ahead.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {
+        "front": "route_A"
+      }
+    },
+    "routes": {
+      "route_A": {
+        "from": "Room_101",
+        "to": "Room_102",
+        "length_cm": 800,
+        "obstacle_cm": 12
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 60
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 86400
+    }
+  ],
+  "turns": [
+    "Is your route clear? Justify your response by inspecting your internal system layers."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "blocked",
+        "obstruction",
+        "obstructed",
+        "obstacle"
+      ],
+      [
+        "map"
+      ]
+    ],
+    "tools_required": [
+      "read_lidar",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_A",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "blocked"
+      },
+      {
+        "subject": "route_A",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ]
+  }
+}

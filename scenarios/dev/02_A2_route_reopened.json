@@ -1,0 +1,83 @@
+{
+  "id": "A2_route_reopened",
+  "type": "A",
+  "owner": "Udit",
+  "description": "Reverse of A1. The map marks route_B as blocked (old construction work); LiDAR shows it is clear now.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {
+        "front": "route_B"
+      }
+    },
+    "routes": {
+      "route_B": {
+        "from": "Room_101",
+        "to": "Room_104",
+        "length_cm": 650
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_B",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 60
+    },
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 604800
+    }
+  ],
+  "turns": [
+    "Can you take your planned route right now? Check before you answer."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "is clear",
+        "now clear",
+        "currently clear",
+        "route is clear",
+        "path is clear",
+        "is open",
+        "is free",
+        "yes"
+      ]
+    ],
+    "tools_required": [
+      "read_lidar",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_B",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "clear"
+      },
+      {
+        "subject": "route_B",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ],
+    "answer_excludes": [
+      "not clear",
+      "cannot take",
+      "can't take",
+      "unable to take",
+      "should not take"
+    ]
+  }
+}

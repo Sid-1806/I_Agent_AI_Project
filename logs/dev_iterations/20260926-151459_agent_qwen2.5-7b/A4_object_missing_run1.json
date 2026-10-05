@@ -1,0 +1,213 @@
+{
+  "scenario": "A4_object_missing",
+  "type": "A",
+  "mode": "agent",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is box_01 here in this room with you? Check before you answer.",
+      "answer": "I updated my belief that box_01 is not in Room_101 based on the direct observation from my camera. The confidence in this belief is 0.95, as it is a direct sensor reading. The previous map report, which had a confidence of 0.9, has been downgraded to 0.27 due to the conflicting evidence.\n\nFor your information, the map's belief about box_01's location is now considered less reliable. If you need me to check again or if you have any other questions, feel free to ask!",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_101",
+                "ambient_light": "normal",
+                "detections": [
+                  {
+                    "object_id": "chair_03",
+                    "label": "chair",
+                    "perceived_color": "grey",
+                    "bbox": [
+                      210,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.95
+                  }
+                ]
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "subject": "box_01",
+                    "predicate": "located_at",
+                    "observation": "not visible in Room_101",
+                    "conflicts": [
+                      {
+                        "perspective": "map",
+                        "stored_value": "Room_101",
+                        "source": "Default_Map",
+                        "confidence": 0.9,
+                        "age_s": 172801
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "I checked the current view from my camera, and I do not see box_01 in Room_101. The last known map report says box_01 is located in Room_101, but this contradicts my direct observation. I will update my belief to reflect what I see now.\n\nI updated my belief that box_01 is not visible in this room. The source of this belief is my camera, and the confidence is based on the direct observation. The previous map report is still recorded but with lower confidence due to the conflicting evidence.\n\nFor your information, the map's belief about box_01's location was last updated 172,801 seconds ago. The camera observed a chair in the current view, which is consistent with the ambient light being normal.\n\nI will now check the provenance log for more details on this belief update."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "entity": "box_01",
+            "property": "located_at"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "entity": "box_01",
+                  "property": "located_at",
+                  "perspective": "map",
+                  "old_value": null,
+                  "new_value": "Room_101",
+                  "old_confidence": null,
+                  "new_confidence": 0.9,
+                  "source": "Default_Map",
+                  "reason": "initial load",
+                  "age_s": 172801
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "draft",
+          "text": "I updated my belief that box_01 is not visible in this room based on my direct observation. The previous map report indicated that box_01 was last known to be in Room_101 with a confidence of 0.9, but this has now been downgraded due to the conflicting evidence.\n\nThe provenance log shows that the map's initial belief about box_01's location was set during the initial load of the map, and it has remained unchanged until now. My current belief is based on the direct sensor reading, which has a higher confidence in the current context.\n\nIf you need me to check again or if you have any other questions, feel free to ask!"
+        },
+        {
+          "step": 3,
+          "type": "self_check",
+          "text": "You said you updated a belief, but you never called update_belief in this turn, so memory is unchanged. Call update_belief now, or do not claim it. Unresolved conflict: camera observed box_01.located_at = not_in_Room_101, but memory has map says Room_101. Record your observation before answering by calling update_belief with entity=\"box_01\", property=\"located_at\", value=\"not_in_Room_101\", source=\"camera\", a confidence and a reason."
+        },
+        {
+          "step": 4,
+          "type": "thought",
+          "text": "I understand the need to update my belief based on the direct observation from the camera. Let me do that now."
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "box_01",
+            "property": "located_at",
+            "value": "not_in_Room_101",
+            "source": "camera",
+            "confidence": 0.95,
+            "reason": "Camera observation in Room_101 shows no box_01."
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "box_01",
+                "property": "located_at",
+                "value": "not_in_Room_101",
+                "perspective": "self",
+                "source": "camera",
+                "confidence": 0.95
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "box_01",
+                  "property": "located_at",
+                  "perspective": "map",
+                  "value": "Room_101",
+                  "old_confidence": 0.9,
+                  "new_confidence": 0.27
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "I updated my belief that box_01 is not in Room_101 based on the direct observation from my camera. The confidence in this belief is 0.95, as it is a direct sensor reading. The previous map report, which had a confidence of 0.9, has been downgraded to 0.27 due to the conflicting evidence.\n\nFor your information, the map's belief about box_01's location is now considered less reliable. If you need me to check again or if you have any other questions, feel free to ask!"
+        }
+      ],
+      "belief_changes": [
+        "~ box_01.located_at [map]: Room_101 (0.9) -> Room_101 (0.27, Default_Map)",
+        "+ box_01.located_at [self] = not_in_Room_101 (conf 0.95, camera)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.27,
+      "timestamp": 827200.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "not_in_Room_101",
+      "perspective": "self",
+      "source": "camera",
+      "confidence": 0.95,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['not', 'no', 'cannot see', \"can't see\", \"don't see\", \"isn't\"]",
+      "passed": true,
+      "detail": "found ['not']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.located_at [self] state",
+      "passed": true,
+      "detail": "= not_in_Room_101 (conf 0.95)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.located_at [map] state",
+      "passed": true,
+      "detail": "= Room_101 (conf 0.27)"
+    }
+  ],
+  "passed": true
+}

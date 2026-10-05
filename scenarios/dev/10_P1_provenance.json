@@ -1,0 +1,43 @@
+{
+  "id": "P1_provenance",
+  "type": "provenance",
+  "owner": "Siddh",
+  "description": "The user asks where a belief came from. The agent must cite the provenance log: bot_02, about an hour ago.",
+  "world": {
+    "robot": {
+      "room": "Room_300",
+      "facing": {}
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 3600,
+      "reason": "bot_02 logged action painted_blue on item box_01"
+    }
+  ],
+  "turns": [
+    "Where did you learn that box_01 is blue, and how long ago was that recorded?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "bot_02",
+        "bot 02"
+      ],
+      [
+        "hour",
+        "3600",
+        "60 minutes"
+      ]
+    ],
+    "tools_required": [
+      "get_provenance"
+    ]
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "id": "HB1_cup_dim_light",
+  "type": "B",
+  "description": "The user asks for the white cup. Under dim light the camera reports dark green; bot_04's log says cup_07 was painted green.",
+  "world": {
+    "robot": {
+      "room": "Room_115",
+      "facing": {}
+    },
+    "objects": {
+      "cup_07": {
+        "type": "cup",
+        "room": "Room_115",
+        "color": "green"
+      }
+    },
+    "lighting": {
+      "Room_115": "dim"
+    }
+  },
+  "memory": [
+    {
+      "subject": "cup_07",
+      "predicate": "located_at",
+      "obj": "Room_115",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 86400
+    },
+    {
+      "subject": "cup_07",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "agent:bot_04",
+      "source": "bot_04_log",
+      "confidence": 0.9,
+      "age_s": 5400,
+      "reason": "bot_04 logged action painted_green on item cup_07"
+    }
+  ],
+  "turns": [
+    "Could you bring me the white cup? It's cup_07.",
+    "What colour do I think cup_07 is, what colour do you see it as, and what colour do the records say it is?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "white"
+      ],
+      [
+        "dark green"
+      ],
+      [
+        "bot_04",
+        "bot 04",
+        "record",
+        "log"
+      ]
+    ],
+    "tools_required": [
+      "record_user_belief",
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "cup_07",
+        "predicate": "color",
+        "perspective": "user",
+        "value": "white"
+      },
+      {
+        "subject": "cup_07",
+        "predicate": "color",
+        "perspective": "agent:bot_04",
+        "value": "green",
+        "min_confidence": 0.9
+      }
+    ],
+    "grounded_vocab": [
+      "red",
+      "blue",
+      "green",
+      "brown",
+      "yellow",
+      "orange",
+      "black",
+      "white",
+      "purple",
+      "grey",
+      "gray",
+      "pink",
+      "olive",
+      "beige",
+      "maroon"
+    ]
+  }
+}

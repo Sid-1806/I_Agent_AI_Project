@@ -1,0 +1,61 @@
+{
+  "scenario": "A1_route_blocked",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is your route clear? Justify your response by inspecting your internal system layers.",
+      "answer": "Yes, my route is clear. According to my internal system, the planned route (route_A) is currently marked as clear on the default map with a confidence level of 1.0, indicating no obstacles or issues are detected along the path.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Yes, my route is clear. According to my internal system, the planned route (route_A) is currently marked as clear on the default map with a confidence level of 1.0, indicating no obstacles or issues are detected along the path."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['map']",
+      "passed": true,
+      "detail": "found ['map']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [map] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "rescored": "2026-10-05 21:44"
+}

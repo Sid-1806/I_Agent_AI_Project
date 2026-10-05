@@ -1,0 +1,161 @@
+{
+  "scenario": "A2_route_reopened",
+  "type": "A",
+  "mode": "agent",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Can you take your planned route right now? Check before you answer.",
+      "answer": "Based on my current beliefs and the static map, the planned route 'route_B' is blocked. My own sensors confirm that I am facing 'route_B' in Room_101. The lidar scan to the right did not detect any obstacles, but it also did not find a defined route in that direction. Therefore, I cannot take the planned route right now.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "right"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_right",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "right",
+                "route": null,
+                "distance_cm": null,
+                "status": "no_route",
+                "note": "no route in direction 'right'. This is not an obstacle reading.",
+                "routes_by_direction": {
+                  "front": "route_B"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The route to the right is not clear; there is no defined route in that direction. According to the lidar sensor, this area does not have an obstacle but also does not have a planned route marked. The static map indicates that the 'front' direction leads to 'route_B'. I will not update my belief as the lidar reading does not contradict any recent reports."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory in this turn. Call query_beliefs (and get_pose if the question is about your route or location) before answering."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "robot",
+                  "property": "planned_route",
+                  "value": "route_B",
+                  "perspective": "self",
+                  "source": "mission_plan",
+                  "confidence": 1.0,
+                  "age_s": 61
+                },
+                {
+                  "entity": "route_B",
+                  "property": "status",
+                  "value": "blocked",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "age_s": 604801
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_101",
+                "facing": {
+                  "front": "route_B"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "Based on my current beliefs and the static map, the planned route 'route_B' is blocked. My own sensors confirm that I am facing 'route_B' in Room_101. The lidar scan to the right did not detect any obstacles, but it also did not find a defined route in that direction. Therefore, I cannot take the planned route right now."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_B",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 395200.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['clear', 'open', 'free', 'yes']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [map] state",
+      "passed": false,
+      "detail": "confidence 0.9 > 0.5"
+    }
+  ],
+  "passed": false
+}

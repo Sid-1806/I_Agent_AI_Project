@@ -1,0 +1,82 @@
+{
+  "id": "HA2_left_route_reopened",
+  "type": "A",
+  "description": "The map marks route_E (to the left) as blocked by construction three days ago; LiDAR shows it is clear now.",
+  "world": {
+    "robot": {
+      "room": "Room_305",
+      "facing": {
+        "left": "route_E"
+      }
+    },
+    "routes": {
+      "route_E": {
+        "from": "Room_305",
+        "to": "Room_309",
+        "length_cm": 600
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_E",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 120
+    },
+    {
+      "subject": "route_E",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.8,
+      "age_s": 259200,
+      "reason": "construction noted on the floor plan"
+    }
+  ],
+  "turns": [
+    "Is route_E passable at the moment?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "is clear",
+        "now clear",
+        "currently clear",
+        "is passable",
+        "is open",
+        "is free",
+        "can be used",
+        "yes"
+      ]
+    ],
+    "answer_excludes": [
+      "not passable",
+      "not clear",
+      "impassable",
+      "still blocked"
+    ],
+    "tools_required": [
+      "read_lidar",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_E",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "clear"
+      },
+      {
+        "subject": "route_E",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ]
+  }
+}

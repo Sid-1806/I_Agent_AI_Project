@@ -1,0 +1,399 @@
+{
+  "scenario": "B1_three_colors",
+  "type": "B",
+  "mode": "agent",
+  "model": "openai/gpt-oss-20b",
+  "turns": [
+    {
+      "question": "Please find the red box for me. It is box_01.",
+      "answer": "I am currently in **Room_101** and the camera detected **box_01** there, with a perceived colour of **brown** (confidence 0.82).  \nThe map records the box at Room_101, the other robot (bot_02) reports it as blue, and the user believes it is red.  \nI trust my own sensor reading because it is the most recent direct observation, so I have updated my belief that the box’s colour is brown.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "subject": "box_01"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "subject": "box_01",
+                  "predicate": "color",
+                  "perspective": "agent:bot_02",
+                  "source": "bot_02_log",
+                  "confidence": 0.9,
+                  "value": "blue",
+                  "age_s": 3600
+                },
+                {
+                  "subject": "box_01",
+                  "predicate": "located_at",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "value": "Room_101",
+                  "age_s": 86400
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "error",
+          "text": "malformed tool call: Error code: 400 - {'error': {'message': 'Failed to parse tool call arguments as JSON', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '{\"name\": \"get_pose\", \"arguments\": {\"\"}\"}'}}"
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "subject": "box_01"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "subject": "box_01",
+                  "predicate": "color",
+                  "perspective": "agent:bot_02",
+                  "source": "bot_02_log",
+                  "confidence": 0.9,
+                  "value": "blue",
+                  "age_s": 3600
+                },
+                {
+                  "subject": "box_01",
+                  "predicate": "located_at",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "value": "Room_101",
+                  "age_s": 86400
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "record_user_belief",
+          "arguments": {
+            "evidence": "\"Please find the red box for me. It is box_01.\"",
+            "predicate": "color",
+            "subject": "box_01",
+            "value": "red"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "subject": "box_01",
+                "predicate": "color",
+                "obj": "red",
+                "perspective": "user",
+                "source": "user_utterance",
+                "confidence": 1.0,
+                "timestamp": 1000000.0
+              },
+              "replaced": null,
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {
+            "": ""
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_101",
+                "facing": {}
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {
+            "": ""
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_101",
+                "ambient_light": "yellow",
+                "detections": [
+                  {
+                    "object_id": "box_01",
+                    "label": "box",
+                    "perceived_color": "brown",
+                    "bbox": [
+                      120,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.82
+                  }
+                ]
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 7,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {
+            "": ""
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000002.0,
+              "payload": {
+                "room": "Room_101",
+                "ambient_light": "yellow",
+                "detections": [
+                  {
+                    "object_id": "box_01",
+                    "label": "box",
+                    "perceived_color": "brown",
+                    "bbox": [
+                      120,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.82
+                  }
+                ]
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 8,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "confidence": 0.8,
+            "predicate": "color",
+            "reason": "camera detection of box_01 in Room_101",
+            "source": "camera",
+            "subject": "box_01",
+            "value": "brown"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "subject": "box_01",
+                "predicate": "color",
+                "obj": "brown",
+                "perspective": "self",
+                "source": "camera",
+                "confidence": 0.8,
+                "timestamp": 1000002.0
+              },
+              "replaced": null,
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 9,
+          "type": "answer",
+          "text": "I am currently in **Room_101** and the camera detected **box_01** there, with a perceived colour of **brown** (confidence 0.82).  \nThe map records the box at Room_101, the other robot (bot_02) reports it as blue, and the user believes it is red.  \nI trust my own sensor reading because it is the most recent direct observation, so I have updated my belief that the box’s colour is brown."
+        }
+      ],
+      "belief_changes": [
+        "+ box_01.color [self] = brown (conf 0.8, camera)",
+        "+ box_01.color [user] = red (conf 1.0, user_utterance)"
+      ]
+    },
+    {
+      "question": "What color does the user think the object is, what color do you register it as, and what does your data history say its true state is?",
+      "answer": "The user believes **box_01** is **red** (user perspective, recorded 2 s ago).  \nI register the box’s colour as **brown** (self perspective, updated from the camera at 0 s).  \nThe provenance log shows three reports: blue from bot_02 (3602 s ago), red from the user (2 s ago), and brown from me (most recent).  Because my own sensor reading is the newest direct evidence, the history indicates the box’s true state is **brown**.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "predicate": "color",
+            "subject": "box_01"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "id": 2,
+                  "subject": "box_01",
+                  "predicate": "color",
+                  "perspective": "agent:bot_02",
+                  "old_obj": null,
+                  "new_obj": "blue",
+                  "old_confidence": null,
+                  "new_confidence": 0.9,
+                  "source": "bot_02_log",
+                  "reason": "bot_02 logged action painted_blue on item box_01",
+                  "age_s": 3602
+                },
+                {
+                  "id": 3,
+                  "subject": "box_01",
+                  "predicate": "color",
+                  "perspective": "user",
+                  "old_obj": null,
+                  "new_obj": "red",
+                  "old_confidence": null,
+                  "new_confidence": 1.0,
+                  "source": "user_utterance",
+                  "reason": "user said: \"Please find the red box for me. It is box_01.\"",
+                  "age_s": 2
+                },
+                {
+                  "id": 4,
+                  "subject": "box_01",
+                  "predicate": "color",
+                  "perspective": "self",
+                  "old_obj": null,
+                  "new_obj": "brown",
+                  "old_confidence": null,
+                  "new_confidence": 0.8,
+                  "source": "camera",
+                  "reason": "camera detection of box_01 in Room_101",
+                  "age_s": 0
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "answer",
+          "text": "The user believes **box_01** is **red** (user perspective, recorded 2 s ago).  \nI register the box’s colour as **brown** (self perspective, updated from the camera at 0 s).  \nThe provenance log shows three reports: blue from bot_02 (3602 s ago), red from the user (2 s ago), and brown from me (most recent).  Because my own sensor reading is the newest direct evidence, the history indicates the box’s true state is **brown**."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "brown",
+      "perspective": "self",
+      "source": "camera",
+      "confidence": 0.8,
+      "timestamp": 1000002.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "red",
+      "perspective": "user",
+      "source": "user_utterance",
+      "confidence": 1.0,
+      "timestamp": 1000000.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 913600.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['red']",
+      "passed": true,
+      "detail": "found ['red']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['brown']",
+      "passed": true,
+      "detail": "found ['brown']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blue']",
+      "passed": true,
+      "detail": "found ['blue']"
+    },
+    {
+      "kind": "tools",
+      "name": "called record_user_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [user] state",
+      "passed": true,
+      "detail": "= red (conf 1.0)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [agent:bot_02] state",
+      "passed": true,
+      "detail": "= blue (conf 0.9)"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": true
+}

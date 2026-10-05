@@ -1,0 +1,91 @@
+{
+  "id": "B3_conflicting_reports",
+  "type": "B",
+  "owner": "Siddh",
+  "description": "Two robots disagree: bot_02 logged box_01 as blue an hour ago, bot_03 logged it as green ten minutes ago. The box is not visible from here.",
+  "world": {
+    "robot": {
+      "room": "Room_300",
+      "facing": {}
+    },
+    "objects": {
+      "box_01": {
+        "type": "box",
+        "room": "Room_205",
+        "color": "green"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 3600,
+      "reason": "bot_02 logged action painted_blue on item box_01"
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "agent:bot_03",
+      "source": "bot_03_log",
+      "confidence": 0.85,
+      "age_s": 600,
+      "reason": "bot_03 logged action painted_green on item box_01"
+    }
+  ],
+  "turns": [
+    "What color is box_01 according to your records, and which record do you trust more?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "green"
+      ],
+      [
+        "blue"
+      ],
+      [
+        "bot_03",
+        "bot 03"
+      ]
+    ],
+    "tools_required": [
+      "query_beliefs"
+    ],
+    "beliefs": [
+      {
+        "subject": "box_01",
+        "predicate": "color",
+        "perspective": "agent:bot_02",
+        "value": "blue"
+      },
+      {
+        "subject": "box_01",
+        "predicate": "color",
+        "perspective": "agent:bot_03",
+        "value": "green"
+      }
+    ],
+    "grounded_vocab": [
+      "red",
+      "blue",
+      "green",
+      "brown",
+      "yellow",
+      "orange",
+      "black",
+      "white",
+      "purple",
+      "grey",
+      "gray",
+      "pink",
+      "olive",
+      "beige"
+    ]
+  }
+}

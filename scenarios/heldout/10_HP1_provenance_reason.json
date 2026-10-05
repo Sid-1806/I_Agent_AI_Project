@@ -1,0 +1,43 @@
+{
+  "id": "HP1_provenance_reason",
+  "type": "provenance",
+  "description": "Memory says route_B is blocked, reported by bot_06 45 minutes ago because of a fallen shelf. The user asks who reported it and why.",
+  "world": {
+    "robot": {
+      "room": "Room_300",
+      "facing": {}
+    }
+  },
+  "memory": [
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "agent:bot_06",
+      "source": "bot_06_log",
+      "confidence": 0.85,
+      "age_s": 2700,
+      "reason": "bot_06 reported a fallen shelf blocking route_B"
+    }
+  ],
+  "turns": [
+    "Who told you that route_B is blocked, and why is it blocked?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "bot_06",
+        "bot 06"
+      ],
+      [
+        "shelf"
+      ]
+    ],
+    "tools_any": [
+      [
+        "get_provenance",
+        "query_beliefs"
+      ]
+    ]
+  }
+}

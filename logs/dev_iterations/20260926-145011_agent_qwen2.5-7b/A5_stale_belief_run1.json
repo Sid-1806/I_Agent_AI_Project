@@ -1,0 +1,107 @@
+{
+  "scenario": "A5_stale_belief",
+  "type": "A",
+  "mode": "agent",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Can you drive your planned route right now?",
+      "answer": "I encountered an obstacle 20 cm ahead while trying to move along route_A. The path is blocked.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_101",
+                "facing": {
+                  "front": "route_A"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "I am currently in Room_101 facing route_A. I can drive along this route to continue my planned path. Let me move forward now."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "move",
+          "arguments": {
+            "route": "route_A"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "action": "move",
+              "t": 1000005.0,
+              "success": false,
+              "detail": {
+                "error": "bumper triggered: obstacle in path",
+                "stopped_at_cm": 20
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "answer",
+          "text": "I encountered an obstacle 20 cm ahead while trying to move along route_A. The path is blocked."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "self",
+      "source": "lidar_front",
+      "confidence": 0.9,
+      "timestamp": 992800.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle', 'no']",
+      "passed": true,
+      "detail": "found ['blocked', 'obstacle']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [self] state",
+      "passed": false,
+      "detail": "value 'clear' != 'blocked'"
+    }
+  ],
+  "passed": false
+}

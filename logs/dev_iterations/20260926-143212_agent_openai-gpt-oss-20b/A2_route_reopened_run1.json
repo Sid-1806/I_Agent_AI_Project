@@ -1,0 +1,217 @@
+{
+  "scenario": "A2_route_reopened",
+  "type": "A",
+  "mode": "agent",
+  "model": "openai/gpt-oss-20b",
+  "turns": [
+    {
+      "question": "Can you take your planned route right now? Check before you answer.",
+      "answer": "Yes, I can proceed along my planned route.  \n- My own belief (self) now records that **route_B** is **clear** based on a live LiDAR reading (distance 650 cm, status “clear”).  \n- The static map’s earlier claim that route_B was blocked has been downgraded in confidence because the sensor contradicts it.  \n- Therefore the route is available for movement.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "subject": "robot",
+                  "predicate": "planned_route",
+                  "perspective": "self",
+                  "source": "mission_plan",
+                  "confidence": 1.0,
+                  "value": "route_B",
+                  "age_s": 60
+                },
+                {
+                  "subject": "route_B",
+                  "predicate": "status",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "value": "blocked",
+                  "age_s": 604800
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {
+            "room": "room_1",
+            "routes": {
+              "back": "route_C",
+              "front": "route_A",
+              "left": "route_D",
+              "right": "route_B"
+            }
+          },
+          "result": {
+            "ok": false,
+            "data": null,
+            "error": "bad arguments for get_pose: ToolRegistry.__init__.<locals>.<lambda>() got an unexpected keyword argument 'room'"
+          }
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_101",
+                "facing": {
+                  "front": "route_B"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_B",
+                "distance_cm": 650,
+                "status": "clear"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "confidence": 0.9,
+            "predicate": "status",
+            "reason": "Live lidar indicates no obstacle within 50 cm",
+            "source": "lidar_front",
+            "subject": "route_B",
+            "value": "clear"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "subject": "route_B",
+                "predicate": "status",
+                "obj": "clear",
+                "perspective": "self",
+                "source": "lidar_front",
+                "confidence": 0.9,
+                "timestamp": 1000001.0
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "subject": "route_B",
+                  "predicate": "status",
+                  "perspective": "map",
+                  "value": "blocked",
+                  "old_confidence": 0.9,
+                  "new_confidence": 0.27
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "answer",
+          "text": "Yes, I can proceed along my planned route.  \n- My own belief (self) now records that **route_B** is **clear** based on a live LiDAR reading (distance 650 cm, status “clear”).  \n- The static map’s earlier claim that route_B was blocked has been downgraded in confidence because the sensor contradicts it.  \n- Therefore the route is available for movement."
+        }
+      ],
+      "belief_changes": [
+        "~ route_B.status [map]: blocked (0.9) -> blocked (0.27, Default_Map)",
+        "+ route_B.status [self] = clear (conf 0.9, lidar_front)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_B",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.27,
+      "timestamp": 395200.0
+    },
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "self",
+      "source": "lidar_front",
+      "confidence": 0.9,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['clear', 'open', 'free', 'yes']",
+      "passed": true,
+      "detail": "found ['clear', 'yes']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [self] state",
+      "passed": true,
+      "detail": "= clear (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [map] state",
+      "passed": true,
+      "detail": "= blocked (conf 0.27)"
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,7 @@
+{
+  "scenario": "A2_route_reopened",
+  "mode": "agent",
+  "error": "RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m1gnh3dpe7qt3820ktt2q4ch` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 197950, Requested 2505. Please try again in 3m16.56s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}",
+  "checks": [],
+  "passed": false
+}

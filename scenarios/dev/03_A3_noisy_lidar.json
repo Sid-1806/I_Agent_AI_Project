@@ -1,0 +1,78 @@
+{
+  "id": "A3_noisy_lidar",
+  "type": "A",
+  "owner": "Siddh",
+  "description": "The first LiDAR reading is a spurious 9 cm spike; later readings agree with the map that route_A is clear. The agent should re-read before changing its beliefs.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {
+        "front": "route_A"
+      }
+    },
+    "routes": {
+      "route_A": {
+        "from": "Room_101",
+        "to": "Room_102",
+        "length_cm": 800
+      }
+    },
+    "lidar_script": {
+      "route_A": [
+        9,
+        240,
+        245
+      ]
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 60
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 86400
+    }
+  ],
+  "turns": [
+    "Is your route clear? Justify your response by inspecting your internal system layers."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "clear"
+      ]
+    ],
+    "tool_min_counts": {
+      "read_lidar": 2
+    },
+    "beliefs": [
+      {
+        "subject": "route_A",
+        "predicate": "status",
+        "perspective": "self",
+        "value_not": "blocked"
+      },
+      {
+        "subject": "route_A",
+        "predicate": "status",
+        "perspective": "map",
+        "min_confidence": 0.9
+      }
+    ],
+    "answer_excludes": [
+      "not clear"
+    ]
+  }
+}
