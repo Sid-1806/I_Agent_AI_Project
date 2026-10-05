@@ -4,6 +4,8 @@
     python run_scenario.py A1                  # Scenario A: map says clear, LiDAR says blocked
     python run_scenario.py B1                  # Scenario B: red / brown / blue
     python run_scenario.py A1 --chat           # then keep asking your own questions
+    python run_scenario.py A1 --level plain    # same scenario without the safeguards
+    python run_scenario.py HA1                 # a held-out scenario
     python run_scenario.py A1 --model openai/gpt-oss-120b
 
 Owner: Udit
@@ -14,9 +16,9 @@ import argparse
 import json
 import sys
 
-from i_agent.evaluation import run_checks
+from i_agent.evaluation import LEVELS, SENSORS_PROMPT, level_options, run_checks
 from i_agent.procedural import Agent, AgentResult, OpenAICompatibleLLM
-from i_agent.scenario import all_scenarios, build_world, load_scenario
+from i_agent.scenario import SETS, all_scenarios, build_world, load_scenario, memory_as_text
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -58,18 +60,26 @@ def main() -> None:
     ap.add_argument("--list", action="store_true", help="list the scenarios")
     ap.add_argument("--chat", action="store_true", help="after the scripted turns, keep asking questions")
     ap.add_argument("--provider", help="groq (default) or ollama")
-    ap.add_argument("--model", help="model name, e.g. llama-3.1-8b-instant")
+    ap.add_argument("--model", help="model name, e.g. qwen2.5:7b")
+    ap.add_argument("--level", default="full", choices=[lv for lv in LEVELS if lv != "baseline"],
+                    help="which parts of the architecture are switched on (default full)")
     args = ap.parse_args()
 
     if args.list or not args.scenario:
-        for s in all_scenarios():
-            print(f"{s['id']:<24} [{s.get('type')}] {s.get('description', '')}")
+        for set_name in SETS:
+            print(f"\n{set_name}:")
+            for s in all_scenarios(set_name):
+                print(f"  {s['id']:<26} [{s.get('type')}] {s.get('description', '')}")
         return
 
     scenario = load_scenario(args.scenario)
-    world = build_world(scenario)
+    tool_options, self_check = level_options(args.level)
+    world = build_world(scenario, **tool_options)
     llm = OpenAICompatibleLLM(provider=args.provider, model=args.model)
-    agent = Agent(world.tools, llm)
+    prompt = None
+    if args.level == "sensors":
+        prompt = SENSORS_PROMPT.read_text(encoding="utf-8") + "\nYour stored knowledge:\n" + memory_as_text(scenario)
+    agent = Agent(world.tools, llm, system_prompt=prompt, self_check=self_check)
 
     print(f"{BOLD}{scenario['id']}{RESET}  ({llm.model})\n{scenario.get('description', '')}")
     print(f"\n{BLUE}Belief graph at start:{RESET}\n{world.store.describe()}")

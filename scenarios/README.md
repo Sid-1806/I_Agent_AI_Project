@@ -24,6 +24,13 @@ Each file is one test case and is the project's "data".
 }
 ```
 
-To add a scenario, copy an existing file, give it the next number, and run
+Scenarios live in two folders:
+
+- `dev/`: the 10 scenarios the system was developed against. Add new development scenarios here.
+- `heldout/`: 10 scenarios frozen before any run on them. **Do not edit these files**; a test checks
+  their hashes against `heldout/FROZEN.md`. To grow the held-out set, add a new frozen batch
+  (ideally written by someone who has not tuned the system) and record its hashes before running it.
+
+To add a dev scenario, copy an existing file, give it the next number, and run
 `python -m pytest tests/test_scenarios.py` (update the expected count there) and
 `python run_scenario.py <id>`.

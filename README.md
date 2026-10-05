@@ -34,13 +34,17 @@ copy .env.example .env          # then put your Groq key in .env (free at consol
 ## Run
 
 ```bash
-python -m pytest                  # offline unit tests, no API key needed
-python run_scenario.py --list     # the 10 scenarios
-python run_scenario.py A1         # Scenario A live, with the full trace (the demo)
-python run_scenario.py B1         # Scenario B: user thinks red, camera sees brown, log says blue
-python run_scenario.py A1 --chat  # then ask your own questions
-python evaluate.py                # all 10 scenarios x 5 runs -> logs/<time>_agent_<model>/
-python evaluate.py --baseline     # same LLM with memory as plain text and no tools
+python -m pytest                          # 66 offline tests, no API key needed
+python run_scenario.py --list             # dev and held-out scenarios
+python run_scenario.py A1                 # Scenario A live, with the full trace (the demo)
+python run_scenario.py B1                 # Scenario B: user thinks red, camera sees brown, log says blue
+python run_scenario.py A1 --level plain   # the same scenario with the safeguards switched off
+python run_scenario.py A1 --chat          # then ask your own questions
+python evaluate.py                        # dev set, full system, 5 runs -> logs/<time>_dev_full_<model>/
+python evaluate.py --set heldout          # the frozen held-out set
+python evaluate.py --level plain          # an ablation level (see "Evaluation")
+python run_experiments.py                 # the whole matrix of sets x levels (5-6 hours locally)
+python report.py                          # results/results.html, results.md, review.html
 ```
 
 ### Models and limits
@@ -66,9 +70,13 @@ python evaluate.py --baseline     # same LLM with memory as plain text and no to
 | `i_agent/sensorimotor.py` | Udit | Mock environment: LiDAR, camera with lighting, motion |
 | `i_agent/scenario.py` | Udit | Builds the three layers from a scenario file |
 | `i_agent/evaluation.py` | Udit | Automatic checks: answer, tools, memory, grounding |
-| `scenarios/*.json` | all | The 10 test scenarios (the project's data) |
-| `run_scenario.py` | Udit | Demo script with the printed trace |
-| `evaluate.py` | Udit | Test suite runner, logs and results table |
+| `i_agent/prompts/system_sensors.md` | Rudraksh | Prompt for the "sensors" ablation level (no memory tools) |
+| `scenarios/dev/*.json` | all | The 10 development scenarios (the project's data) |
+| `scenarios/heldout/*.json` | all | 10 held-out scenarios, frozen before any run (`FROZEN.md`) |
+| `run_scenario.py` | Udit | Demo script with the printed trace; `--level` switches parts off |
+| `evaluate.py` | Udit | Test suite runner: `--set`, `--level`, `--temperature`, `--rescore` |
+| `run_experiments.py` | Udit | Runs every set x level combination in priority order |
+| `report.py` | Udit | Pools all runs into tables, an ablation chart and a hand-review sheet |
 
 ## Key design decisions
 
@@ -94,8 +102,44 @@ Each scenario file has an `expect` block. `evaluation.py` checks four things per
 | memory | Is the belief graph in the correct state afterwards? |
 | grounding | Is every colour/value in the answer present in some tool result or user message? |
 
-The baseline gets the same memory as plain text but no tools. It cannot read sensors or update
-beliefs, which shows what the architecture adds.
+### Ablation levels: what does each part add?
+
+Each level adds one part of the architecture to the one before it, using the same model and prompt rules:
+
+| Level | What the agent has |
+|---|---|
+| `baseline` | No tools. Starting memory pasted into the prompt as text. |
+| `sensors` | Sensor tools only, memory as text. A plain tool-using agent with no memory layer: the **fair baseline**. |
+| `plain` | All 8 tools including the memory layer (graph, provenance, conflict rule), but no safeguards. |
+| `checks` | + tool-layer checks: memory check on sensor readings, grounded writes, disagreement summary. |
+| `full` | + the answer self-check. The complete system. |
+
+Argument repair and parsing of text-written tool calls are on at every level: they fix formatting, not reasoning.
+
+Levels without memory tools (`baseline`, `sensors`) cannot pass the tool or memory checks by design,
+so **compare levels on the "correct answer" rate** (every answer check passed). `report.py` reports both.
+
+### Dev set vs held-out set
+
+All safeguards were added after watching failures on the **dev** scenarios, so dev results are
+optimistic. The **held-out** scenarios were written afterwards and frozen before the agent ever ran on
+them: their SHA-256 hashes are in `scenarios/heldout/FROZEN.md`, a test fails if any file changes,
+and the git commit that froze them predates every held-out result. They reuse the same world
+mechanics in new combinations (other directions, dim light, objects found elsewhere, three robots
+disagreeing, unknown properties, provenance reasons). Caveat: the same person wrote the system and
+these scenarios; scenarios written by teammates who have not read the code would be more independent.
+
+### Repeats and temperature
+
+At temperature 0 the local model is nearly deterministic: repeated runs often give word-for-word
+identical answers, so they measure reproducibility rather than spread. `run_experiments.py`
+therefore also repeats the full system at temperature 0.7. Results show 95% confidence intervals
+(Wilson) over the pooled runs.
+
+### Checking the checks
+
+Keyword checks can misjudge paraphrases. `results/review.html` lists answers next to their
+automatic verdict so a person can mark agree / disagree; report the agreement rate alongside results.
 
 ## Scenarios
 
@@ -111,6 +155,11 @@ beliefs, which shows what the architecture adds.
 | B3_conflicting_reports | Two robots disagree about the colour |
 | H1_unknown_object | Asked about something unknown; must say it does not know |
 | P1_provenance | Must cite where and when a belief came from |
+
+Held-out (`scenarios/heldout/`): HA1 route to the right blocked · HA2 route to the left reopened ·
+HA3 noisy scan to the left · HA4 crate missing in a dim room · HA5 crate found in a different room
+than the map says · HB1 white / dark green / green cup under dim light · HB2 keys moved (false belief) ·
+HB3 three robots disagree · HH1 unknown property (weight) · HP1 provenance including the reason.
 
 ## Explaining your part (for the evaluation)
 
@@ -174,8 +223,9 @@ Still to do: 5 runs per scenario, the `--no-self-check` ablation, and the same s
      `python evaluate.py --rescore <folder>`.
 
   Every other expectation is unchanged from when it was written.
-- **Weak keyword checks.** A4's answer check accepts words as broad as "no" and "not". The baseline's
-  "correct" A4 answer therefore passes on wording alone. Tightening it is a good next step.
+- **Tightened checks (5 Oct).** A2–A5 accepted words that also match wrong answers ("clear" inside
+  "not clear", or bare "no" / "not"). They now require specific phrases and reject negations; all saved
+  logs were re-scored with `--rescore`.
 - **Sample size.** Results so far are 1 run per scenario on `qwen2.5:7b`. LLM output varies between runs,
   so report pass rates over 5 runs (`python evaluate.py --provider ollama --model qwen2.5:7b`) before
   drawing conclusions.
