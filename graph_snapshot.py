@@ -17,6 +17,9 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+
+plt.rcParams["font.family"] = ["Arial", "DejaVu Sans"]
+
 import networkx as nx  # noqa: E402
 
 from i_agent.scenario import load_scenario  # noqa: E402
