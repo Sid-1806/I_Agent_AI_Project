@@ -1,6 +1,8 @@
 """Draw the belief graph before and after a run, from its log.
 
-    python graph_snapshot.py logs/<run folder>/A1_route_blocked_run1.json [out.png]
+    python graph_snapshot.py logs/<run folder>/A1_route_blocked_run1.json [out.png] [--vertical]
+
+--vertical stacks "before" above "after" (for a narrow column on a slide).
 
 "Before" is the scenario's starting memory; "after" is the final_beliefs saved in the run log.
 Grey edges are map beliefs, teal edges the robot's own, other perspectives indigo/amber.
@@ -82,8 +84,10 @@ def draw(ax, beliefs: list[dict], before: dict, title: str, pos: dict, lim: tupl
 
 
 def main() -> None:
-    log = Path(sys.argv[1])
-    out = Path(sys.argv[2]) if len(sys.argv) > 2 else log.with_suffix(".png")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    vertical = "--vertical" in sys.argv
+    log = Path(args[0])
+    out = Path(args[1]) if len(args) > 1 else log.with_suffix(".png")
     rec = json.loads(log.read_text(encoding="utf-8"))
     scenario = load_scenario(rec["scenario"].split("_")[0])
     start = [{**m, "perspective": m.get("perspective", "self"), "confidence": m.get("confidence", 1.0)}
@@ -95,10 +99,13 @@ def main() -> None:
     xs, ys = [p[0] for p in pos.values()], [p[1] for p in pos.values()]
     lim = ((min(xs) - 0.75, max(xs) + 1.75), (min(ys) - 0.5, max(ys) + 0.6))
 
-    fig, axes = plt.subplots(1, 2, figsize=(7.3, 2.15), dpi=300)
+    if vertical:
+        fig, axes = plt.subplots(2, 1, figsize=(5.2, 3.9), dpi=300)
+    else:
+        fig, axes = plt.subplots(1, 2, figsize=(7.3, 2.15), dpi=300)
     draw(axes[0], start, {}, "Before: starting memory", pos, lim)
     draw(axes[1], end, before, "After: saved at end of run", pos, lim)
-    fig.tight_layout(w_pad=0.6, pad=0.2)
+    fig.tight_layout(w_pad=0.6, h_pad=0.4, pad=0.2)
     fig.savefig(out, facecolor="white", bbox_inches="tight", pad_inches=0.05)
     print("wrote", out)
 
