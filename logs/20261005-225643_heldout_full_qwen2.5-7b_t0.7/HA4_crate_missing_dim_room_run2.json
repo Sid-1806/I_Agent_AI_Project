@@ -1,0 +1,203 @@
+{
+  "scenario": "HA4_crate_missing_dim_room",
+  "set": "heldout",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is crate_02 in this room? Look before you answer.",
+      "answer": "I have updated my belief to reflect that the crate_02 is not in this room (Room_204). This belief is based on the live camera observation, which has a confidence level of 0.82. The static map's record of the crate_02 being in Room_204 has been downgraded to a confidence level of 0.27 due to the conflicting evidence from the camera.\n\nBased on the current live sensor data, I conclude that the crate_02 is not in this room.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_204",
+                "ambient_light": "dim",
+                "detections": [
+                  {
+                    "object_id": "lamp_05",
+                    "label": "lamp",
+                    "perceived_color": "grey",
+                    "bbox": [
+                      210,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.82
+                  }
+                ]
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "subject": "crate_02",
+                    "predicate": "located_at",
+                    "observation": "not visible in Room_204",
+                    "conflicts": [
+                      {
+                        "perspective": "map",
+                        "stored_value": "Room_204",
+                        "source": "Default_Map",
+                        "confidence": 0.9,
+                        "age_s": 259201
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "Based on the live camera feed, the crate_02 is not visible in this room (Room_204), which is dimly lit. According to the static map, the crate_02 is recorded as being located in this room, but this current observation contradicts the map's record. I trust the live sensor data more as it provides direct evidence. I will update my belief accordingly.\n\nI now believe that the crate_02 is not in this room. This belief is based on the camera observation, which has a higher confidence than the static map's record.\n\nUpdate: I have updated my belief about the location of crate_02 in this room. The source of this belief is the camera feed, with a confidence level of 0.82, and it was recorded at t=1000001.0. The static map's confidence for crate_02 being in this room has been downgraded."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. You described actions you are going to take but did not take them. Call the tools now, then answer from their results. You said you updated a belief, but you never called update_belief, so memory is unchanged. Call update_belief now, or do not claim it. Unresolved conflict: camera observed crate_02.located_at = not_in_Room_204, but memory has map says Room_204. Record your observation before answering by calling update_belief with entity=\"crate_02\", property=\"located_at\", value=\"not_in_Room_204\", source=\"camera\", a confidence and a reason."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "crate_02",
+                  "property": "located_at",
+                  "value": "Room_204",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "age_s": 259201
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "thought",
+          "text": "I have checked my memory, and according to the static map, the crate_02 is recorded as being located in Room_204. However, my live camera feed observed that the crate_02 is not visible in this room. This creates a conflict between the map and the current observation.\n\nTo record my observation, I will update my belief:"
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "confidence": 0.82,
+            "reason": "Camera feed shows no sign of crate_02 in Room_204.",
+            "entity": "crate_02",
+            "property": "located_at",
+            "value": "not_in_Room_204",
+            "source": "camera"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "crate_02",
+                "property": "located_at",
+                "value": "not_in_Room_204",
+                "perspective": "self",
+                "source": "camera",
+                "confidence": 0.82
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "crate_02",
+                  "property": "located_at",
+                  "perspective": "map",
+                  "value": "Room_204",
+                  "old_confidence": 0.9,
+                  "new_confidence": 0.27
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "I have updated my belief to reflect that the crate_02 is not in this room (Room_204). This belief is based on the live camera observation, which has a confidence level of 0.82. The static map's record of the crate_02 being in Room_204 has been downgraded to a confidence level of 0.27 due to the conflicting evidence from the camera.\n\nBased on the current live sensor data, I conclude that the crate_02 is not in this room."
+        }
+      ],
+      "belief_changes": [
+        "~ crate_02.located_at [map]: Room_204 (0.9) -> Room_204 (0.27, Default_Map)",
+        "+ crate_02.located_at [self] = not_in_Room_204 (conf 0.82, camera)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "crate_02",
+      "predicate": "located_at",
+      "obj": "Room_204",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.27,
+      "timestamp": 740800.0
+    },
+    {
+      "subject": "crate_02",
+      "predicate": "located_at",
+      "obj": "not_in_Room_204",
+      "perspective": "self",
+      "source": "camera",
+      "confidence": 0.82,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['not here', 'not in this room', 'not in room', 'not present', 'cannot see', \"can't see\", \"don't see\", 'do not see', 'not visible', 'not detect', 'did not detect', \"didn't detect\", \"isn't here\", 'is not here', 'is not in', \"isn't in\", 'not currently in', 'not found', 'no crate']",
+      "passed": true,
+      "detail": "found ['not in this room', 'is not in']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_02.located_at [self] state",
+      "passed": true,
+      "detail": "= not_in_Room_204 (conf 0.82)"
+    },
+    {
+      "kind": "memory",
+      "name": "crate_02.located_at [map] state",
+      "passed": true,
+      "detail": "= Room_204 (conf 0.27)"
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,154 @@
+{
+  "scenario": "HH1_unknown_weight",
+  "set": "heldout",
+  "type": "grounding",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "How heavy is box_01?",
+      "answer": "Based on the information in my memory, box_01 is located in Room_101 and is blue. However, there is no recorded information about its weight.\n\nI have checked both my memory and the static map, and there are no reports or beliefs about the weight of box_01. If you need to know its weight, you would need to use a scale or another robot equipped with a weight sensor.\n\nFor now, I can confirm that box_01 is in Room_101 and appears to be blue.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "thought",
+          "text": "I do not know the weight of box_01. There are no beliefs or reports about its weight in my memory, and my sensors are not designed to measure weight directly.\n\nI can check if box_01 is present in the current room using the camera or lidar, but weight is not something I can perceive. If you have any other questions about box_01's appearance or location, I might be able to help with those.\n\nTo check if box_01 is in the room, I will use the camera to see if I can detect it. If it's there, I can describe its appearance, but not its weight.\n\nCamera check coming up..."
+        },
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_101",
+                "ambient_light": "normal",
+                "detections": [
+                  {
+                    "object_id": "box_01",
+                    "label": "box",
+                    "perceived_color": "blue",
+                    "bbox": [
+                      120,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.95
+                  }
+                ]
+              },
+              "memory_check": {
+                "conflicts": [],
+                "advice": "Detections agree with memory."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The camera detected box_01 in the current room, Room_101. It appears to be a blue box based on the perception. However, I still do not have any information about its weight.\n\nIf you need to know the weight of box_01, you would need a scale or another robot equipped with a weight sensor to measure it. For now, I can confirm that box_01 is in the room and describe its appearance as blue."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering."
+        },
+        {
+          "step": 3,
+          "type": "thought",
+          "text": "Apologies for the oversight. Let me first check my memory and current pose to see if there's any information about box_01's weight or location.\n\nChecking memory..."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "box_01",
+            "property": "weight"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "blue",
+                  "perspective": "agent:bot_02",
+                  "source": "bot_02_log",
+                  "confidence": 0.9,
+                  "age_s": 3601
+                },
+                {
+                  "entity": "box_01",
+                  "property": "located_at",
+                  "value": "Room_101",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "age_s": 86401
+                }
+              ],
+              "note": "No 'weight' beliefs about box_01; showing everything known about box_01."
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "Based on the information in my memory, box_01 is located in Room_101 and is blue. However, there is no recorded information about its weight.\n\nI have checked both my memory and the static map, and there are no reports or beliefs about the weight of box_01. If you need to know its weight, you would need to use a scale or another robot equipped with a weight sensor.\n\nFor now, I can confirm that box_01 is in Room_101 and appears to be blue."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 913600.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of [\"don't know\", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', \"can't determine\", 'no data', \"don't have\", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', \"can't provide\", 'no sensor reading', 'not aware']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": true,
+      "detail": "called ['query_beliefs']"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false
+}

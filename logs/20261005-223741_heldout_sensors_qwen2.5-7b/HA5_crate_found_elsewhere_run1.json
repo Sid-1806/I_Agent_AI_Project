@@ -1,0 +1,53 @@
+{
+  "scenario": "HA5_crate_found_elsewhere",
+  "set": "heldout",
+  "type": "A",
+  "mode": "sensors",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Where is crate_03 right now?",
+      "answer": "According to my stored knowledge, crate_03 is located at Room_301. This information comes from the map data, which was recorded 172800 seconds ago. There have been no recent sensor readings to contradict this, so I can confidently say that crate_03 is in Room_301.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "According to my stored knowledge, crate_03 is located at Room_301. This information comes from the map data, which was recorded 172800 seconds ago. There have been no recent sensor readings to contradict this, so I can confidently say that crate_03 is in Room_301."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "crate_03",
+      "predicate": "located_at",
+      "obj": "Room_301",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 827200.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['302']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_03.located_at [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false
+}

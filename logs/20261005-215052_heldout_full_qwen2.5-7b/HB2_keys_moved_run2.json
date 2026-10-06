@@ -1,0 +1,8 @@
+{
+  "scenario": "HB2_keys_moved",
+  "set": "heldout",
+  "mode": "full",
+  "error": "APIConnectionError: Connection error.",
+  "checks": [],
+  "passed": false
+}

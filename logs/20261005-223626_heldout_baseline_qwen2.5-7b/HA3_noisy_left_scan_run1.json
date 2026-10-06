@@ -1,0 +1,67 @@
+{
+  "scenario": "HA3_noisy_left_scan",
+  "set": "heldout",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Before you set off, check whether route_G is safe to drive.",
+      "answer": "Route G is currently marked as clear according to the default map, with a confidence level of 1.0. Since the planned route is route_G and its status is clear, it is safe to proceed. However, it's a good practice to perform a quick visual check for any unexpected obstacles before setting off.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Route G is currently marked as clear according to the default map, with a confidence level of 1.0. Since the planned route is route_G and its status is clear, it is safe to proceed. However, it's a good practice to perform a quick visual check for any unexpected obstacles before setting off."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['clear', 'safe']",
+      "passed": true,
+      "detail": "found ['clear', 'safe']"
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not safe'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'unsafe'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar at least 2x",
+      "passed": false,
+      "detail": "called 0x"
+    },
+    {
+      "kind": "memory",
+      "name": "route_G.status [self] state",
+      "passed": true,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "route_G.status [map] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false
+}

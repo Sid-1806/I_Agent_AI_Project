@@ -1,0 +1,53 @@
+{
+  "scenario": "HP1_provenance_reason",
+  "set": "heldout",
+  "type": "provenance",
+  "mode": "sensors",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Who told you that route_B is blocked, and why is it blocked?",
+      "answer": "Route_B is reported as blocked based on a record from another robot (agent:bot_06), with a confidence level of 0.85. The reason for the blockage is not specified in the stored knowledge, but it could be due to an obstacle or an object in the way. To confirm this, I will check the current status using the LiDAR sensor.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Route_B is reported as blocked based on a record from another robot (agent:bot_06), with a confidence level of 0.85. The reason for the blockage is not specified in the stored knowledge, but it could be due to an obstacle or an object in the way. To confirm this, I will check the current status using the LiDAR sensor."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "agent:bot_06",
+      "source": "bot_06_log",
+      "confidence": 0.85,
+      "timestamp": 997300.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_06', 'bot 06']",
+      "passed": true,
+      "detail": "found ['bot_06']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['shelf']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['get_provenance', 'query_beliefs']",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false
+}

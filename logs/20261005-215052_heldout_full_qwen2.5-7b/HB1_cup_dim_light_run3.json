@@ -1,0 +1,184 @@
+{
+  "scenario": "HB1_cup_dim_light",
+  "set": "heldout",
+  "type": "B",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Could you bring me the white cup? It's cup_07.",
+      "answer": "-query_beliefs()",
+      "trace": [
+        {
+          "step": 1,
+          "type": "draft",
+          "text": "-record_user_belief(cup_07, color, white, \"user mentioned the cup color\"). I do not know the exact location of cup_07, but I will start by checking my memory."
+        },
+        {
+          "step": 1,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. Your answer relies on the static map for cup_07 (located_at = Room_115, 86400 s old) without a live reading. Look with read_camera before answering."
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "- Calling get_pose to check my current location and routes.\n- Calling read_camera to look for cup_07 in the current room.\n\n-get_pose()\n-read_camera()"
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. No memory record or sensor reading mentions cup_07. Do not give it properties seen on other objects; if you have no information, say so. Your answer relies on the static map for cup_07 (located_at = Room_115, 86400 s old) without a live reading. Look with read_camera before answering."
+        },
+        {
+          "step": 3,
+          "type": "draft",
+          "text": "-get_pose()\n-read_camera()"
+        },
+        {
+          "step": 3,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering."
+        },
+        {
+          "step": 4,
+          "type": "draft",
+          "text": "-query_beliefs()"
+        },
+        {
+          "step": 4,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering."
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "-query_beliefs()"
+        }
+      ],
+      "belief_changes": []
+    },
+    {
+      "question": "What colour do I think cup_07 is, what colour do you see it as, and what colour do the records say it is?",
+      "answer": "-record_user_belief(cup_07, color, green, \"user mentioned the cup color\")\n-query_beliefs()\n-read_camera()",
+      "trace": [
+        {
+          "step": 1,
+          "type": "draft",
+          "text": "-query_beliefs()\n-read_camera()"
+        },
+        {
+          "step": 1,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. The user told you what they believe (\"I think cup_07 is, what colour do you see it as, and what colour do...\"), but you have not called the record_user_belief tool. Writing that you recorded it does not record it. Make the tool call now, e.g. record_user_belief(entity=\"item_07\", property=\"color\", value=\"green\", evidence=\"<the user's words>\") with the entity, property and value from the user's message."
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "-record_user_belief(cup_07, color, green, \"user mentioned the cup color\"). I have no direct sensor reading of cup_07's color, so I cannot say what color I see it as. According to my memory, the static map records cup_07 as being located in Room_115. I will now check the current room with the camera to see if I can determine the color of cup_07."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. The user told you what they believe (\"I think cup_07 is, what colour do you see it as, and what colour do...\"), but you have not called the record_user_belief tool. Writing that you recorded it does not record it. Make the tool call now, e.g. record_user_belief(entity=\"item_07\", property=\"color\", value=\"green\", evidence=\"<the user's words>\") with the entity, property and value from the user's message. No memory record or sensor reading mentions cup_07, room_115. Do not give them properties seen on other objects; if you have no information, say so. Your answer relies on the static map for cup_07 (located_at = Room_115, 86400 s old) without a live reading. Look with read_camera before answering. You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 3,
+          "type": "draft",
+          "text": "-query_beliefs()\n-read_camera()"
+        },
+        {
+          "step": 3,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. The user told you what they believe (\"I think cup_07 is, what colour do you see it as, and what colour do...\"), but you have not called the record_user_belief tool. Writing that you recorded it does not record it. Make the tool call now, e.g. record_user_belief(entity=\"item_07\", property=\"color\", value=\"green\", evidence=\"<the user's words>\") with the entity, property and value from the user's message."
+        },
+        {
+          "step": 4,
+          "type": "draft",
+          "text": "-record_user_belief(cup_07, color, green, \"user mentioned the cup color\")\n-query_beliefs()\n-read_camera()"
+        },
+        {
+          "step": 4,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. The user told you what they believe (\"I think cup_07 is, what colour do you see it as, and what colour do...\"), but you have not called the record_user_belief tool. Writing that you recorded it does not record it. Make the tool call now, e.g. record_user_belief(entity=\"item_07\", property=\"color\", value=\"green\", evidence=\"<the user's words>\") with the entity, property and value from the user's message. No memory record or sensor reading mentions cup_07. Do not give it properties seen on other objects; if you have no information, say so. Your answer relies on the static map for cup_07 (located_at = Room_115, 86400 s old) without a live reading. Look with read_camera before answering."
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "-record_user_belief(cup_07, color, green, \"user mentioned the cup color\")\n-query_beliefs()\n-read_camera()"
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "cup_07",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "agent:bot_04",
+      "source": "bot_04_log",
+      "confidence": 0.9,
+      "timestamp": 994600.0
+    },
+    {
+      "subject": "cup_07",
+      "predicate": "located_at",
+      "obj": "Room_115",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 913600.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['white']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['dark green']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_04', 'bot 04', 'record', 'log']",
+      "passed": true,
+      "detail": "found ['record']"
+    },
+    {
+      "kind": "tools",
+      "name": "called record_user_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "cup_07.color [user] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "cup_07.color [agent:bot_04] state",
+      "passed": true,
+      "detail": "= green (conf 0.9)"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": false,
+      "detail": "not in any tool result: ['green']"
+    }
+  ],
+  "passed": false
+}

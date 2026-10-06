@@ -1,0 +1,128 @@
+{
+  "scenario": "HA1_right_route_blocked",
+  "set": "heldout",
+  "type": "A",
+  "mode": "sensors",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Can you continue along your planned route right now? Explain how you know.",
+      "answer": "The lidar scan in the front direction shows that the route is clear, with no obstacles detected within 700 cm. This information is from my current sensor reading, which overrides the older map data indicating the route as clear. Therefore, I can continue along my planned route right now.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "thought",
+          "text": "I will check the current status of my planned route using the read_lidar tool to ensure it is clear."
+        },
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_C",
+                "distance_cm": 700,
+                "status": "clear"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "answer",
+          "text": "The lidar scan in the front direction shows that the route is clear, with no obstacles detected within 700 cm. This information is from my current sensor reading, which overrides the older map data indicating the route as clear. Therefore, I can continue along my planned route right now."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_D",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999880.0
+    },
+    {
+      "subject": "route_C",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "timestamp": 827200.0
+    },
+    {
+      "subject": "route_D",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "timestamp": 827200.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'route is clear'",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'path is clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_D.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "route_D.status [map] state",
+      "passed": false,
+      "detail": "confidence 1.0 > 0.5"
+    },
+    {
+      "kind": "memory",
+      "name": "route_C.status [map] state",
+      "passed": true,
+      "detail": "= clear (conf 1.0)"
+    }
+  ],
+  "passed": false
+}

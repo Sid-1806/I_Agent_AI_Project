@@ -1,0 +1,182 @@
+{
+  "scenario": "HA5_crate_found_elsewhere",
+  "set": "heldout",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Where is crate_03 right now?",
+      "answer": "I have updated my belief to reflect that crate_03 is currently located in Room_302. The static map's confidence in crate_03 being in Room_301 has been downgraded to 0.27, as the recent camera detection contradicts the map's older record. The camera's detection is more recent and direct, so it takes precedence in this case.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "thought",
+          "text": "Let me check my beliefs and the provenance log to find out where crate_03 is located right now."
+        },
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "crate_03",
+            "property": "located_at"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "crate_03",
+                  "property": "located_at",
+                  "value": "Room_301",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "age_s": 172800
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "According to the static map, crate_03 is located in Room_301. This information comes from the default map and is quite recent, with an age of 2 days. However, let's verify this by checking the current sensor readings to ensure there's no recent change.\n\nI will use the `read_camera` tool to check the current state of Room_301."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {
+            "camera": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_302",
+                "ambient_light": "normal",
+                "detections": [
+                  {
+                    "object_id": "crate_03",
+                    "label": "crate",
+                    "perceived_color": "green",
+                    "bbox": [
+                      120,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.95
+                  }
+                ]
+              },
+              "memory_check": {
+                "conflicts": [],
+                "advice": "Detections agree with memory."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "thought",
+          "text": "The camera detected a crate, which it identified as crate_03, in Room_302. The crate appears to be green, and the detection has a high confidence level. This contradicts the map's belief that crate_03 is in Room_301.\n\nI will update my belief to reflect the current sensor reading. Let's use the `update_belief` tool to store this new information."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "crate_03",
+            "property": "located_at",
+            "value": "Room_302",
+            "source": "camera",
+            "confidence": 0.95,
+            "reason": "Camera detection in Room_302 with high confidence."
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "crate_03",
+                "property": "located_at",
+                "value": "Room_302",
+                "perspective": "self",
+                "source": "camera",
+                "confidence": 0.95
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "crate_03",
+                  "property": "located_at",
+                  "perspective": "map",
+                  "value": "Room_301",
+                  "old_confidence": 0.9,
+                  "new_confidence": 0.27
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "I have updated my belief to reflect that crate_03 is currently located in Room_302. The static map's confidence in crate_03 being in Room_301 has been downgraded to 0.27, as the recent camera detection contradicts the map's older record. The camera's detection is more recent and direct, so it takes precedence in this case."
+        }
+      ],
+      "belief_changes": [
+        "~ crate_03.located_at [map]: Room_301 (0.9) -> Room_301 (0.27, Default_Map)",
+        "+ crate_03.located_at [self] = Room_302 (conf 0.95, camera)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "crate_03",
+      "predicate": "located_at",
+      "obj": "Room_301",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.27,
+      "timestamp": 827200.0
+    },
+    {
+      "subject": "crate_03",
+      "predicate": "located_at",
+      "obj": "Room_302",
+      "perspective": "self",
+      "source": "camera",
+      "confidence": 0.95,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['302']",
+      "passed": true,
+      "detail": "found ['302']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_03.located_at [self] state",
+      "passed": true,
+      "detail": "= Room_302 (conf 0.95)"
+    }
+  ],
+  "passed": true
+}

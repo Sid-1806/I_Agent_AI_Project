@@ -1,0 +1,53 @@
+{
+  "scenario": "P1_provenance",
+  "set": "dev",
+  "type": "provenance",
+  "mode": "sensors",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Where did you learn that box_01 is blue, and how long ago was that recorded?",
+      "answer": "I learned that box_01 is blue from agent:bot_02, and this information was recorded 3600 seconds ago with a confidence level of 0.9.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "I learned that box_01 is blue from agent:bot_02, and this information was recorded 3600 seconds ago with a confidence level of 0.9."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_02', 'bot 02']",
+      "passed": true,
+      "detail": "found ['bot_02']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['hour', '3600', '60 minutes']",
+      "passed": true,
+      "detail": "found ['3600']"
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false
+}

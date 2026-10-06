@@ -1,0 +1,383 @@
+{
+  "scenario": "HA2_left_route_reopened",
+  "set": "heldout",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is route_E passable at the moment?",
+      "answer": "Route_E is now confirmed to be passable. The lidar_left sensor readings have updated my belief, and the static map's confidence in the route being blocked has been further downgraded to 0.072. Route_E is clear and passable at the moment.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": null,
+                "distance_cm": null,
+                "status": "no_route",
+                "note": "no route in direction 'front'. This is not an obstacle reading.",
+                "routes_by_direction": {
+                  "left": "route_E"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "Route_E is passable at the moment. The lidar_front sensor indicates there is no obstacle in the direction of route_E, though it notes there is no route defined in that direction."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering. Your answer relies on the static map for route_E (status = blocked, 259201 s old) without a live reading. Scan it with read_lidar(direction=\"left\") before answering."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "left"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_left",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "left",
+                "route": "route_E",
+                "distance_cm": 600,
+                "status": "clear"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "blocked",
+                    "source": "Default_Map",
+                    "confidence": 0.8,
+                    "age_s": 259202
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "thought",
+          "text": "The lidar_left sensor shows that route_E is clear, with no obstacles detected. However, the static map still marks route_E as blocked with a confidence of 0.8, and it was last updated 259202 seconds ago. I should read the lidar again to confirm this before updating my belief.\n\nI will read the lidar from the left direction once more."
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "left"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_left",
+              "t": 1000003.0,
+              "payload": {
+                "direction": "left",
+                "route": "route_E",
+                "distance_cm": 600,
+                "status": "clear"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "blocked",
+                    "source": "Default_Map",
+                    "confidence": 0.8,
+                    "age_s": 259203
+                  }
+                ],
+                "advice": "Confirmed by consecutive readings. Update your own belief with update_belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "thought",
+          "text": "The lidar_left sensor confirms that route_E is clear, with no obstacles detected. Given the consecutive readings, I will update my belief that route_E is passable.\n\nI am now updating my belief based on the current sensor reading."
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "property": "status",
+            "value": "clear",
+            "source": "lidar_left",
+            "confidence": 0.95,
+            "reason": "Consecutive lidar readings indicate no obstacles.",
+            "entity": "route_E"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_E",
+                "property": "status",
+                "value": "clear",
+                "perspective": "self",
+                "source": "lidar_left",
+                "confidence": 0.95
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "route_E",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "blocked",
+                  "old_confidence": 0.8,
+                  "new_confidence": 0.24
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "draft",
+          "text": "Route_E is now confirmed to be passable. The lidar_left sensor readings have updated my belief, and the static map's confidence in the route being blocked has been downgraded to 0.24."
+        },
+        {
+          "step": 6,
+          "type": "self_check",
+          "text": "You have not checked memory yet. Call query_beliefs (and get_pose if the question is about your route or location) before answering."
+        },
+        {
+          "step": 7,
+          "type": "thought",
+          "text": "I will first check memory to ensure I have the most up-to-date information about the current state of route_E.\n\nCall `query_beliefs` to check the status of route_E."
+        },
+        {
+          "step": 7,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "route_E",
+            "property": "status"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "route_E",
+                  "property": "status",
+                  "value": "clear",
+                  "perspective": "self",
+                  "source": "lidar_left",
+                  "confidence": 0.95,
+                  "age_s": 0
+                },
+                {
+                  "entity": "route_E",
+                  "property": "status",
+                  "value": "blocked",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.24,
+                  "age_s": 259203
+                }
+              ],
+              "disagreements": [
+                {
+                  "entity": "route_E",
+                  "property": "status",
+                  "newest_first": [
+                    {
+                      "value": "clear",
+                      "perspective": "self",
+                      "source": "lidar_left",
+                      "recorded": "0 s ago"
+                    },
+                    {
+                      "value": "blocked",
+                      "perspective": "map",
+                      "source": "Default_Map",
+                      "recorded": "3 days ago"
+                    }
+                  ],
+                  "newest": "clear from lidar_left (0 s ago)"
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 8,
+          "type": "thought",
+          "text": "Based on the memory check, route_E is currently marked as clear (status: clear, confidence: 0.95, from `lidar_left`) and the static map still indicates it as blocked (status: blocked, confidence: 0.24, last updated 3 days ago). The most recent and direct evidence from the `lidar_left` sensor confirms that route_E is clear.\n\nI will now update my belief to reflect the current sensor reading."
+        },
+        {
+          "step": 8,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "route_E",
+            "property": "status",
+            "value": "clear",
+            "source": "lidar_left",
+            "confidence": 0.95,
+            "reason": "Recent lidar reading indicates route is clear."
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_E",
+                "property": "status",
+                "value": "clear",
+                "perspective": "self",
+                "source": "lidar_left",
+                "confidence": 0.95
+              },
+              "replaced": {
+                "entity": "route_E",
+                "property": "status",
+                "value": "clear",
+                "perspective": "self",
+                "source": "lidar_left",
+                "confidence": 0.95
+              },
+              "downgraded": [
+                {
+                  "entity": "route_E",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "blocked",
+                  "old_confidence": 0.24,
+                  "new_confidence": 0.072
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 9,
+          "type": "answer",
+          "text": "Route_E is now confirmed to be passable. The lidar_left sensor readings have updated my belief, and the static map's confidence in the route being blocked has been further downgraded to 0.072. Route_E is clear and passable at the moment."
+        }
+      ],
+      "belief_changes": [
+        "~ route_E.status [map]: blocked (0.8) -> blocked (0.072, Default_Map)",
+        "+ route_E.status [self] = clear (conf 0.95, lidar_left)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_E",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999880.0
+    },
+    {
+      "subject": "route_E",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.072,
+      "timestamp": 740800.0
+    },
+    {
+      "subject": "route_E",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "self",
+      "source": "lidar_left",
+      "confidence": 0.95,
+      "timestamp": 1000003.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['is clear', 'now clear', 'currently clear', 'is passable', 'is open', 'is free', 'can be used', 'yes']",
+      "passed": true,
+      "detail": "found ['is clear']"
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not passable'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'impassable'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'still blocked'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_E.status [self] state",
+      "passed": true,
+      "detail": "= clear (conf 0.95)"
+    },
+    {
+      "kind": "memory",
+      "name": "route_E.status [map] state",
+      "passed": true,
+      "detail": "= blocked (conf 0.072)"
+    }
+  ],
+  "passed": true
+}

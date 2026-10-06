@@ -1,0 +1,79 @@
+{
+  "scenario": "HA2_left_route_reopened",
+  "set": "heldout",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is route_E passable at the moment?",
+      "answer": "Route_E is currently blocked according to the latest map data, so it is not passable at the moment. The status is based on a confidence level of 0.8, which means there's a high likelihood that the route remains blocked.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Route_E is currently blocked according to the latest map data, so it is not passable at the moment. The status is based on a confidence level of 0.8, which means there's a high likelihood that the route remains blocked."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['is clear', 'now clear', 'currently clear', 'is passable', 'is open', 'is free', 'can be used', 'yes']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not passable'",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'impassable'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'still blocked'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_E.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "route_E.status [map] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false
+}

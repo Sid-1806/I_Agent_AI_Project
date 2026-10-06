@@ -1,0 +1,107 @@
+{
+  "scenario": "HB3_three_robot_reports",
+  "set": "heldout",
+  "type": "B",
+  "mode": "sensors",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "What colour is crate_11 according to your records? Which report do you trust most, and why?",
+      "answer": "According to my records, crate_11 has been reported with three different colors: red (from agent:bot_02, recorded 7200 seconds ago), yellow (from agent:bot_05, recorded 1800 seconds ago), and orange (from agent:bot_07, recorded 300 seconds ago). I trust the most recent report the most, which is the orange report from agent:bot_07, as it is the most direct and recent evidence.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "According to my records, crate_11 has been reported with three different colors: red (from agent:bot_02, recorded 7200 seconds ago), yellow (from agent:bot_05, recorded 1800 seconds ago), and orange (from agent:bot_07, recorded 300 seconds ago). I trust the most recent report the most, which is the orange report from agent:bot_07, as it is the most direct and recent evidence."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "crate_11",
+      "predicate": "color",
+      "obj": "red",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 992800.0
+    },
+    {
+      "subject": "crate_11",
+      "predicate": "color",
+      "obj": "yellow",
+      "perspective": "agent:bot_05",
+      "source": "bot_05_log",
+      "confidence": 0.85,
+      "timestamp": 998200.0
+    },
+    {
+      "subject": "crate_11",
+      "predicate": "color",
+      "obj": "orange",
+      "perspective": "agent:bot_07",
+      "source": "bot_07_log",
+      "confidence": 0.85,
+      "timestamp": 999700.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['orange']",
+      "passed": true,
+      "detail": "found ['orange']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['yellow']",
+      "passed": true,
+      "detail": "found ['yellow']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['red']",
+      "passed": true,
+      "detail": "found ['red']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_07', 'bot 07']",
+      "passed": true,
+      "detail": "found ['bot_07']"
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_11.color [agent:bot_02] state",
+      "passed": true,
+      "detail": "= red (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "crate_11.color [agent:bot_05] state",
+      "passed": true,
+      "detail": "= yellow (conf 0.85)"
+    },
+    {
+      "kind": "memory",
+      "name": "crate_11.color [agent:bot_07] state",
+      "passed": true,
+      "detail": "= orange (conf 0.85)"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false
+}

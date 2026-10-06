@@ -1,0 +1,180 @@
+{
+  "scenario": "HA5_crate_found_elsewhere",
+  "set": "heldout",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Where is crate_03 right now?",
+      "answer": "I have updated my belief based on the camera sensor data. The current location of crate_03 is Room_302. The static map's confidence for Room_301 has been downgraded to 0.27 due to this new evidence.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "thought",
+          "text": "Let me check my current beliefs about the location of crate_03."
+        },
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "crate_03",
+            "property": "located_at"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "crate_03",
+                  "property": "located_at",
+                  "value": "Room_301",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "age_s": 172800
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "According to the static map, crate_03 is located in Room_301. However, I will verify this by checking the live sensor data to ensure accuracy."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_302",
+                "ambient_light": "normal",
+                "detections": [
+                  {
+                    "object_id": "crate_03",
+                    "label": "crate",
+                    "perceived_color": "green",
+                    "bbox": [
+                      120,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.95
+                  }
+                ]
+              },
+              "memory_check": {
+                "conflicts": [],
+                "advice": "Detections agree with memory."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "thought",
+          "text": "The camera in Room_302 detects a green crate, which matches the location reported by the static map. However, since the camera is in Room_302 and not in Room_301, there is a slight discrepancy. I will update my belief to reflect the current sensor data."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "crate_03",
+            "property": "located_at",
+            "value": "Room_302",
+            "source": "camera",
+            "confidence": 0.95,
+            "reason": "Camera detection in Room_302 confirms the current location."
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "crate_03",
+                "property": "located_at",
+                "value": "Room_302",
+                "perspective": "self",
+                "source": "camera",
+                "confidence": 0.95
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "crate_03",
+                  "property": "located_at",
+                  "perspective": "map",
+                  "value": "Room_301",
+                  "old_confidence": 0.9,
+                  "new_confidence": 0.27
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "I have updated my belief based on the camera sensor data. The current location of crate_03 is Room_302. The static map's confidence for Room_301 has been downgraded to 0.27 due to this new evidence."
+        }
+      ],
+      "belief_changes": [
+        "~ crate_03.located_at [map]: Room_301 (0.9) -> Room_301 (0.27, Default_Map)",
+        "+ crate_03.located_at [self] = Room_302 (conf 0.95, camera)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "crate_03",
+      "predicate": "located_at",
+      "obj": "Room_301",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.27,
+      "timestamp": 827200.0
+    },
+    {
+      "subject": "crate_03",
+      "predicate": "located_at",
+      "obj": "Room_302",
+      "perspective": "self",
+      "source": "camera",
+      "confidence": 0.95,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['302']",
+      "passed": true,
+      "detail": "found ['302']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_03.located_at [self] state",
+      "passed": true,
+      "detail": "= Room_302 (conf 0.95)"
+    }
+  ],
+  "passed": true
+}

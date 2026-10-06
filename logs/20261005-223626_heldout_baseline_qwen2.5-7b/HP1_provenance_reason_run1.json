@@ -1,0 +1,43 @@
+{
+  "scenario": "HP1_provenance_reason",
+  "set": "heldout",
+  "type": "provenance",
+  "mode": "baseline",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Who told you that route_B is blocked, and why is it blocked?",
+      "answer": "According to the information from bot_06, route_B is currently blocked. The reason for the blockage is not specified in the data, but I can suggest checking the logs or recent communications with bot_06 for more details if needed.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "According to the information from bot_06, route_B is currently blocked. The reason for the blockage is not specified in the data, but I can suggest checking the logs or recent communications with bot_06 for more details if needed."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_06', 'bot 06']",
+      "passed": true,
+      "detail": "found ['bot_06']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['shelf']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['get_provenance', 'query_beliefs']",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false
+}
