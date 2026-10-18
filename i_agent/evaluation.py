@@ -47,7 +47,8 @@ def _mentions(text: str, word: str, inflect: bool = False) -> bool:
     detected', 'hour' matches 'hours'); other suffixes never do, so 'red' never matches 'reduced'.
     Required phrases use inflect; forbidden phrases do not ('path is cleared' is not 'path is clear')."""
     suffix = r"(s|es|ed|ing)?" if inflect else ""
-    return re.search(r"(?<![a-z0-9])" + re.escape(word.lower()) + suffix + r"(?![a-z0-9])", text.lower()) is not None
+    plain = re.sub(r"[\"'`“”]", "", text.lower())  # 'is now "clear"' reads as 'is now clear'
+    return re.search(r"(?<![a-z0-9])" + re.escape(word.lower()) + suffix + r"(?![a-z0-9])", plain) is not None
 
 
 def run_checks(expect: dict, turns: list[AgentResult], store: BeliefStore | None,

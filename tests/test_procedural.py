@@ -523,3 +523,41 @@ def test_forbidden_phrases_match_exactly_and_required_ones_allow_inflections():
     assert not _mentions("I will wait until the path is cleared.", "path is clear")
     assert _mentions("box_05 was not detected here.", "not detect", inflect=True)
     assert not _mentions("confidence was reduced", "red", inflect=True)
+
+
+def test_quotes_do_not_hide_a_phrase_and_yes_no_questions_need_a_direct_answer():
+    from i_agent.evaluation import _mentions
+    assert _mentions('route_B.status is now "clear"', "now clear", inflect=True)
+    world = build_world(load_scenario("A2"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["Can you take your planned route right now?"]
+    assert any("yes/no" in p for p in agent.check_answer("route_B is clear now.", []))
+    assert not any("yes/no" in p for p in agent.check_answer("Yes. route_B is clear now.", []))
+
+
+def test_claiming_a_sensor_result_requires_the_sensor_call():
+    world = build_world(load_scenario("A4"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["What colour is box_01?"]
+    problems = agent.check_answer("My camera confirms that box_01 is blue.", [])
+    assert any("never called read_camera" in p for p in problems)
+
+
+def test_naming_an_entity_without_using_the_map_value_is_not_reliance_on_the_map():
+    world = build_world(load_scenario("A4"))  # map: box_01 located_at Room_101 (the robot's room)
+    assert not world.tools.unverified_map_entities("I do not know the weight of box_01.", [])
+    assert world.tools.unverified_map_entities("box_01 is in Room_101.", [])
+
+
+def test_moving_along_a_route_that_does_not_exist_says_so():
+    world = build_world(load_scenario("B2"))  # no routes lead out of Room_101
+    out = json.loads(world.tools.execute("move", {"route": "route_B"}))
+    assert out["ok"] is False and "cannot drive anywhere" in out["error"]
+
+
+def test_a_repeated_failing_call_is_flagged():
+    world = build_world(load_scenario("B2"))
+    llm = ScriptedLLM([[("move", {"route": "route_B"})], [("move", {"route": "route_B"})], "I cannot drive."])
+    result = Agent(world.tools, llm, self_check=False).ask("Go to Room 205.")
+    errors = [s["result"]["error"] for s in result.trace if s["type"] == "tool_call"]
+    assert "failed 2 times" in errors[1] and "failed" not in errors[0].split("route_B")[0]

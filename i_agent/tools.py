@@ -422,6 +422,11 @@ class ToolRegistry:
         return reading
 
     def move(self, route: str):
+        here = sorted(r for r, spec in self.env.routes.items() if spec.get("from") == self.env.robot["room"])
+        if route not in here:
+            raise ValueError(f"There is no route '{route}' leading out of {self.env.robot['room']}. "
+                             + (f"Routes from here: {', '.join(here)}." if here else
+                                "No routes lead out of this room, so the robot cannot drive anywhere from here."))
         if self.safe_moves and self.scanned.get(route) != "clear":
             facing = {r: d for d, r in self.env.robot["facing"].items()}
             how = (f'Scan it first with read_lidar(direction="{facing[route]}").' if route in facing else
@@ -463,7 +468,8 @@ class ToolRegistry:
         facing = {route: d for d, route in self.env.robot["facing"].items()}
         out = []
         for b in self.store.query(perspective=MAP):
-            if b.subject.lower() not in text or b.subject in sensed:
+            value = b.obj.lower().replace("_", " ")
+            if b.subject.lower() not in text or b.subject in sensed or value not in text.replace("_", " "):
                 continue
             if b.predicate == "status" and b.subject in facing:
                 how = f"Scan it with read_lidar(direction=\"{facing[b.subject]}\")"
