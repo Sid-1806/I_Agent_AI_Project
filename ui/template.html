@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I, Agent replay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f3f2ee; --panel: #ffffff; --ink: #1c1c1a; --muted: #6a6a64; --line: #1c1c1a; --faint: #d8d6cf;
+  --mark: #b85c00; --bad: #a8261c; --good: #2b6a2e; --agent: #1d5a85; --user: #8a4a00;
+  --sans: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 var(--sans); height: 100vh; display: flex; flex-direction: column; }
+header { border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; background: var(--panel); }
+header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+select, button { font: 13px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 0; padding: 4px 8px; }
+button { cursor: pointer; min-width: 34px; }
+button:hover, select:hover { background: var(--bg); }
+input[type=range] { width: 220px; accent-color: var(--ink); }
+.counter { font: 12px var(--mono); color: var(--muted); }
+.desc { padding: 8px 16px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.desc b { color: var(--ink); font-weight: 600; }
+main { display: grid; grid-template-columns: minmax(300px, 1.25fr) minmax(300px, 1fr) minmax(320px, 1.1fr); flex: 1; min-height: 0; }
+section { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+section:last-child { border-right: 0; }
+section > h2 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
+section > h2 span { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); }
+.body { padding: 12px; overflow: auto; flex: 1; position: relative; }
+svg { width: 100%; height: auto; display: block; background: var(--panel); border: 1px solid var(--line); }
+svg text { font-family: var(--mono); font-size: 12.5px; fill: var(--ink); }
+.note { font: 12px var(--mono); margin-top: 8px; padding: 6px 8px; border: 1px solid var(--faint); background: var(--panel); white-space: pre-wrap; }
+.trace { list-style: none; margin: 0; padding: 0; }
+.trace li { border: 1px solid var(--faint); background: var(--panel); padding: 6px 8px; margin-bottom: 6px; }
+.trace li.now { border-color: var(--line); border-left: 4px solid var(--mark); }
+.trace li.q { border-color: var(--line); font-weight: 600; }
+.tag { display: inline-block; font: 600 10.5px var(--mono); letter-spacing: .04em; padding: 0 5px; border: 1px solid currentColor; margin-right: 6px; vertical-align: 1px; }
+.t-call { color: var(--ink); } .t-check { color: var(--bad); } .t-draft { color: var(--muted); } .t-answer { color: var(--good); } .t-thought { color: var(--muted); }
+.code { font: 12px var(--mono); word-break: break-word; }
+.res { font: 12px var(--mono); color: var(--muted); margin-top: 3px; white-space: pre-wrap; word-break: break-word; }
+.res.err { color: var(--bad); }
+.draft { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; background: var(--panel); font-size: 12.5px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--faint); vertical-align: top; }
+th { font-weight: 600; border-bottom: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
+td.ent { font: 600 12px var(--mono); }
+td.num { font-family: var(--mono); white-space: nowrap; }
+tr.chg td { background: #fbf1e4; }
+tr.chg td:first-child { border-left: 3px solid var(--mark); }
+.p { font: 11px var(--mono); padding: 0 4px; border: 1px solid currentColor; white-space: nowrap; }
+.p-self { color: var(--ink); } .p-map { color: var(--muted); } .p-user { color: var(--user); } .p-agent { color: var(--agent); }
+.src { font: 11px var(--mono); color: var(--muted); margin-top: 2px; }
+.bar { display: inline-block; width: 34px; height: 7px; border: 1px solid var(--line); vertical-align: 0; margin-right: 5px; }
+.bar i { display: block; height: 100%; background: var(--ink); }
+.sub { font-size: 12px; font-weight: 600; margin: 14px 0 6px; }
+.prov { font: 11.5px var(--mono); color: var(--muted); border-top: 1px solid var(--faint); padding: 4px 0; }
+.prov.new { color: var(--ink); }
+.foot { font-size: 12px; color: var(--muted); }
+@media (max-width: 1000px) { body { height: auto; display: block; } main { grid-template-columns: 1fr; } section { border-right: 0; border-bottom: 1px solid var(--line); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>I, Agent</h1>
+  <select id="run" aria-label="Run"></select>
+  <span>
+    <button id="first" title="First step">|&lt;</button>
+    <button id="prev" title="Previous step (←)">&lt;</button>
+    <button id="play" title="Play (space)">play</button>
+    <button id="next" title="Next step (→)">&gt;</button>
+    <button id="last" title="Last step">&gt;|</button>
+  </span>
+  <input type="range" id="slider" min="0" value="0" aria-label="Step">
+  <span class="counter" id="counter"></span>
+</header>
+<div class="desc" id="desc"></div>
+<main>
+  <section>
+    <h2>World <span>· sensorimotor layer, ground truth (the agent only sees it through sensor tools)</span></h2>
+    <div class="body"><div id="world"></div><div class="note" id="sensor"></div></div>
+  </section>
+  <section>
+    <h2>Brain <span>· procedural layer, LLM steps and tool calls</span></h2>
+    <div class="body" id="brainBody"><ol class="trace" id="brain"></ol></div>
+  </section>
+  <section>
+    <h2>Memory <span>· declarative layer, belief graph and provenance log</span></h2>
+    <div class="body"><div id="memory"></div></div>
+  </section>
+</main>
+<script>
+const RUNS = /*DATA*/[];
+const $ = id => document.getElementById(id);
+let run = 0, step = 0, timer = null;
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const ago = s => s < 120 ? s + " s" : s < 7200 ? Math.round(s / 60) + " min" : s < 172800 ? Math.round(s / 3600) + " h" : Math.round(s / 86400) + " d";
+const pclass = p => p.startsWith("agent:") ? "p-agent" : "p-" + p;
+const COLOURS = {red: "#c0392b", blue: "#2e5c9a", green: "#3f7d3a", brown: "#7a5230", yellow: "#d9b72c", orange: "#d9782c",
+  black: "#222", white: "#fff", purple: "#6a4c93", grey: "#999", gray: "#999", pink: "#d98aa7", olive: "#7b7a2e", beige: "#e3d6b4"};
+const LIGHT = {yellow: "#f4e9b8", dim: "#dcdad3", normal: "#ffffff"};
+
+// ------------------------------------------------------------------ run picker
+RUNS.forEach((r, i) => {
+  const o = document.createElement("option");
+  o.value = i;
+  o.textContent = `${r.set} · ${r.id} · ${r.passed ? "passed" : "failed"}`;
+  $("run").appendChild(o);
+});
+
+// ------------------------------------------------------------------ world layout
+function layout(world, frames) {
+  const robot = world.robot || {}, routes = world.routes || {}, objects = world.objects || {};
+  const rooms = new Set([robot.room]);
+  Object.values(routes).forEach(r => { rooms.add(r.from); rooms.add(r.to); });
+  Object.values(objects).forEach(o => rooms.add(o.room));
+  Object.keys(world.lighting || {}).forEach(r => rooms.add(r));
+  frames.forEach(f => rooms.add(f.room));
+  rooms.delete(undefined);
+  const pos = {}, taken = new Set(), key = (x, y) => x + "," + y;
+  const put = (room, x, y) => { pos[room] = [x, y]; taken.add(key(x, y)); };
+  put(robot.room, 0, 0);
+  const off = {front: [1, 0], back: [-1, 0], left: [0, -1], right: [0, 1]};
+  Object.entries(robot.facing || {}).forEach(([dir, id]) => {
+    const r = routes[id];
+    if (r && !(r.to in pos) && off[dir]) put(r.to, off[dir][0], off[dir][1]);
+  });
+  let changed = true;
+  while (changed) {
+    changed = false;
+    Object.values(routes).forEach(r => {
+      if (r.from in pos && !(r.to in pos)) {
+        const [x, y] = pos[r.from];
+        for (const [dx, dy] of [[1, 0], [0, 1], [0, -1], [-1, 0]]) {
+          if (!taken.has(key(x + dx, y + dy))) { put(r.to, x + dx, y + dy); changed = true; break; }
+        }
+      }
+    });
+  }
+  const ys = Object.values(pos).map(p => p[1]);
+  let x = Math.min(...Object.values(pos).map(p => p[0]));
+  const yOther = Math.max(...ys) + 1;
+  [...rooms].filter(r => !(r in pos)).sort().forEach(r => put(r, x++, yOther));
+  return pos;
+}
+
+function edgePoint(c, toward, hw, hh) {
+  const dx = toward[0] - c[0], dy = toward[1] - c[1];
+  const t = Math.min(Math.abs(dx) > 1e-9 ? hw / Math.abs(dx) : Infinity, Math.abs(dy) > 1e-9 ? hh / Math.abs(dy) : Infinity);
+  return [c[0] + dx * t, c[1] + dy * t];
+}
+
+function drawWorld(r, f) {
+  const world = r.world, routes = world.routes || {}, objects = world.objects || {};
+  const pos = layout(world, r.frames);
+  const CW = 300, CH = 170, BW = 150, BH = 120, PAD = 24;
+  const xs = Object.values(pos).map(p => p[0]), ys = Object.values(pos).map(p => p[1]);
+  const minX = Math.min(...xs), minY = Math.min(...ys);
+  const W = (Math.max(...xs) - minX + 1) * CW + PAD, H = (Math.max(...ys) - minY + 1) * CH + PAD;
+  const C = room => [PAD / 2 + (pos[room][0] - minX) * CW + CW / 2, PAD / 2 + (pos[room][1] - minY) * CH + CH / 2];
+  const res = f.result && f.result.ok ? f.result.data : null;
+  const lidar = f.name === "read_lidar" && res ? res.payload : null;
+  const camera = f.name === "read_camera" && res ? res.payload : null;
+  const facingOf = {};
+  Object.entries((world.robot || {}).facing || {}).forEach(([d, id]) => facingOf[id] = d);
+  let labels = "";
+  let s = `<svg viewBox="0 0 ${W} ${H}" style="max-width:${W * 1.15}px" role="img" aria-label="World map">`;
+  // routes
+  Object.entries(routes).forEach(([id, rt]) => {
+    if (!(rt.from in pos) || !(rt.to in pos)) return;
+    const a = C(rt.from), b = C(rt.to);
+    const p = edgePoint(a, b, BW / 2, BH / 2), q = edgePoint(b, a, BW / 2, BH / 2);
+    const hot = lidar && lidar.route === id;
+    s += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#1c1c1a" stroke-width="${hot ? 3 : 1.5}"/>`;
+    const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
+    labels += `<text x="${mx}" y="${my - 8}" text-anchor="middle">${esc(id)}${facingOf[id] ? " (" + facingOf[id] + ")" : ""}</text>`;
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]), ux = (q[0] - p[0]) / len, uy = (q[1] - p[1]) / len;
+    const at = cm => Math.min(1, cm / (rt.length_cm || 800)) * len;
+    if (rt.obstacle_cm != null) {
+      const d = Math.max(at(rt.obstacle_cm), 8), ox = p[0] + ux * d, oy = p[1] + uy * d;
+      s += `<rect x="${ox - 5}" y="${oy - 5}" width="10" height="10" fill="#1c1c1a"/>`;
+      labels += `<text x="${(p[0] + q[0]) / 2}" y="${my + 20}" text-anchor="middle">obstacle ${rt.obstacle_cm} cm</text>`;
+    }
+    if (hot && lidar.distance_cm != null) {
+      const d = Math.max(at(lidar.distance_cm), 8), hx = p[0] + ux * d, hy = p[1] + uy * d;
+      s += `<line x1="${p[0]}" y1="${p[1]}" x2="${hx}" y2="${hy}" stroke="#b85c00" stroke-width="3" stroke-dasharray="5 3"/>`;
+      s += `<circle cx="${hx}" cy="${hy}" r="4" fill="none" stroke="#b85c00" stroke-width="2"/>`;
+    }
+  });
+  // rooms
+  Object.keys(pos).forEach(room => {
+    const [cx, cy] = C(room), light = (world.lighting || {})[room] || "normal";
+    const seen = camera && camera.room === room;
+    s += `<rect x="${cx - BW / 2}" y="${cy - BH / 2}" width="${BW}" height="${BH}" fill="${LIGHT[light] || "#fff"}" stroke="${seen ? "#b85c00" : "#1c1c1a"}" stroke-width="${seen ? 3 : 1}"/>`;
+    s += `<text x="${cx - BW / 2 + 6}" y="${cy - BH / 2 + 16}" style="font-weight:600">${esc(room)}</text>`;
+    if (light !== "normal") s += `<text x="${cx - BW / 2 + 6}" y="${cy - BH / 2 + 31}" style="fill:#6a6a64">${esc(light)} light</text>`;
+    const here = Object.entries(objects).filter(([, o]) => o.room === room);
+    let oy = cy - BH / 2 + (light !== "normal" ? 40 : 26);
+    here.forEach(([id, o]) => {
+      const ox = cx - BW / 2 + 8;
+      s += `<rect x="${ox}" y="${oy}" width="14" height="14" fill="${COLOURS[o.color] || "#ccc"}" stroke="#1c1c1a"/>`;
+      s += `<text x="${ox + 20}" y="${oy + 11}">${esc(id)} ${esc(o.color)}</text>`;
+      const det = camera && camera.room === room && camera.detections.find(d => d.object_id === id);
+      if (det) {
+        s += `<text x="${ox + 20}" y="${oy + 26}" style="fill:#b85c00">camera: ${esc(det.perceived_color)}</text>`;
+        oy += 15;
+      }
+      oy += 20;
+    });
+    if (f.room === room) {
+      const rx = cx + BW / 2 - 18, ry = cy + BH / 2 - 18;
+      s += `<circle cx="${rx}" cy="${ry}" r="10" fill="#1c1c1a"/><text x="${rx}" y="${ry + 4}" text-anchor="middle" style="fill:#fff;font-weight:600">R</text>`;
+    }
+  });
+  s += labels + "</svg>";
+  $("world").innerHTML = s;
+  $("sensor").textContent = sensorNote(f);
+}
+
+function sensorNote(f) {
+  if (f.type !== "tool_call") return f.type === "start" ? "Robot (R) waits for a question. Squares show each object's true colour." : "No sensor in use at this step.";
+  const r = f.result || {};
+  if (!r.ok) return `${f.name}: refused by the tool layer\n${r.error || ""}`;
+  const d = r.data || {}, p = d.payload || {};
+  if (f.name === "read_lidar") return p.route ? `LiDAR ${p.direction}: ${p.route}, ${p.distance_cm} cm → ${p.status}` : `LiDAR ${p.direction}: no route in that direction`;
+  if (f.name === "read_camera") return `Camera in ${p.room} (${p.ambient_light} light): ` + (p.detections.length ? p.detections.map(x => `${x.object_id} looks ${x.perceived_color} (${x.confidence})`).join(", ") : "nothing detected");
+  if (f.name === "get_pose") return `Odometry: robot in ${p.room}, facing ${JSON.stringify(p.facing)}`;
+  if (f.name === "move") return d.success ? `Moved: now in ${d.detail.now_in}` : `Move failed: ${(d.detail || {}).error}`;
+  return "Memory tool: the world is not touched.";
+}
+
+// ------------------------------------------------------------------ brain
+function summary(f) {
+  const r = f.result || {};
+  if (!r.ok) return [r.error || "error", true];
+  const d = r.data || {}, p = d.payload || {};
+  const mc = d.memory_check && d.memory_check.conflicts && d.memory_check.conflicts.length
+    ? "\nmemory check: " + d.memory_check.conflicts.map(c => c.stored_value ? `${c.perspective} says ${c.stored_value}` : `${c.subject}: ${c.observation}`).join("; ") + (d.memory_check.advice ? " · " + d.memory_check.advice : "")
+    : "";
+  switch (f.name) {
+    case "read_lidar": return [(p.route ? `${p.route}: ${p.distance_cm} cm, ${p.status}` : "no route") + mc];
+    case "read_camera": return [`${p.room}, ${p.ambient_light} light: ` + (p.detections.map(x => `${x.object_id} ${x.perceived_color}`).join(", ") || "nothing") + mc];
+    case "get_pose": return [`in ${p.room}`];
+    case "move": return [d.success ? `now in ${d.detail.now_in}` : (d.detail || {}).error + mc];
+    case "query_beliefs": {
+      let t = (d.beliefs || []).length ? `${d.beliefs.length} belief(s)` : (d.note || "nothing");
+      (d.disagreements || []).forEach(x => t += `\ndisagree on ${x.entity}.${x.property}: ` + x.newest_first.map(y => `${y.value} (${y.source}, ${y.recorded})`).join(" · "));
+      return [t];
+    }
+    case "get_provenance": return [(d.history || []).length ? `${d.history.length} log record(s)` : d.note];
+    case "update_belief": case "record_user_belief": {
+      const w = d.written;
+      let t = w ? `stored ${w.entity}.${w.property} = ${w.value} [${w.perspective}, ${w.source}, ${w.confidence}]` : "";
+      (d.downgraded || []).forEach(x => t += `\nconflict rule: ${x.perspective} ${x.value} ${x.old_confidence} → ${x.new_confidence}`);
+      return [t];
+    }
+  }
+  return [JSON.stringify(d).slice(0, 200)];
+}
+
+function brainItem(f, now) {
+  const cls = now ? "now" : "";
+  if (f.type === "start") return `<li class="${cls}"><span class="tag t-thought">START</span>${esc(RUNS[run].frames.length - 1)} steps in this run.</li>`;
+  if (f.type === "question") return `<li class="q ${cls}">User: ${esc(f.text)}</li>`;
+  if (f.type === "tool_call") {
+    const [t, err] = summary(f);
+    const args = f.args && Object.keys(f.args).length ? JSON.stringify(f.args) : "";
+    return `<li class="${cls}"><span class="tag t-call">TOOL</span><span class="code">${esc(f.name)}(${esc(args)})</span>` +
+      `<div class="res${err ? " err" : ""}">${esc(t)}</div>${f.mismatch ? '<div class="res err">replay differs from the log</div>' : ""}</li>`;
+  }
+  const tag = {thought: ["THOUGHT", "t-thought"], draft: ["DRAFT", "t-draft"], self_check: ["SELF-CHECK", "t-check"],
+    answer: ["ANSWER", "t-answer"], note: ["NOTE", "t-thought"], error: ["ERROR", "t-check"]}[f.type] || [f.type, "t-thought"];
+  const body = f.type === "self_check" ? "Draft rejected. " + f.text : f.text;
+  return `<li class="${cls}"><span class="tag ${tag[1]}">${tag[0]}</span><span class="${f.type === "draft" ? "draft" : ""}">${esc(body)}</span></li>`;
+}
+
+function drawBrain(r) {
+  $("brain").innerHTML = r.frames.slice(0, step + 1).map((f, i) => brainItem(f, i === step)).join("");
+  const cur = $("brain").lastElementChild;
+  const box = $("brainBody");
+  if (cur) box.scrollTop = Math.max(0, cur.offsetTop + cur.offsetHeight - box.clientHeight + 12);
+}
+
+// ------------------------------------------------------------------ memory
+function drawMemory(r, f) {
+  const prev = step > 0 ? r.frames[step - 1] : f;
+  const before = {};
+  prev.beliefs.forEach(b => before[b.s + "|" + b.p + "|" + b.persp] = b);
+  const rows = [...f.beliefs].sort((a, b) => (a.s + a.p + a.persp).localeCompare(b.s + b.p + b.persp));
+  let html = `<table><thead><tr><th>entity</th><th>property</th><th>value</th><th>perspective · source</th><th>confidence</th><th>age</th></tr></thead><tbody>`;
+  let last = null;
+  rows.forEach(b => {
+    const k = b.s + "|" + b.p + "|" + b.persp, old = before[k];
+    const changed = !old || old.o !== b.o || old.conf !== b.conf;
+    let conf = `<span class="bar"><i style="width:${Math.round(b.conf * 100)}%"></i></span>${b.conf}`;
+    if (old && old.conf !== b.conf) conf = `${old.conf} → ` + conf;
+    const val = old && old.o !== b.o ? `${esc(old.o)} → ${esc(b.o)}` : esc(b.o);
+    html += `<tr class="${changed && step > 0 ? "chg" : ""}"><td class="ent">${b.s === last ? "" : esc(b.s)}</td><td>${esc(b.p)}</td><td>${val}</td>` +
+      `<td><span class="p ${pclass(b.persp)}">${esc(b.persp)}</span><div class="src">${esc(b.src)}</div></td><td class="num">${conf}</td><td class="num">${ago(b.age)}</td></tr>`;
+    last = b.s;
+  });
+  html += "</tbody></table>";
+  const prov = r.provenance.slice(0, f.prov);
+  html += `<div class="sub">Provenance log (SQLite) · ${prov.length} record(s), newest first</div>`;
+  prov.slice().reverse().slice(0, 10).forEach((p, i) => {
+    const isNew = i < f.prov - prev.prov;
+    const val = p.old == null ? `${p.new}` : p.old === p.new ? `${p.new}` : `${p.old} → ${p.new}`;
+    const conf = p.oc == null ? `${p.nc}` : p.oc === p.nc ? `${p.nc}` : `${p.oc} → ${p.nc}`;
+    html += `<div class="prov${isNew ? " new" : ""}">${esc(p.s)}.${esc(p.p)} [${esc(p.persp)}] ${esc(val)} · conf ${conf} · ${esc(p.src)} · ${esc(p.reason)}</div>`;
+  });
+  $("memory").innerHTML = html;
+}
+
+// ------------------------------------------------------------------ controls
+function render() {
+  const r = RUNS[run], f = r.frames[step];
+  $("slider").max = r.frames.length - 1;
+  $("slider").value = step;
+  $("counter").textContent = `step ${step} / ${r.frames.length - 1}`;
+  const failed = r.checks.filter(c => !c.passed).map(c => c.name);
+  $("desc").innerHTML = `<b>${esc(r.id)}</b> (${esc(r.set)}, ${esc(r.level)} ${esc(r.system)}, ${esc(r.model)}). ${esc(r.description)} ` +
+    `<span class="foot">Evaluation: ${r.passed ? "passed" : "failed: " + esc(failed.join("; "))}. Log: ${esc(r.file)}</span>`;
+  drawWorld(r, f);
+  drawBrain(r);
+  drawMemory(r, f);
+}
+function go(i) { step = Math.max(0, Math.min(RUNS[run].frames.length - 1, i)); render(); }
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "play"; }
+$("run").onchange = e => { stop(); run = +e.target.value; step = 0; render(); };
+$("first").onclick = () => { stop(); go(0); };
+$("prev").onclick = () => { stop(); go(step - 1); };
+$("next").onclick = () => { stop(); go(step + 1); };
+$("last").onclick = () => { stop(); go(Infinity); };
+$("slider").oninput = e => { stop(); go(+e.target.value); };
+$("play").onclick = () => {
+  if (timer) return stop();
+  if (step >= RUNS[run].frames.length - 1) step = -1;
+  $("play").textContent = "pause";
+  timer = setInterval(() => { if (step >= RUNS[run].frames.length - 1) stop(); else go(step + 1); }, 1200);
+};
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT") return;
+  if (e.key === "ArrowRight") { stop(); go(step + 1); }
+  if (e.key === "ArrowLeft") { stop(); go(step - 1); }
+  if (e.key === " ") { e.preventDefault(); $("play").click(); }
+});
+const [h0, h1] = location.hash.slice(1).split(",").map(Number);
+if (RUNS[h0]) { run = h0; $("run").value = h0; step = Math.min(h1 || 0, RUNS[run].frames.length - 1); }
+if (RUNS.length) render(); else $("desc").textContent = "No runs. Run python ui.py after evaluate.py.";
+</script>
+</body>
+</html>

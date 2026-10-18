@@ -45,6 +45,7 @@ python evaluate.py --set heldout2         # held-out set 2 (frozen 18 Oct); --se
 python evaluate.py --level plain          # an ablation level (see "Evaluation")
 python run_experiments.py --plan v2       # the whole matrix of sets x levels (5-6 hours locally)
 python report.py                          # results/results.html, results.md, review.html
+python ui.py                              # ui/viewer.html: replay runs step by step (world, brain, memory)
 ```
 
 ### Models and limits
@@ -78,6 +79,7 @@ python report.py                          # results/results.html, results.md, re
 | `evaluate.py` | Udit | Test suite runner: `--set`, `--level`, `--temperature`, `--rescore` |
 | `run_experiments.py` | Udit | Runs every set x level combination in priority order |
 | `report.py` | Udit | Pools all runs into tables, an ablation chart and a hand-review sheet |
+| `ui.py`, `ui/template.html` | team | Replay viewer: re-executes a logged run's tool calls and shows the world, the LLM's steps and the belief graph at every step |
 
 ## Key design decisions
 
