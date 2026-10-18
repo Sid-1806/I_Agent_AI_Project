@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional, Protocol
 
+from .schemas import SELF
 from .tools import ToolRegistry
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "system.md"
@@ -135,7 +136,8 @@ class Agent:
 
             if not reply["tool_calls"] and reply["content"]:
                 # Small models sometimes write a tool call as text instead of calling it.
-                calls, leftover = extract_text_tool_calls(reply["content"], self.tools.names)
+                calls, leftover = extract_text_tool_calls(reply["content"], self.tools.names,
+                                                          self._required_params())
                 if calls:
                     trace.append({"step": step, "type": "note", "text": f"parsed {len(calls)} tool call(s) from text"})
                     reply = {"content": leftover or None, "tool_calls": calls}
@@ -180,6 +182,10 @@ class Agent:
         return AgentResult(question=question, answer=answer, trace=trace,
                            belief_changes=store.diff(v_before, v_after))
 
+    def _required_params(self) -> dict[str, set[str]]:
+        return {t["function"]["name"]: set(t["function"]["parameters"].get("required", []))
+                for t in self.tools.schemas}
+
     def check_answer(self, answer: str, trace: list[dict]) -> list[str]:
         """Epistemic validation: compare a draft answer with what actually happened in the layers.
 
@@ -196,8 +202,11 @@ class Agent:
                       for s in trace)
         checked_memory = any(s["type"] == "tool_call" and s["name"] in _MEMORY_READS for s in trace)
         if not checked_memory:
-            problems.append("You have not checked memory yet. Call query_beliefs (and get_pose if "
-                            "the question is about your route or location) before answering.")
+            named = sorted({e for q in self.user_turns[-1:] for e in _ENTITY_ID.findall(q.lower())})
+            call = f'query_beliefs(entity="{named[0]}")' if len(named) == 1 else "query_beliefs()"
+            problems.append(f"You have not checked memory yet: no query_beliefs call appears in this conversation, "
+                            f"and writing that you checked does not check it. Do not answer yet; make this tool "
+                            f"call now: {call} (and get_pose if the question is about your route or location).")
         recorded_user = any(s["type"] == "tool_call" and s["name"] == "record_user_belief" and s["result"].get("ok")
                             for s in trace)
         stated = [m.group(0) for q in self.user_turns if (m := _USER_STATES.search(q))]
@@ -210,9 +219,10 @@ class Agent:
         observed = _observed_entities(trace)
         unseen = sorted({e for e in _ENTITY_ID.findall(answer.lower()) if e not in observed})
         if unseen and not _SAYS_UNKNOWN.search(answer):
-            problems.append(f"No memory record or sensor reading mentions {', '.join(unseen)}. Do not give "
-                            f"{'it' if len(unseen) == 1 else 'them'} properties seen on other objects; if you "
-                            f"have no information, say so.")
+            problems.append(f"No memory record or sensor reading mentions {', '.join(unseen)}. The camera sees "
+                            f"only the room you are in ({self.tools.env.robot['room']}), so an object it does not "
+                            f"list is not in view. Do not give {'it' if len(unseen) == 1 else 'them'} properties "
+                            f"seen on other objects; say plainly that you do not know.")
         for entity in self.tools.unverified_map_entities(answer, trace):
             problems.append(f"Your answer relies on the static map for {entity['subject']} "
                             f"({entity['predicate']} = {entity['value']}, {entity['age_s']} s old) without a live "
@@ -223,6 +233,29 @@ class Agent:
         if _CLAIMS_UPDATE.search(answer) and not updated:
             problems.append("You said you updated a belief, but you never called update_belief, "
                             "so memory is unchanged. Call update_belief now, or do not claim it.")
+        if checked_memory:
+            store = self.tools.store
+            for entity in store.subjects():
+                if entity == "robot" or not _says(answer, entity):
+                    continue
+                hidden = sorted({f"{b.predicate} from {b.perspective}" for b in store.query(entity)
+                                 if (entity, b.predicate, b.perspective) not in self.tools.shown})
+                if hidden:
+                    problems.append(f"Memory holds records about {entity} that you have not looked at "
+                                    f"({', '.join(hidden)}). Call query_beliefs(entity=\"{entity}\") and take "
+                                    f"every record into account before answering.")
+        for (entity, prop), d in self.tools.shown_disagreements.items():
+            records = [r for r in d["newest_first"] if r["perspective"] != SELF]
+            if len({r["value"] for r in records}) < 2:
+                continue
+            if not (_says(answer, entity) or any(_says(answer, r["value"]) for r in records)):
+                continue
+            missing = [r for r in records if not _says(answer, r["value"])]
+            if missing:
+                listing = "; ".join(f"{r['value']} from {r['source']} ({r['recorded']})" for r in records)
+                problems.append(f"Your records disagree about {entity}.{prop}: {listing}. Your answer leaves out "
+                                f"{', '.join(r['value'] + ' from ' + r['source'] for r in missing)}. Report every "
+                                f"record with its source and age, then say which one you trust more and why.")
         for c in self.tools.actionable_conflicts():
             stored = ", ".join(f"{x['perspective']} says {x['stored_value']}" for x in c["conflicts"])
             if c["confirmed"]:
@@ -239,6 +272,12 @@ class Agent:
 
 
 _MEMORY_READS = {"query_beliefs", "get_provenance"}
+
+
+def _says(text: str, term: str) -> bool:
+    """Whether the text names a term, treating '_' and ' ' alike ('box_01' matches 'box 01')."""
+    norm = lambda x: re.sub(r"[_\s]+", " ", x.lower())
+    return re.search(r"(?<![a-z0-9])" + re.escape(norm(term)) + r"(?![a-z0-9])", norm(text)) is not None
 _USER_STATES = re.compile(r"\bI (left|put|placed|dropped|moved|think|believe|thought|saw|remember|"
                           r"painted|parked|stored)\b[^.?!]{0,60}", re.IGNORECASE)
 _ENTITY_ID = re.compile(r"\b[a-z]+_\d+\b")
@@ -271,30 +310,75 @@ def run_baseline(llm: LLM, memory: list[dict], question_turns: list[str]) -> Age
                        trace=[{"step": 1, "type": "answer", "text": answer}])
 
 
-def extract_text_tool_calls(text: str, tool_names: list[str]) -> tuple[list[dict], str]:
-    """Find tool calls written as text, e.g. '-update_belief {"subject": ...}'.
+def extract_text_tool_calls(text: str, tool_names: list[str],
+                            required: Optional[dict[str, set[str]]] = None) -> tuple[list[dict], str]:
+    """Find tool calls written as text instead of made through the API.
 
-    Returns (calls, remaining_text). Only a known tool name directly followed by a JSON object counts.
+    Three forms are recognised:
+      update_belief {"entity": ...}                          a tool name directly followed by JSON
+      {"name": "move", "arguments": {"route": "route_B"}}    a JSON call object, e.g. in a ```json block
+      {"entity": ..., "property": ..., "value": ..., ...}    bare arguments that fit exactly one tool
+    Returns (calls, remaining_text).
     """
     decoder = json.JSONDecoder()
-    pattern = re.compile(r"\b(" + "|".join(map(re.escape, tool_names)) + r")\b\s*(\(\s*)?(?=\{)")
-    calls, spans, pos = [], [], 0
-    while (m := pattern.search(text, pos)):
+    required = required or {}
+    calls, spans = [], []
+
+    def add(name: str, args: dict, start: int, end: int) -> None:
+        calls.append({"id": f"text_call_{len(calls)}", "name": name, "arguments": json.dumps(args)})
+        spans.append((start, end))
+
+    named = re.compile(r"\b(" + "|".join(map(re.escape, tool_names)) + r")\b\s*(\(\s*)?(?=\{)")
+    pos = 0
+    while (m := named.search(text, pos)):
         try:
             args, end = decoder.raw_decode(text, m.end())
         except json.JSONDecodeError:
             pos = m.end()
             continue
         if isinstance(args, dict):
-            calls.append({"id": f"text_call_{len(calls)}", "name": m.group(1), "arguments": json.dumps(args)})
-            spans.append((m.start(), end))
+            add(m.group(1), args, m.start(), end)
         pos = end
+
+    # query_beliefs(entity="box_01", property="color") or get_pose()
+    pycall = re.compile(r"\b(" + "|".join(map(re.escape, tool_names)) +
+                        r")\(\s*((?:\w+\s*=\s*(?:\"[^\"]*\"|'[^']*'|[\w.]+)\s*,?\s*)*)\)")
+    for m in pycall.finditer(text):
+        if any(a <= m.start() < b for a, b in spans):
+            continue
+        args = {k: (v1 or v2 or v3) for k, v1, v2, v3 in
+                re.findall(r"(\w+)\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|([\w.]+))", m.group(2))}
+        add(m.group(1), args, m.start(), m.end())
+
+    pos = 0
+    while (i := text.find("{", pos)) != -1:
+        if any(a <= i < b for a, b in spans):
+            pos = i + 1
+            continue
+        try:
+            obj, end = decoder.raw_decode(text, i)
+        except json.JSONDecodeError:
+            pos = i + 1
+            continue
+        pos = end
+        if not isinstance(obj, dict):
+            continue
+        args = obj.get("arguments", obj.get("parameters"))
+        if obj.get("name") in tool_names and isinstance(args, (dict, type(None))):
+            add(obj["name"], args or {}, i, end)
+            continue
+        fits = [n for n in tool_names if required.get(n) and required[n] <= set(obj)]
+        if len(fits) == 1:
+            add(fits[0], obj, i, end)
+
+    spans.sort()
     leftover, last = [], 0
     for a, b in spans:
         leftover.append(text[last:a])
         last = b
     leftover.append(text[last:])
-    return calls, re.sub(r"\s*-\s*$", "", "".join(leftover)).strip()
+    rest = re.sub(r"```(json)?\s*```", "", "".join(leftover))
+    return calls, re.sub(r"\s*-\s*$", "", rest).strip()
 
 
 _NON_EVIDENCE_KEYS = ("note", "advice", "error", "ignored_arguments")

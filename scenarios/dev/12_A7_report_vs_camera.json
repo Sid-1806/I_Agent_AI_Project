@@ -1,0 +1,78 @@
+{
+  "id": "A7_report_vs_camera",
+  "type": "A",
+  "owner": "Udit",
+  "description": "Two hours ago bot_04 reported box_05 in Room_101. The camera in Room_101 now sees no box_05. The live sensor wins for the current state, but bot_04's report is a historical record and must not be overwritten.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_05": {
+        "type": "box",
+        "room": "Room_212",
+        "color": "green"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_05",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "agent:bot_04",
+      "source": "bot_04_log",
+      "confidence": 0.9,
+      "age_s": 7200
+    }
+  ],
+  "turns": [
+    "Is box_05 here in this room? Check before you answer."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "not here",
+        "not in this room",
+        "not in room",
+        "not present",
+        "cannot see",
+        "can't see",
+        "don't see",
+        "do not see",
+        "not visible",
+        "not detect",
+        "did not detect",
+        "didn't detect",
+        "isn't here",
+        "is not here",
+        "is not in",
+        "isn't in",
+        "not currently in",
+        "not found"
+      ],
+      [
+        "bot_04",
+        "bot 04"
+      ]
+    ],
+    "tools_required": [
+      "read_camera"
+    ],
+    "tools_any": [
+      [
+        "query_beliefs",
+        "get_provenance"
+      ]
+    ],
+    "beliefs": [
+      {
+        "subject": "box_05",
+        "predicate": "located_at",
+        "perspective": "agent:bot_04",
+        "value": "Room_101"
+      }
+    ]
+  }
+}

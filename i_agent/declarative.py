@@ -26,7 +26,7 @@ from .schemas import MAP, SELF, Belief, ProvenanceRecord
 # ever downgraded automatically: user and third-party beliefs are other minds' views, which the
 # agent must keep (Theory of Mind), not overwrite.
 SOURCE_RANK = {"sensor": 3, "agent": 2, "map": 1, "user": 0}
-SENSOR_SOURCES = ("lidar", "camera", "sensor", "bumper")
+SENSOR_SOURCES = ("lidar", "camera", "sensor", "bumper", "odometry")
 MAP_DOWNGRADE_FACTOR = 0.3
 
 _SCHEMA = """

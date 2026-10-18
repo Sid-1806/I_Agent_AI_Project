@@ -5,7 +5,7 @@ Owner: Rudraksh
 import json
 
 from i_agent.evaluation import run_checks
-from i_agent.procedural import Agent, ToolCallFormatError
+from i_agent.procedural import Agent, ToolCallFormatError, extract_text_tool_calls
 from i_agent.scenario import build_world, load_scenario
 
 
@@ -299,8 +299,71 @@ def test_invented_values_cannot_be_written_to_memory():
     out = json.loads(world.tools.execute("update_belief", {**write, "value": "red"}))
     assert out["ok"] is False and "does not appear" in out["error"]
     world.tools.execute("query_beliefs", {"entity": "box_01"})
-    out = json.loads(world.tools.execute("update_belief", {**write, "value": "green", "source": "bot_03_log"}))
+    out = json.loads(world.tools.execute("update_belief", {**write, "value": "green", "source": "camera"}))
     assert out["ok"] is True
+
+
+def test_another_robots_report_cannot_be_copied_into_self():
+    world = build_world(load_scenario("B3"))
+    world.tools.execute("query_beliefs", {"entity": "box_01"})
+    out = json.loads(world.tools.execute("update_belief", {
+        "entity": "box_01", "property": "color", "value": "green", "source": "bot_03_log",
+        "confidence": 0.85, "reason": "newest report"}))
+    assert out["ok"] is False and "not one of your sensors" in out["error"]
+    assert world.store.get("box_01", "color", "self") is None
+
+
+def test_values_seen_on_one_object_cannot_be_written_to_another():
+    world = build_world(load_scenario("H1"))  # camera sees box_01 (blue); crate_07 is unknown
+    world.tools.execute("read_camera", {})
+    out = json.loads(world.tools.execute("update_belief", {
+        "entity": "crate_07", "property": "color", "value": "blue", "source": "camera",
+        "confidence": 0.9, "reason": "x"}))
+    assert out["ok"] is False and "crate_07" in out["error"]
+
+
+def test_json_tool_calls_without_a_tool_name_are_parsed():
+    names = ["update_belief", "move", "query_beliefs"]
+    required = {"update_belief": {"entity", "property", "value", "source", "confidence", "reason"},
+                "move": {"route"}, "query_beliefs": set()}
+    text = ('I will record it.\n```json\n{"entity": "route_B", "property": "status", "value": "clear", '
+            '"source": "lidar_front", "confidence": 1.0, "reason": "two readings"}\n```\n'
+            'Then:\n```json\n{"name": "move", "arguments": {"route": "route_B"}}\n```')
+    calls, rest = extract_text_tool_calls(text, names, required)
+    assert [c["name"] for c in calls] == ["update_belief", "move"]
+    assert json.loads(calls[1]["arguments"]) == {"route": "route_B"}
+    assert "```" not in rest and "route_B" not in rest
+
+
+def test_self_check_requires_every_disagreeing_record():
+    world = build_world(load_scenario("B3"))
+    llm = ScriptedLLM([
+        [("query_beliefs", {"entity": "box_01"})],
+        "box_01 is green according to bot_03, which I trust more because it is newer.",
+        "bot_03 reported green 10 min ago and bot_02 reported blue 1 h ago; I trust green from bot_03 more "
+        "because it is newer.",
+    ])
+    agent = Agent(world.tools, llm)
+    result = agent.ask("What color is box_01?")
+    checks = [s["text"] for s in result.trace if s["type"] == "self_check"]
+    assert len(checks) == 1 and "leaves out blue" in checks[0]
+    assert "blue" in result.answer
+
+
+def test_self_check_requires_looking_at_all_records_about_a_named_entity():
+    world = build_world(load_scenario("B1"))  # memory also has bot_02's colour record for box_01
+    llm = ScriptedLLM([
+        [("query_beliefs", {"entity": "box_01", "property": "located_at"})],
+        "box_01 is in Room_101.",
+        [("query_beliefs", {"entity": "box_01"}), ("read_camera", {})],
+        "box_01 is in Room_101.",
+        "box_01 is in Room_101.",
+        "box_01 is in Room_101.",
+    ])
+    agent = Agent(world.tools, llm, self_check=True)
+    result = agent.ask("Where is box_01?")
+    checks = [s["text"] for s in result.trace if s["type"] == "self_check"]
+    assert checks and "not looked at" in checks[0] and "color from agent:bot_02" in checks[0]
 
 
 def test_a_no_record_note_does_not_count_as_evidence():
@@ -356,3 +419,11 @@ def test_levels_run_end_to_end_with_a_scripted_model():
         llm = ScriptedLLM([[("read_lidar", {"direction": "front"})], "It is blocked."] + ["It is blocked."] * 6)
         rec = run_scenario(load_scenario("A1"), llm, level=level)
         assert rec["mode"] == level and rec["set"] == "dev"
+
+
+def test_python_style_tool_calls_are_parsed():
+    calls, rest = extract_text_tool_calls('Checking now: query_beliefs(entity="crate_07") and get_pose().',
+                                          ["query_beliefs", "get_pose"])
+    assert [(c["name"], json.loads(c["arguments"])) for c in calls] == [
+        ("query_beliefs", {"entity": "crate_07"}), ("get_pose", {})]
+    assert "query_beliefs" not in rest

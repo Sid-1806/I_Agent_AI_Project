@@ -24,7 +24,7 @@ import inspect
 import json
 from typing import Any, Callable
 
-from .declarative import BeliefStore
+from .declarative import BeliefStore, source_kind
 from .schemas import MAP, SELF, USER, Belief, ToolResult
 from .sensorimotor import MockEnv
 
@@ -140,6 +140,12 @@ class ToolRegistry:
         # Everything the agent has been shown by a read tool. update_belief may only write values
         # that appear here, so an invented fact can never enter memory.
         self._observed = ""
+        # Entities a sensor actually measured or detected in this conversation.
+        self._sensed: set[str] = set()
+        # (entity, property, perspective) of every stored belief a tool result has shown the agent,
+        # and the disagreements query_beliefs reported. The self-check uses both.
+        self.shown: set[tuple[str, str, str]] = set()
+        self.shown_disagreements: dict[tuple[str, str], dict] = {}
 
     @property
     def names(self) -> list[str]:
@@ -212,10 +218,13 @@ class ToolRegistry:
             return {"beliefs": [], "note": "No matching beliefs in memory. You have no record of this.",
                     "known_entities": entities}
         rows.sort(key=lambda r: (r["entity"], r["property"], r["age_s"]))
+        self.shown |= {(r["entity"], r["property"], r["perspective"]) for r in rows}
         out: dict = {"beliefs": rows}
         disagreements = self._disagreements(rows) if self.disagreement_summary else []
         if disagreements:
             out["disagreements"] = disagreements
+            for d in disagreements:
+                self.shown_disagreements[(d["entity"], d["property"])] = d
         if note:
             out["note"] = note
         return out
@@ -252,19 +261,30 @@ class ToolRegistry:
                          "age_s": round(now - r.timestamp)})
         if not rows:
             return {"history": [], "note": f"No provenance records for '{entity}'."}
+        self.shown |= {(r["entity"], r["property"], r["perspective"]) for r in rows}
         return {"history": rows}
 
     def update_belief(self, entity: str, property: str, value: str, source: str,
                       confidence: float, reason: str):
         v = str(value).strip().lower()
-        if self.grounded_writes and v not in self._observed and not v.startswith(NEGATIVE_VALUES):
-            raise ValueError(f"'{value}' does not appear in any memory record or sensor reading you have seen, "
-                             f"so it cannot be written to memory. update_belief records only what you observed. "
-                             f"Check the source again, or say that you do not know.")
         known_properties = {b.predicate for b in self.store.query()}
         if entity in known_properties and entity not in self.store.subjects():
             raise ValueError(f"'{entity}' is a property, not an entity. entity must be the thing the "
                              f"belief is about, e.g. one of {self.store.subjects()}; property is e.g. '{entity}'.")
+        if self.grounded_writes:
+            if v not in self._observed and not v.startswith(NEGATIVE_VALUES):
+                raise ValueError(f"'{value}' does not appear in any memory record or sensor reading you have "
+                                 f"seen, so it cannot be written to memory. update_belief records only what you "
+                                 f"observed. Check the source again, or say that you do not know.")
+            if entity not in self._sensed and entity not in self.store.subjects():
+                raise ValueError(f"No sensor reading or memory record mentions '{entity}', so nothing about it "
+                                 f"can be written. Values seen on other objects do not apply to it. If you have "
+                                 f"no information about {entity}, say that you do not know.")
+            if source_kind(source) != "sensor":
+                raise ValueError(f"update_belief stores YOUR OWN sensor observations, and '{source}' is not one "
+                                 f"of your sensors (lidar, camera, bumper, odometry). Reports from other robots, "
+                                 f"the map and the user are already stored under their own perspective: report "
+                                 f"them in your answer with their source and age instead of copying them.")
         belief = Belief(subject=entity, predicate=property, obj=str(value), perspective=SELF,
                         source=source, confidence=float(confidence), timestamp=self.store.clock.now())
         self.open_conflicts.pop((entity, property), None)
@@ -276,6 +296,10 @@ class ToolRegistry:
         return self._summary(self.store.assert_belief(belief, reason=f"user said: {evidence}"))
 
     def _summary(self, change: dict) -> dict:
+        written = change["written"]
+        if written:
+            self.shown.add((written["subject"], written["predicate"], written["perspective"]))
+        self.shown |= {(d["subject"], d["predicate"], d["perspective"]) for d in change["downgraded"]}
         def plain(b):
             return None if b is None else {"entity": b["subject"], "property": b["predicate"], "value": b["obj"],
                                            "perspective": b["perspective"], "source": b["source"],
@@ -304,6 +328,8 @@ class ToolRegistry:
     def read_lidar(self, direction: str = "front"):
         reading = self.env.read_lidar(direction).model_dump()
         route, status = reading["payload"].get("route"), reading["payload"]["status"]
+        if route is not None:
+            self._sensed.add(route)
         if route is None or not self.memory_check:
             return reading
         confirmed = self._last_lidar.get(route) == status
@@ -321,11 +347,14 @@ class ToolRegistry:
 
     def read_camera(self, camera: str = "front"):
         reading = self.env.read_camera().model_dump()
-        if not self.memory_check:
-            return reading
         payload = reading["payload"]
         room, light = payload["room"], payload["ambient_light"]
         seen = {d["object_id"]: d for d in payload["detections"]}
+        self._sensed |= set(seen) | {room}
+        payload["note"] = (f"The camera sees only {room}, the room you are in. Objects not listed in "
+                           f"detections are not in view, and their colours are unknown to the camera.")
+        if not self.memory_check:
+            return reading
         found = []
         # Objects memory places in this room that the camera cannot see.
         for b in self.store.query(predicate="located_at"):
@@ -350,6 +379,7 @@ class ToolRegistry:
 
     def move(self, route: str):
         result = self.env.move(route).model_dump()
+        self._sensed.add(route)
         if self.memory_check and "bumper" in result["detail"].get("error", ""):
             conflicts = self._conflicts_with(route, "status", "blocked")
             self._track(route, "status", "blocked", conflicts, True, "bumper")

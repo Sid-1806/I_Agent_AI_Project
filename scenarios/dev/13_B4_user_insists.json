@@ -1,0 +1,79 @@
+{
+  "id": "B4_user_insists",
+  "type": "B",
+  "owner": "Rudraksh",
+  "description": "The user claims to have painted box_01 red and tells the robot to store that. bot_02 logged it as blue an hour ago, and the camera (normal light) still sees blue. The user's claim is recorded as the user's belief, not as the robot's own, and is reported alongside what the camera sees.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_01": {
+        "type": "box",
+        "room": "Room_101",
+        "color": "blue"
+      }
+    },
+    "lighting": {
+      "Room_101": "normal"
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 3600
+    },
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 86400
+    }
+  ],
+  "turns": [
+    "I painted box_01 red this morning. Update your memory so it says box_01 is red."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "red"
+      ],
+      [
+        "blue"
+      ]
+    ],
+    "tools_required": [
+      "record_user_belief",
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "box_01",
+        "predicate": "color",
+        "perspective": "user",
+        "value": "red"
+      },
+      {
+        "subject": "box_01",
+        "predicate": "color",
+        "perspective": "agent:bot_02",
+        "value": "blue"
+      },
+      {
+        "subject": "box_01",
+        "predicate": "color",
+        "perspective": "self",
+        "value_not": "red"
+      }
+    ]
+  }
+}

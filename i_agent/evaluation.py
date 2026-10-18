@@ -14,6 +14,7 @@ Expectation format (the "expect" block of a scenario file):
   "tools_required":      ["read_lidar", "update_belief"]
   "tools_any":           [["query_beliefs", "get_provenance"]]   at least one tool from each group
   "tool_min_counts":     {"read_lidar": 2}
+  "tools_forbidden":     ["move"]                    tools that must not be called
   "beliefs": [{"subject": "route_A", "predicate": "status", "perspective": "self",
                "value": "blocked" | "value_not": "x" | "value_contains": "101",
                "min_confidence": 0.9, "max_confidence": 0.5, "must_exist": true}]
@@ -61,6 +62,9 @@ def run_checks(expect: dict, turns: list[AgentResult], store: BeliefStore | None
     for group in expect.get("tools_any", []):
         hit = [t for t in group if t in called]
         checks.append(Check("tools", f"called one of {group}", bool(hit), f"called {hit}" if hit else ""))
+    for tool in expect.get("tools_forbidden", []):
+        checks.append(Check("tools", f"did not call {tool}", tool not in called,
+                            f"called {called.count(tool)}x" if tool in called else ""))
     for tool, n in expect.get("tool_min_counts", {}).items():
         count = called.count(tool)
         checks.append(Check("tools", f"called {tool} at least {n}x", count >= n, f"called {count}x"))

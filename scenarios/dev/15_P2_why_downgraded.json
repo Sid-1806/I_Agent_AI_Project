@@ -1,0 +1,80 @@
+{
+  "id": "P2_why_downgraded",
+  "type": "provenance",
+  "owner": "Siddh",
+  "description": "Two turns. First the agent finds route_A blocked (LiDAR 15 cm) and the map is downgraded. Then the user asks why the map entry now has lower confidence. The agent must read the provenance log and cite the LiDAR as the cause.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {
+        "front": "route_A"
+      }
+    },
+    "routes": {
+      "route_A": {
+        "from": "Room_101",
+        "to": "Room_102",
+        "length_cm": 800,
+        "obstacle_cm": 15
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 60
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 86400
+    }
+  ],
+  "turns": [
+    "Is your route clear? Check before you answer.",
+    "Why does the map entry for route_A have a lower confidence now, and what caused the change?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "lidar"
+      ],
+      [
+        "0.3",
+        "downgrad",
+        "downgraded",
+        "lowered",
+        "reduced",
+        "contradict",
+        "contradicted"
+      ]
+    ],
+    "tools_required": [
+      "get_provenance",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_A",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "blocked"
+      },
+      {
+        "subject": "route_A",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ]
+  }
+}
