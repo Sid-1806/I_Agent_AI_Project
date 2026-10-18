@@ -1,0 +1,75 @@
+{
+  "id": "NA2_drive_request_clear",
+  "type": "A",
+  "description": "The user asks the robot to go to Room 220. The week-old map says route_M is blocked, but it has been cleared (LiDAR reads 500 cm).",
+  "world": {
+    "robot": {
+      "room": "Room_210",
+      "facing": {
+        "left": "route_M"
+      }
+    },
+    "routes": {
+      "route_M": {
+        "from": "Room_210",
+        "to": "Room_220",
+        "length_cm": 500
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "route_M",
+      "predicate": "leads_to",
+      "obj": "Room_220",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 604800
+    },
+    {
+      "subject": "route_M",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 604800
+    }
+  ],
+  "turns": [
+    "Can you get to Room 220 along route_M? Check first."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "clear",
+        "open",
+        "passable",
+        "free"
+      ]
+    ],
+    "answer_excludes": [
+      "cannot get",
+      "can't get"
+    ],
+    "tools_required": [
+      "read_lidar",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_M",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "clear"
+      },
+      {
+        "subject": "route_M",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ]
+  }
+}

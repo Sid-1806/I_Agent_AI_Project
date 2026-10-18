@@ -1,0 +1,77 @@
+{
+  "id": "NP2_why_downgraded_left",
+  "type": "provenance",
+  "description": "Two turns. The map says route_L (to the robot's left) is clear; the LiDAR reads 18 cm. After the agent updates, the user asks why the map entry lost confidence.",
+  "world": {
+    "robot": {
+      "room": "Room_160",
+      "facing": {
+        "left": "route_L"
+      }
+    },
+    "routes": {
+      "route_L": {
+        "from": "Room_160",
+        "to": "Room_161",
+        "length_cm": 650,
+        "obstacle_cm": 18
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_L",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 60
+    },
+    {
+      "subject": "route_L",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 259200
+    }
+  ],
+  "turns": [
+    "Can you take your planned route? Check before answering.",
+    "What changed in your memory about route_L just now, and what caused it?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "lidar"
+      ],
+      [
+        "0.3",
+        "downgraded",
+        "lowered",
+        "reduced",
+        "contradicted"
+      ]
+    ],
+    "tools_required": [
+      "get_provenance",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_L",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "blocked"
+      },
+      {
+        "subject": "route_L",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ]
+  }
+}

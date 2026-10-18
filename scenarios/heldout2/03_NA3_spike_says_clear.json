@@ -1,0 +1,77 @@
+{
+  "id": "NA3_spike_says_clear",
+  "type": "A",
+  "description": "The map says route_P is blocked. The first LiDAR reading is a spurious 700 cm (clear); the next readings show 25 cm, agreeing with the map. The agent must re-read and keep the route blocked.",
+  "world": {
+    "robot": {
+      "room": "Room_130",
+      "facing": {
+        "front": "route_P"
+      }
+    },
+    "routes": {
+      "route_P": {
+        "from": "Room_130",
+        "to": "Room_131",
+        "length_cm": 700
+      }
+    },
+    "lidar_script": {
+      "route_P": [
+        700,
+        25,
+        24
+      ]
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_P",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 60
+    },
+    {
+      "subject": "route_P",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 3600
+    }
+  ],
+  "turns": [
+    "Is your planned route clear?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "blocked",
+        "obstruction",
+        "obstructed",
+        "obstacle"
+      ]
+    ],
+    "tool_min_counts": {
+      "read_lidar": 2
+    },
+    "beliefs": [
+      {
+        "subject": "route_P",
+        "predicate": "status",
+        "perspective": "self",
+        "value_not": "clear"
+      },
+      {
+        "subject": "route_P",
+        "predicate": "status",
+        "perspective": "map",
+        "min_confidence": 0.9
+      }
+    ]
+  }
+}

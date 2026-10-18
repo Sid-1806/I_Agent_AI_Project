@@ -9,12 +9,13 @@ from i_agent.scenario import SCENARIO_DIR, all_scenarios, build_world, load_scen
 
 DEV = all_scenarios("dev")
 HELDOUT = all_scenarios("heldout")
+HELDOUT2 = all_scenarios("heldout2")
 
 
-def test_each_set_has_ten_scenarios_and_ids_are_unique_across_sets():
-    assert len(DEV) == 10 and len(HELDOUT) == 10
-    ids = [s["id"] for s in DEV + HELDOUT]
-    assert len(set(ids)) == 20
+def test_sets_have_the_expected_size_and_ids_are_unique_across_sets():
+    assert len(DEV) == 15 and len(HELDOUT) == 10
+    ids = [s["id"] for s in DEV + HELDOUT + HELDOUT2]
+    assert len(set(ids)) == len(ids)
 
 
 def test_short_ids_find_the_right_set():
@@ -32,10 +33,11 @@ def test_scenario_builds(scenario):
     world.env.get_pose()
 
 
-def test_heldout_files_match_their_frozen_hashes():
-    frozen = (SCENARIO_DIR / "heldout" / "FROZEN.md").read_text(encoding="utf-8")
+@pytest.mark.parametrize("set_name, count", [("heldout", 10), ("heldout2", 11)])
+def test_heldout_files_match_their_frozen_hashes(set_name, count):
+    frozen = (SCENARIO_DIR / set_name / "FROZEN.md").read_text(encoding="utf-8")
     expected = {name: digest for digest, name in re.findall(r"`([0-9a-f]{64})`\s+`([^`]+\.json)`", frozen)}
-    assert len(expected) == 10
+    assert len(expected) == count == len(list((SCENARIO_DIR / set_name).glob("*.json")))
     for name, digest in expected.items():
-        data = (SCENARIO_DIR / "heldout" / name).read_bytes()
+        data = (SCENARIO_DIR / set_name / name).read_bytes()
         assert hashlib.sha256(data).hexdigest() == digest, f"{name} changed after it was frozen"

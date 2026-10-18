@@ -1,0 +1,72 @@
+{
+  "id": "NB3_two_reports_location",
+  "type": "B",
+  "description": "bot_08 reported box_09 in Room_140 three hours ago; bot_09 reported it in Room_141 fifteen minutes ago. The agent must report both and trust the newer one.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_09": {
+        "type": "box",
+        "room": "Room_141",
+        "color": "red"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_09",
+      "predicate": "located_at",
+      "obj": "Room_140",
+      "perspective": "agent:bot_08",
+      "source": "bot_08_log",
+      "confidence": 0.9,
+      "age_s": 10800
+    },
+    {
+      "subject": "box_09",
+      "predicate": "located_at",
+      "obj": "Room_141",
+      "perspective": "agent:bot_09",
+      "source": "bot_09_log",
+      "confidence": 0.85,
+      "age_s": 900
+    }
+  ],
+  "turns": [
+    "Where is box_09 according to your records, and which report do you trust more?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "140"
+      ],
+      [
+        "141"
+      ],
+      [
+        "bot_09",
+        "bot 09"
+      ]
+    ],
+    "tools_required": [
+      "query_beliefs"
+    ],
+    "beliefs": [
+      {
+        "subject": "box_09",
+        "predicate": "located_at",
+        "perspective": "agent:bot_08",
+        "value": "Room_140"
+      },
+      {
+        "subject": "box_09",
+        "predicate": "located_at",
+        "perspective": "agent:bot_09",
+        "value": "Room_141"
+      }
+    ]
+  }
+}

@@ -23,7 +23,7 @@ from .sensorimotor import MockEnv
 from .tools import ToolRegistry
 
 SCENARIO_DIR = Path(__file__).resolve().parent.parent / "scenarios"
-SETS = ("dev", "heldout")
+SETS = ("dev", "heldout", "heldout2")
 
 
 @dataclass

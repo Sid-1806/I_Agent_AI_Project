@@ -1,0 +1,85 @@
+{
+  "id": "NA4_report_vs_camera_dim",
+  "type": "A",
+  "description": "Three hours ago bot_07 reported crate_08 in Room_115. The robot is in Room_115 (dim light) and the camera does not see crate_08. bot_07's record must stay as it is.",
+  "world": {
+    "robot": {
+      "room": "Room_115",
+      "facing": {}
+    },
+    "objects": {
+      "crate_08": {
+        "type": "crate",
+        "room": "Room_150",
+        "color": "yellow"
+      },
+      "bin_02": {
+        "type": "bin",
+        "room": "Room_115",
+        "color": "grey"
+      }
+    },
+    "lighting": {
+      "Room_115": "dim"
+    }
+  },
+  "memory": [
+    {
+      "subject": "crate_08",
+      "predicate": "located_at",
+      "obj": "Room_115",
+      "perspective": "agent:bot_07",
+      "source": "bot_07_log",
+      "confidence": 0.9,
+      "age_s": 10800
+    }
+  ],
+  "turns": [
+    "Is crate_08 in this room with you?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "not here",
+        "not in this room",
+        "not in room",
+        "not present",
+        "cannot see",
+        "can't see",
+        "don't see",
+        "do not see",
+        "not visible",
+        "not detect",
+        "did not detect",
+        "didn't detect",
+        "isn't here",
+        "is not here",
+        "is not in",
+        "isn't in",
+        "not currently in",
+        "not found"
+      ],
+      [
+        "bot_07",
+        "bot 07"
+      ]
+    ],
+    "tools_required": [
+      "read_camera"
+    ],
+    "tools_any": [
+      [
+        "query_beliefs",
+        "get_provenance"
+      ]
+    ],
+    "beliefs": [
+      {
+        "subject": "crate_08",
+        "predicate": "located_at",
+        "perspective": "agent:bot_07",
+        "value": "Room_115"
+      }
+    ]
+  }
+}

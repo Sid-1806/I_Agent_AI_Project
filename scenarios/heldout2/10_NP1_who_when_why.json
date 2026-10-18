@@ -1,0 +1,48 @@
+{
+  "id": "NP1_who_when_why",
+  "type": "provenance",
+  "description": "Memory says door_03 is locked, logged by bot_10 two hours ago during a security patrol. The user asks who, when and why.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    }
+  },
+  "memory": [
+    {
+      "subject": "door_03",
+      "predicate": "status",
+      "obj": "locked",
+      "perspective": "agent:bot_10",
+      "source": "bot_10_log",
+      "confidence": 0.9,
+      "age_s": 7200,
+      "reason": "bot_10 locked door_03 during the evening security patrol"
+    }
+  ],
+  "turns": [
+    "Who reported that door_03 is locked, when was that, and why was it locked?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "bot_10",
+        "bot 10"
+      ],
+      [
+        "2 h",
+        "2 hours",
+        "two hours",
+        "7200",
+        "120 min"
+      ],
+      [
+        "patrol",
+        "security"
+      ]
+    ],
+    "tools_required": [
+      "get_provenance"
+    ]
+  }
+}

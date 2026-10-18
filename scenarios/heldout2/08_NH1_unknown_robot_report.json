@@ -1,0 +1,73 @@
+{
+  "id": "NH1_unknown_robot_report",
+  "type": "grounding",
+  "description": "The user asks what bot_12 reported about route_D. Memory has no report from bot_12 and nothing about route_D.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {
+        "front": "route_A"
+      }
+    },
+    "routes": {
+      "route_A": {
+        "from": "Room_101",
+        "to": "Room_102",
+        "length_cm": 800
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 86400
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "age_s": 3600
+    }
+  ],
+  "turns": [
+    "What did bot_12 report about route_D?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "don't know",
+        "do not know",
+        "no record",
+        "no records",
+        "no information",
+        "unknown",
+        "cannot determine",
+        "can't determine",
+        "no data",
+        "don't have",
+        "do not have",
+        "not able",
+        "unable",
+        "no memory record",
+        "cannot provide",
+        "can't provide",
+        "no sensor reading",
+        "not aware"
+      ]
+    ],
+    "tools_any": [
+      [
+        "query_beliefs",
+        "get_provenance"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "id": "NH2_unknown_chair_colour",
+  "type": "grounding",
+  "description": "The user asks the colour of chair_05 in Room 207. The robot is in Room_101 where the camera sees a red box_01; nothing is known about chair_05.",
+  "world": {
+    "robot": {
+      "room": "Room_101",
+      "facing": {}
+    },
+    "objects": {
+      "box_01": {
+        "type": "box",
+        "room": "Room_101",
+        "color": "red"
+      },
+      "chair_05": {
+        "type": "chair",
+        "room": "Room_207",
+        "color": "green"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 86400
+    }
+  ],
+  "turns": [
+    "What colour is chair_05 in Room 207?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "don't know",
+        "do not know",
+        "no record",
+        "no records",
+        "no information",
+        "unknown",
+        "cannot determine",
+        "can't determine",
+        "no data",
+        "don't have",
+        "do not have",
+        "not able",
+        "unable",
+        "no memory record",
+        "cannot provide",
+        "can't provide",
+        "no sensor reading",
+        "not aware"
+      ]
+    ],
+    "grounded_vocab": [
+      "red",
+      "blue",
+      "green",
+      "brown",
+      "yellow",
+      "orange",
+      "black",
+      "white",
+      "purple",
+      "grey",
+      "gray",
+      "pink",
+      "olive",
+      "beige"
+    ],
+    "answer_excludes": [
+      "chair_05 is red",
+      "chair 05 is red",
+      "green"
+    ],
+    "tools_any": [
+      [
+        "query_beliefs",
+        "get_provenance"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "NA1_back_route_blocked",
+  "type": "A",
+  "description": "route_K lies behind the robot. The two-day-old map says it is clear; a pallet now sits 30 cm away.",
+  "world": {
+    "robot": {
+      "room": "Room_118",
+      "facing": {
+        "back": "route_K"
+      }
+    },
+    "routes": {
+      "route_K": {
+        "from": "Room_118",
+        "to": "Room_119",
+        "length_cm": 900,
+        "obstacle_cm": 30
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_K",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "age_s": 120
+    },
+    {
+      "subject": "route_K",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "age_s": 172800
+    }
+  ],
+  "turns": [
+    "Is route_K passable right now? Tell me how you know."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "blocked",
+        "obstruction",
+        "obstructed",
+        "obstacle"
+      ]
+    ],
+    "tools_required": [
+      "read_lidar",
+      "update_belief"
+    ],
+    "beliefs": [
+      {
+        "subject": "route_K",
+        "predicate": "status",
+        "perspective": "self",
+        "value": "blocked"
+      },
+      {
+        "subject": "route_K",
+        "predicate": "status",
+        "perspective": "map",
+        "max_confidence": 0.5
+      }
+    ]
+  }
+}

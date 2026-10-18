@@ -1,0 +1,78 @@
+{
+  "id": "NB1_user_insists_green",
+  "type": "B",
+  "description": "The user says cup_03 is green and asks the robot to store that. bot_05 logged it as white 30 minutes ago and the camera (normal light) sees white.",
+  "world": {
+    "robot": {
+      "room": "Room_102",
+      "facing": {}
+    },
+    "objects": {
+      "cup_03": {
+        "type": "cup",
+        "room": "Room_102",
+        "color": "white"
+      }
+    },
+    "lighting": {
+      "Room_102": "normal"
+    }
+  },
+  "memory": [
+    {
+      "subject": "cup_03",
+      "predicate": "color",
+      "obj": "white",
+      "perspective": "agent:bot_05",
+      "source": "bot_05_log",
+      "confidence": 0.9,
+      "age_s": 1800
+    },
+    {
+      "subject": "cup_03",
+      "predicate": "located_at",
+      "obj": "Room_102",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "age_s": 86400
+    }
+  ],
+  "turns": [
+    "I'm sure cup_03 is green. Save that in your memory."
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "green"
+      ],
+      [
+        "white"
+      ]
+    ],
+    "tools_required": [
+      "record_user_belief",
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "cup_03",
+        "predicate": "color",
+        "perspective": "user",
+        "value": "green"
+      },
+      {
+        "subject": "cup_03",
+        "predicate": "color",
+        "perspective": "agent:bot_05",
+        "value": "white"
+      },
+      {
+        "subject": "cup_03",
+        "predicate": "color",
+        "perspective": "self",
+        "value_not": "green"
+      }
+    ]
+  }
+}

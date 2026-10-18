@@ -1,0 +1,62 @@
+{
+  "id": "NB2_laptop_moved",
+  "type": "B",
+  "description": "False-belief test. The user left laptop_04 in Room_120; bot_06 moved it to Room_133 twenty minutes ago. The robot is in Room_120.",
+  "world": {
+    "robot": {
+      "room": "Room_120",
+      "facing": {}
+    },
+    "objects": {
+      "laptop_04": {
+        "type": "laptop",
+        "room": "Room_133",
+        "color": "black"
+      }
+    }
+  },
+  "memory": [
+    {
+      "subject": "laptop_04",
+      "predicate": "located_at",
+      "obj": "Room_133",
+      "perspective": "agent:bot_06",
+      "source": "bot_06_log",
+      "confidence": 0.9,
+      "age_s": 1200,
+      "reason": "bot_06 logged action moved laptop_04 from Room_120 to Room_133"
+    }
+  ],
+  "turns": [
+    "I left laptop_04 here in Room 120 this morning. Is it still here?",
+    "Where do I think laptop_04 is, and where is it according to your records?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      [
+        "120"
+      ],
+      [
+        "133"
+      ]
+    ],
+    "tools_required": [
+      "record_user_belief",
+      "read_camera"
+    ],
+    "beliefs": [
+      {
+        "subject": "laptop_04",
+        "predicate": "located_at",
+        "perspective": "user",
+        "value_contains": "120"
+      },
+      {
+        "subject": "laptop_04",
+        "predicate": "located_at",
+        "perspective": "agent:bot_06",
+        "value": "Room_133"
+      }
+    ]
+  }
+}
