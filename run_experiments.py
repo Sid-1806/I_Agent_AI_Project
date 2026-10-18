@@ -78,7 +78,7 @@ def already_done(set_name: str, level: str, temp: float, model: str, since: str 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--provider", default="ollama")
-    ap.add_argument("--model", default="qwen2.5:7b")
+    ap.add_argument("--model", default="qwen2.5:7b-8k")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--plan", choices=["v1", "v2"], default="v1", help="which experiment plan to run")
     ap.add_argument("--quick", action="store_true", help="v1 plan: 1 run per level at T=0, 2 held-out repeats at T=0.7")

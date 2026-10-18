@@ -156,6 +156,9 @@ class ToolRegistry:
         # and the disagreements query_beliefs reported. The self-check uses both.
         self.shown: set[tuple[str, str, str]] = set()
         self.shown_disagreements: dict[tuple[str, str], dict] = {}
+        # What the user has said in this conversation (the Agent adds each question).
+        # record_user_belief may only store a value the user actually said.
+        self.user_said: list[str] = []
 
     @property
     def names(self) -> list[str]:
@@ -263,16 +266,23 @@ class ToolRegistry:
 
     def get_provenance(self, entity: str, property: str = None):
         now = self.store.clock.now()
-        rows = []
-        for r in self.store.get_provenance(entity, property):
-            rows.append({"entity": r.subject, "property": r.predicate, "perspective": r.perspective,
-                         "old_value": r.old_obj, "new_value": r.new_obj, "old_confidence": r.old_confidence,
-                         "new_confidence": r.new_confidence, "source": r.source, "reason": r.reason,
-                         "age_s": round(now - r.timestamp)})
+
+        def history(prop):
+            return [{"entity": r.subject, "property": r.predicate, "perspective": r.perspective,
+                     "old_value": r.old_obj, "new_value": r.new_obj, "old_confidence": r.old_confidence,
+                     "new_confidence": r.new_confidence, "source": r.source, "reason": r.reason,
+                     "age_s": round(now - r.timestamp)} for r in self.store.get_provenance(entity, prop)]
+
+        rows, note = history(property), None
+        if not rows and property:
+            rows = history(None)
+            if rows:
+                note = (f"{entity} has no property '{property}'; showing all of its history. Its properties: "
+                        f"{', '.join(sorted({r['property'] for r in rows}))}.")
         if not rows:
             return {"history": [], "note": f"No provenance records for '{entity}'."}
         self.shown |= {(r["entity"], r["property"], r["perspective"]) for r in rows}
-        return {"history": rows}
+        return {"history": rows, **({"note": note} if note else {})}
 
     def update_belief(self, entity: str, property: str, value: str, source: str,
                       confidence: float, reason: str):
@@ -308,6 +318,11 @@ class ToolRegistry:
         return self._summary(self.store.assert_belief(belief, reason=reason))
 
     def record_user_belief(self, entity: str, property: str, value: str, evidence: str):
+        said = " ".join(self.user_said)
+        if self.grounded_writes and self.user_said and _norm(value).replace("_", " ") not in _norm(said).replace("_", " "):
+            raise ValueError(f"record_user_belief stores what the USER said, and the user never said '{value}'. "
+                             f"Other robots' reports are already stored under their own perspective (agent:<id>); "
+                             f"mention them in your answer instead. The user said: \"{said}\"")
         belief = Belief(subject=entity, predicate=property, obj=str(value), perspective=USER,
                         source="user_utterance", confidence=1.0, timestamp=self.store.clock.now())
         return self._summary(self.store.assert_belief(belief, reason=f"user said: {evidence}"))
@@ -349,14 +364,22 @@ class ToolRegistry:
             self._sensed.add(route)
             self.scanned[route] = status
             self._sensor_facts.add(("lidar", route, status))
-        if route is None or not self.memory_check:
+        if route is None:
+            routes = reading["payload"].get("routes_by_direction") or {}
+            reading["payload"]["advice"] = (
+                "Routes from here: " + ", ".join(f'{r} lies {d} (read_lidar(direction="{d}"))' for d, r in routes.items())
+                if routes else "No routes lead out of this room.")
+            return reading
+        if not self.memory_check:
             return reading
         confirmed = self._last_lidar.get(route) == status
         self._last_lidar[route] = status
         conflicts = self._conflicts_with(route, "status", status)
         self._track(route, "status", status, conflicts, confirmed, reading["sensor"])
         if conflicts:
-            advice = ("Confirmed by consecutive readings. Update your own belief with update_belief."
+            advice = (f'Confirmed by consecutive readings. Record it now: update_belief(entity="{route}", '
+                      f'property="status", value="{status}", source="{reading["sensor"]}", confidence=1.0, '
+                      f'reason="two consecutive {reading["sensor"]} readings")'
                       if confirmed else
                       "Single reading: read once more to confirm before updating your belief.")
             reading["memory_check"] = {"conflicts": conflicts, "advice": advice}

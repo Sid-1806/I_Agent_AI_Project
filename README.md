@@ -76,8 +76,11 @@ frontend: `cd web && npm install && npm run dev` (port 5173, with `server.py` ru
 - **Groq (default):** `openai/gpt-oss-20b`, open-weight, fast. Groq no longer serves Llama 3.
   The free tier allows about **200k tokens per model per day**, and one scenario run uses 6–12k
   tokens. So one key covers roughly one full pass of the suite per day. Use Groq for the live demo.
-- **Ollama (local, unlimited):** `qwen2.5:7b` (already pulled) or the spec's Llama:
-  `ollama pull llama3.1:8b`. Add `--provider ollama --model qwen2.5:7b` to any command.
+- **Ollama (local, unlimited):** `qwen2.5:7b`, or the spec's Llama: `ollama pull llama3.1:8b`.
+  **Create the 8k-context variant once:** `ollama create qwen2.5:7b-8k -f ollama/Modelfile`, and use
+  `--provider ollama --model qwen2.5:7b-8k`. Ollama's default context is 4096 tokens and it silently
+  drops the start of longer conversations, including the system prompt; about one run in ten of the
+  multi-turn scenarios was longer than that (all results before 19 Oct used the 4096 default).
   Slower (about 1–2 minutes per scenario) but free and offline. Use it for the full test suite.
 - To spread Groq usage, each teammate can use their own key and run a subset:
   `python evaluate.py --only A1 A2 A3`.
@@ -158,8 +161,10 @@ froze them predates every result on them.
   Its results were known while v2 was built, so under v2 it is no longer a clean test. It is still
   run and reported, separately.
 - **Held-out set 2** (`scenarios/heldout2/`, frozen 18 Oct) was written and frozen after the v2
-  dev fixes had started but before any run on it, and no change was made because of its results.
-  It is the clean generalisation test for v2.
+  dev fixes had started but before any run on it. Its **v2** result is the clean generalisation
+  number: **27/33 correct answers (82%), 25/33 all checks**, with NA4, NP1 and NP2 failing.
+  Those failures were then used to build **v3**, so v3 results on held-out set 2 are no longer a
+  clean test; they are reported separately and labelled as such.
 
 Caveat: the system and both held-out sets were written with the same AI coding assistant, so the
 tests are not fully independent. In particular, two more rounds of dev-set fixes were made after
@@ -171,6 +176,16 @@ a stronger test.
 Every log records the system version (`SYSTEM_VERSION` in `i_agent/__init__.py`), and `report.py`
 never pools results across versions. **v1** is the mid-semester system (6 Oct). **v2** (18 Oct) adds
 the safeguards marked *(v2)* in "Explaining your part" below; each was added after a dev-set failure.
+**v3** (19 Oct) fixes the causes of the remaining failures on every set, including held-out set 2:
+self-check messages give the exact tool call to make (the small model kept announcing
+`update_belief` instead of calling it), a question about "your route" requires a scan of the
+planned route from memory, an answer that says "another robot" must name it and its age,
+`get_provenance` with a wrong property shows the entity's whole history, and a LiDAR scan in a
+direction with no route names the routes that exist, `record_user_belief` only stores values the
+user actually said (the model had stored another robot's report as the user's belief), and the
+self-check gives the exact `record_user_belief` call built from the user's words. Each fix is general
+(no scenario ids or answers are hard-coded) and has a unit test on a dev scenario. v3 results use
+`qwen2.5:7b-8k` (same weights, 8192-token context; see "Models and limits").
 
 ### Repeats and temperature
 
@@ -296,6 +311,9 @@ Still to do: 5 runs per scenario, the `--no-self-check` ablation, and the same s
   matches "reduced"), because correct answers in A7 were marked wrong. H2 also accepts "cannot
   confirm". `tools_forbidden` counts only calls the tool layer executed, since a refused call has no
   effect. These apply to every set; held-out files themselves were never edited.
+- **Checker fix (19 Oct).** The inflection tolerance above was also applied to forbidden phrases, so
+  a correct answer ("I will not proceed until the path is cleared") failed `answer_excludes: "path
+  is clear"`. Forbidden phrases now match exactly; saved logs were re-scored with `--rescore`.
 - **Tightened checks (5 Oct).** A2–A5 accepted words that also match wrong answers ("clear" inside
   "not clear", or bare "no" / "not"). They now require specific phrases and reject negations; all saved
   logs were re-scored with `--rescore`.

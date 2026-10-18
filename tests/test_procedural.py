@@ -459,3 +459,67 @@ def test_self_check_rejects_downgrade_claims_and_missing_provenance():
     result = Agent(world.tools, llm).ask("Where did you learn that box_01 is blue?")
     checks = [s["text"] for s in result.trace if s["type"] == "self_check"]
     assert len(checks) == 1 and "downgraded" in checks[0] and "get_provenance" in checks[0]
+
+
+def test_get_provenance_recovers_from_a_value_given_as_property():
+    world = build_world(load_scenario("P1"))  # box_01.color = blue, logged by bot_02
+    out = json.loads(world.tools.execute("get_provenance", {"entity": "box_01", "property": "blue"}))
+    assert out["data"]["history"] and "no property 'blue'" in out["data"]["note"]
+
+
+def test_lidar_without_a_route_names_the_routes_that_exist():
+    world = build_world(load_scenario("A1"))  # route_A lies in front
+    out = json.loads(world.tools.execute("read_lidar", {"direction": "left"}))
+    assert 'read_lidar(direction="front")' in out["data"]["payload"]["advice"]
+
+
+def test_self_check_requires_scanning_the_planned_route_and_naming_robots():
+    world = build_world(load_scenario("A1"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["Is your route clear?"]
+    world.tools.execute("query_beliefs", {})
+    problems = agent.check_answer("My route is clear.", [])
+    assert any('read_lidar(direction="front")' in p for p in problems)
+
+    world = build_world(load_scenario("A7"))  # bot_04 reported box_05 here
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["Is box_05 here?"]
+    world.tools.execute("query_beliefs", {"entity": "box_05"})
+    problems = agent.check_answer("box_05 is not here, although another robot said it was.", [])
+    assert any("Name the robot" in p and "bot_04" in p for p in problems)
+
+
+def test_user_belief_message_gives_the_call_to_make():
+    from i_agent.procedural import _user_belief_call
+    assert _user_belief_call("I left box_01 in Room 101 before lunch.") == (
+        'record_user_belief(entity="box_01", property="located_at", value="Room_101", '
+        'evidence="I left box_01 in Room 101 before lunch.")')
+    assert 'property="color", value="red"' in _user_belief_call("I painted box_01 red this morning.")
+
+
+def test_why_question_needs_the_logged_reason():
+    world = build_world(load_scenario("P1"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["Why do you think box_01 is blue?"]
+    trace = [{"type": "tool_call", "name": "query_beliefs", "arguments": {}, "result": {"ok": True, "data": {}}},
+             {"type": "tool_call", "name": "get_provenance", "arguments": {"entity": "box_01"},
+              "result": json.loads(world.tools.execute("get_provenance", {"entity": "box_01"}))}]
+    assert any("records the reason" in p for p in agent.check_answer("bot_02 said so an hour ago.", trace))
+    assert not any("records the reason" in p
+                   for p in agent.check_answer("bot_02 logged that it painted box_01 blue an hour ago.", trace))
+
+
+def test_record_user_belief_only_stores_what_the_user_said():
+    world = build_world(load_scenario("B2"))
+    world.tools.user_said.append("I left box_01 in Room 101 before lunch.")
+    write = {"entity": "box_01", "property": "located_at", "evidence": "x"}
+    out = json.loads(world.tools.execute("record_user_belief", {**write, "value": "Room_205"}))
+    assert out["ok"] is False and "never said" in out["error"]
+    assert json.loads(world.tools.execute("record_user_belief", {**write, "value": "Room_101"}))["ok"] is True
+
+
+def test_forbidden_phrases_match_exactly_and_required_ones_allow_inflections():
+    from i_agent.evaluation import _mentions
+    assert not _mentions("I will wait until the path is cleared.", "path is clear")
+    assert _mentions("box_05 was not detected here.", "not detect", inflect=True)
+    assert not _mentions("confidence was reduced", "red", inflect=True)

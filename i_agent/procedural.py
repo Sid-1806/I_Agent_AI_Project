@@ -118,6 +118,7 @@ class Agent:
         v_before = store.snapshot(f"before: {question}")
         self.messages.append({"role": "user", "content": question})
         self.user_turns.append(question)
+        self.tools.user_said.append(question)
         self.tools.open_conflicts.clear()
         self.tools.scanned.clear()
         trace = _Trace(on_step)
@@ -213,13 +214,11 @@ class Agent:
                             f"call now: {call} (and get_pose if the question is about your route or location).")
         recorded_user = any(s["type"] == "tool_call" and s["name"] == "record_user_belief" and s["result"].get("ok")
                             for s in trace)
-        stated = [m.group(0) for q in self.user_turns if (m := _USER_STATES.search(q))]
+        stated = [q for q in self.user_turns if _USER_STATES.search(q)]
         if stated and not recorded_user:
-            problems.append(f"The user told you what they believe (\"{stated[0]}...\"), but you have not called "
-                            f"the record_user_belief tool. Writing that you recorded it does not record it. Make "
-                            f"the tool call now, e.g. record_user_belief(entity=\"item_07\", "
-                            f"property=\"color\", value=\"green\", evidence=\"<the user's words>\") "
-                            f"with the entity, property and value from the user's message.")
+            problems.append(f"The user told you what they believe (\"{stated[0]}\"), but you have not called the "
+                            f"record_user_belief tool. Writing that you recorded it does not record it. Do not "
+                            f"answer yet; make this tool call now: {_user_belief_call(stated[0])}")
         observed = _observed_entities(trace)
         unseen = sorted({e for e in _ENTITY_ID.findall(answer.lower()) if e not in observed})
         if unseen and not _SAYS_UNKNOWN.search(answer):
@@ -243,6 +242,14 @@ class Agent:
             problems.append("The user is asking where, when, why or how a belief arose. Answer from the "
                             "provenance log, not from the conversation: call get_provenance for the entity "
                             "first and cite its source, reason and age.")
+        if _ASKS_WHY.search(self.user_turns[-1]):
+            reasons = {r["reason"] for s in this_turn if s["type"] == "tool_call" and s["name"] == "get_provenance"
+                       and s["result"].get("ok") for r in (s["result"].get("data") or {}).get("history", [])
+                       if r.get("reason") and r["reason"] != "initial load"}
+            missing = [r for r in sorted(reasons) if not any(_says(answer, w) for w in _content_words(r))]
+            if reasons and len(missing) == len(reasons):
+                problems.append(f"The user asked why. The provenance log records the reason: "
+                                f"{'; '.join(repr(r) for r in missing)}. Include that reason in your answer.")
         for s in this_turn:
             if s["type"] == "tool_call" and s["name"] == "record_user_belief" and s["result"].get("ok"):
                 w = (s["result"].get("data") or {}).get("written") or {}
@@ -257,10 +264,26 @@ class Agent:
             problems.append(f"No tool result or user message mentions {', '.join(invented)}. Every value in your "
                             f"answer must come from a tool result in this conversation or from the user; remove "
                             f"{'it' if len(invented) == 1 else 'them'}, or say that you do not know.")
+        planned = self.tools.store.get("robot", "planned_route", SELF)
+        facing = {r: d for d, r in self.tools.env.robot["facing"].items()}
+        if (planned and _ASKS_OWN_ROUTE.search(self.user_turns[-1]) and planned.obj in facing
+                and planned.obj not in self.tools.scanned):
+            problems.append(f"Memory says your planned route is {planned.obj}, which lies {facing[planned.obj]} of "
+                            f"you. Scan that route before answering: read_lidar(direction=\"{facing[planned.obj]}\").")
+        if _VAGUE_ROBOT.search(answer):
+            unnamed = sorted({(persp, e, p) for e, p, persp in self.tools.shown
+                              if persp.startswith("agent:") and _says(answer, e) and not _says(answer, persp[6:])})
+            if unnamed:
+                now = self.tools.store.clock.now()
+                listing = "; ".join(f"{persp[6:]} reported {e}.{p} = {b.obj} {round((now - b.timestamp) / 60)} min ago"
+                                    for persp, e, p in unnamed if (b := self.tools.store.get(e, p, persp)))
+                problems.append(f"Name the robot instead of writing 'another robot': {listing}. Say which robot "
+                                f"reported it and how long ago.")
         if _ANNOUNCES_ACTION.search(answer):
             problems.append("You described actions you are going to take but did not take them. Call the "
                             "tools now, then answer from their results.")
-        if _CLAIMS_UPDATE.search(answer) and not updated:
+        claim = _CLAIMS_UPDATE.search(answer)
+        if claim and not updated and not (recorded_user and "record" in claim.group(0).lower()):
             problems.append("You said you updated a belief, but you never called update_belief, "
                             "so memory is unchanged. Call update_belief now, or do not claim it.")
         if checked_memory:
@@ -294,15 +317,16 @@ class Agent:
             stored = ", ".join(f"{x['perspective']} says {x['stored_value']}" for x in c["conflicts"])
             if c["confirmed"]:
                 problems.append(f"Unresolved conflict: {c['sensor']} observed {c['subject']}.{c['predicate']} = "
-                                f"{c['observed']}, but memory has {stored}. Record your observation before "
-                                f"answering by calling update_belief with entity=\"{c['subject']}\", "
+                                f"{c['observed']}, but memory has {stored}. Do not answer yet. Your next reply must "
+                                f"be this tool call: update_belief(entity=\"{c['subject']}\", "
                                 f"property=\"{c['predicate']}\", value=\"{c['observed']}\", "
-                                f"source=\"{c['sensor']}\", a confidence and a reason.")
+                                f"source=\"{c['sensor']}\", confidence=1.0, reason=\"live {c['sensor']} reading\")")
             else:
                 problems.append(f"Unconfirmed conflict: one {c['sensor']} reading gave {c['subject']}."
                                 f"{c['predicate']} = {c['observed']}, but memory has {stored}. Read the sensor "
                                 f"again; if it agrees, call update_belief, otherwise trust the readings that agree.")
-        return problems
+        conflicts = [p for p in problems if p.startswith(("Unresolved conflict", "Unconfirmed conflict"))]
+        return conflicts + [p for p in problems if p not in conflicts]
 
 
 class _Trace(list):
@@ -337,6 +361,36 @@ _CLAIMS_UPDATE = re.compile(r"\b(i\s+(have\s+)?updated|i've updated|updated my (
                             r"i\s+(have\s+)?(recorded|downgraded))", re.IGNORECASE)
 _CLAIMS_DOWNGRADE = re.compile(r"\b(downgraded|lowered (its|their|the) confidence|reduced (its|their|the) "
                                r"confidence)\b", re.IGNORECASE)
+_ASKS_WHY = re.compile(r"\bwhy\b", re.IGNORECASE)
+_STOPWORDS = {"the", "and", "from", "with", "that", "this", "item", "logged", "action", "reported", "robot",
+              "during", "because", "after", "before", "into", "onto", "were", "was", "has", "have"}
+
+
+def _content_words(text: str) -> list[str]:
+    """Words of a logged reason that say something (not ids, numbers or filler)."""
+    return [w for w in re.findall(r"[a-z]+", text.lower()) if len(w) > 3 and w not in _STOPWORDS
+            and not re.fullmatch(r"(bot|room|route|box|crate|cup)", w)]
+
+
+def _user_belief_call(statement: str) -> str:
+    """The record_user_belief call for a user statement such as "I left box_01 in Room 101"."""
+    entity = (_ENTITY_ID.findall(statement.lower()) or ["<entity>"])[0]
+    room = re.search(r"\broom[ _]?(\d+)", statement, re.IGNORECASE)
+    colour = next((c for c in _COLOURS if re.search(rf"\b{c}\b", statement, re.IGNORECASE)), None)
+    if room:
+        prop, value = "located_at", f"Room_{room.group(1)}"
+    elif colour:
+        prop, value = "color", colour
+    else:
+        prop, value = "<property>", "<value>"
+    evidence = statement.replace('"', "'")
+    return (f'record_user_belief(entity="{entity}", property="{prop}", value="{value}", '
+            f'evidence="{evidence}")')
+
+
+_ASKS_OWN_ROUTE = re.compile(r"\b(your|my) (planned )?(route|path)\b|\bdrive your\b", re.IGNORECASE)
+_VAGUE_ROBOT = re.compile(r"\b(another|other|a second|second|secondary|maintenance|an?) (robot|bot|agent)s?\b",
+                          re.IGNORECASE)
 _ASKS_PROVENANCE = re.compile(r"\b(why|where did you (learn|get|hear)|who (told|reported|said)|when (was|did)|"
                               r"what caused|how do you know|history)\b", re.IGNORECASE)
 _ANNOUNCES_ACTION = re.compile(r"\b(i will|i'll|let me|i am going to|i'm going to)\s+(now\s+|first\s+)?"

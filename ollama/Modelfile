@@ -1,0 +1,5 @@
+# qwen2.5:7b with an 8k context window. Ollama defaults to 4096 tokens and silently drops the
+# start of longer conversations (including the system prompt). Create it once with:
+#   ollama create qwen2.5:7b-8k -f ollama/Modelfile
+FROM qwen2.5:7b
+PARAMETER num_ctx 8192

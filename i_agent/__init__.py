@@ -13,4 +13,7 @@
 #   v1  the mid-semester system (6 Oct 2026, commit b09a5df)
 #   v2  18 Oct 2026: stricter grounded writes, self-check for disagreeing records and unread
 #       memory, parsing of tool calls written as JSON or Python-style text
-SYSTEM_VERSION = "v2"
+#   v3  19 Oct 2026: exact tool calls in self-check messages, planned route must be scanned,
+#       unnamed robot sources rejected, get_provenance recovers from a wrong property, LiDAR
+#       names the routes that exist. Driven partly by held-out set 2 failures (see README).
+SYSTEM_VERSION = "v3"

@@ -42,11 +42,12 @@ class Check:
     detail: str = ""
 
 
-def _mentions(text: str, word: str) -> bool:
-    """Whole-word match that also accepts a plain inflection: 'not detect' matches 'not detected',
-    'hour' matches 'hours'. Other suffixes do not count, so 'red' never matches 'reduced'."""
-    return re.search(r"(?<![a-z0-9])" + re.escape(word.lower()) + r"(s|es|ed|ing)?(?![a-z0-9])",
-                     text.lower()) is not None
+def _mentions(text: str, word: str, inflect: bool = False) -> bool:
+    """Whole-word match. With inflect, a plain inflection also counts ('not detect' matches 'not
+    detected', 'hour' matches 'hours'); other suffixes never do, so 'red' never matches 'reduced'.
+    Required phrases use inflect; forbidden phrases do not ('path is cleared' is not 'path is clear')."""
+    suffix = r"(s|es|ed|ing)?" if inflect else ""
+    return re.search(r"(?<![a-z0-9])" + re.escape(word.lower()) + suffix + r"(?![a-z0-9])", text.lower()) is not None
 
 
 def run_checks(expect: dict, turns: list[AgentResult], store: BeliefStore | None,
@@ -55,7 +56,7 @@ def run_checks(expect: dict, turns: list[AgentResult], store: BeliefStore | None
     checks: list[Check] = []
 
     for group in expect.get("answer_mentions", []):
-        hit = [w for w in group if _mentions(answer, w)]
+        hit = [w for w in group if _mentions(answer, w, inflect=True)]
         checks.append(Check("answer", f"mentions one of {group}", bool(hit), f"found {hit}" if hit else ""))
     for phrase in expect.get("answer_excludes", []):
         checks.append(Check("answer", f"does not say '{phrase}'", not _mentions(answer, phrase)))

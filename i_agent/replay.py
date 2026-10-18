@@ -60,8 +60,19 @@ def replay(log_path: Path) -> dict:
                 frames.append(frame(world, t, step))
                 continue
             result = json.loads(world.tools.execute(step["name"], step.get("arguments") or {}))
-            mismatches += result != step["result"]
-            frames.append(frame(world, t, {**step, "result": result}, mismatch=result != step["result"]))
+            differs = _data(result) != _data(step["result"])
+            mismatches += differs
+            frames.append(frame(world, t, {**step, "result": result}, mismatch=differs))
     return {"scenario": scenario_info(scenario), "level": level, "system": log.get("system", "v1"),
             "model": log.get("model"), "passed": log.get("passed"), "checks": log.get("checks", []),
             "file": Path(log_path).as_posix(), "frames": frames, "mismatches": mismatches}
+
+
+def _data(x):
+    """A tool result without its explanatory text (advice, notes, errors), which may be reworded
+    between system versions; what remains is the data the layers produced."""
+    if isinstance(x, dict):
+        return {k: _data(v) for k, v in x.items() if k not in ("advice", "note", "error")}
+    if isinstance(x, list):
+        return [_data(v) for v in x]
+    return x

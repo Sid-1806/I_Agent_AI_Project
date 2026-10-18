@@ -171,7 +171,7 @@ def main() -> None:
     global LLM
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--provider", default="ollama")
-    ap.add_argument("--model", default="qwen2.5:7b")
+    ap.add_argument("--model", default="qwen2.5:7b-8k")
     ap.add_argument("--port", type=int, default=8000)
     args = ap.parse_args()
     LLM = OpenAICompatibleLLM(provider=args.provider, model=args.model)
