@@ -18,7 +18,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Callable, Optional, Protocol
 
 from .schemas import SELF
 from .tools import ToolRegistry
@@ -109,15 +109,18 @@ class Agent:
         self.history: list[dict] = []      # trace steps of earlier turns in this conversation
         self.user_turns: list[str] = []
 
-    def ask(self, question: str) -> AgentResult:
-        """One user turn. Conversation history is kept between calls, so multi-turn scenarios work."""
+    def ask(self, question: str, on_step: Optional[Callable[[dict], None]] = None) -> AgentResult:
+        """One user turn. Conversation history is kept between calls, so multi-turn scenarios work.
+
+        on_step, if given, is called with each trace step as soon as it happens (used by the web UI).
+        """
         store = self.tools.store
         v_before = store.snapshot(f"before: {question}")
         self.messages.append({"role": "user", "content": question})
         self.user_turns.append(question)
         self.tools.open_conflicts.clear()
         self.tools.scanned.clear()
-        trace: list[dict] = []
+        trace = _Trace(on_step)
         answer = None
         format_errors = 0
         self_checks = 0
@@ -180,7 +183,7 @@ class Agent:
 
         self.history.extend(trace)
         v_after = store.snapshot(f"after: {question}")
-        return AgentResult(question=question, answer=answer, trace=trace,
+        return AgentResult(question=question, answer=answer, trace=list(trace),
                            belief_changes=store.diff(v_before, v_after))
 
     def _required_params(self) -> dict[str, set[str]]:
@@ -300,6 +303,19 @@ class Agent:
                                 f"{c['predicate']} = {c['observed']}, but memory has {stored}. Read the sensor "
                                 f"again; if it agrees, call update_belief, otherwise trust the readings that agree.")
         return problems
+
+
+class _Trace(list):
+    """The trace of one turn; also reports each step to an optional listener."""
+
+    def __init__(self, on_step: Optional[Callable[[dict], None]] = None):
+        super().__init__()
+        self.on_step = on_step
+
+    def append(self, step: dict) -> None:
+        super().append(step)
+        if self.on_step:
+            self.on_step(step)
 
 
 _MEMORY_READS = {"query_beliefs"}  # current beliefs; get_provenance is the history behind them

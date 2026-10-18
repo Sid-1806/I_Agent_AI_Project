@@ -71,7 +71,9 @@ class BeliefStore:
     def __init__(self, clock: Optional[SimClock] = None, db_path: str = ":memory:"):
         self.clock = clock or SimClock()
         self.graph = nx.MultiDiGraph()
-        self.db = sqlite3.connect(db_path)
+        # check_same_thread=False: the web server builds a session in one thread and runs the agent in
+        # another. Access is still one thread at a time (each session has a lock).
+        self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(_SCHEMA)
 

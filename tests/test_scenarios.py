@@ -41,3 +41,16 @@ def test_heldout_files_match_their_frozen_hashes(set_name, count):
     for name, digest in expected.items():
         data = (SCENARIO_DIR / set_name / name).read_bytes()
         assert hashlib.sha256(data).hexdigest() == digest, f"{name} changed after it was frozen"
+
+
+def test_a_logged_run_replays_exactly():
+    from i_agent.replay import replay
+    logs = sorted(Path("logs").glob("20261018-204741_dev_full_*/A1_route_blocked_run1.json"))
+    if not logs:
+        pytest.skip("log not present")
+    run = replay(logs[0])
+    assert run["mismatches"] == 0
+    assert run["frames"][0]["type"] == "start" and run["frames"][-1]["type"] == "answer"
+    last = {(b["s"], b["p"], b["persp"]): b for b in run["frames"][-1]["beliefs"]}
+    assert last[("route_A", "status", "self")]["o"] == "blocked"
+    assert last[("route_A", "status", "map")]["conf"] == 0.3
