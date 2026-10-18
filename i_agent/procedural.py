@@ -116,6 +116,7 @@ class Agent:
         self.messages.append({"role": "user", "content": question})
         self.user_turns.append(question)
         self.tools.open_conflicts.clear()
+        self.tools.scanned.clear()
         trace: list[dict] = []
         answer = None
         format_errors = 0
@@ -227,6 +228,32 @@ class Agent:
             problems.append(f"Your answer relies on the static map for {entity['subject']} "
                             f"({entity['predicate']} = {entity['value']}, {entity['age_s']} s old) without a live "
                             f"reading. {entity['how_to_check']} before answering.")
+        downgrades = any(s["type"] == "tool_call" and s["result"].get("ok") and
+                         (s["result"].get("data") or {}).get("downgraded") for s in trace)
+        if _CLAIMS_DOWNGRADE.search(answer) and not downgrades:
+            problems.append("You said a belief was downgraded, but no confidence in memory changed. Only the "
+                            "static map is downgraded, and only when your own sensor contradicts it; other "
+                            "robots' reports and the user's beliefs are kept as they are. Do not claim it.")
+        this_turn = trace[len(self.history):]
+        if _ASKS_PROVENANCE.search(self.user_turns[-1]) and not any(
+                s["type"] == "tool_call" and s["name"] == "get_provenance" for s in this_turn):
+            problems.append("The user is asking where, when, why or how a belief arose. Answer from the "
+                            "provenance log, not from the conversation: call get_provenance for the entity "
+                            "first and cite its source, reason and age.")
+        for s in this_turn:
+            if s["type"] == "tool_call" and s["name"] == "record_user_belief" and s["result"].get("ok"):
+                w = (s["result"].get("data") or {}).get("written") or {}
+                if w and not _says(answer, w["value"]):
+                    problems.append(f"You recorded the user's belief that {w['entity']}.{w['property']} = "
+                                    f"{w['value']}, but your answer does not mention it. Tell the user what you "
+                                    f"recorded as their view, separately from what you observed yourself.")
+        evidence = " ".join(self.user_turns) + " " + " ".join(
+            json.dumps(s["result"]) for s in trace if s["type"] == "tool_call")
+        invented = [c for c in _COLOURS if _says(answer, c) and not _says(evidence, c)]
+        if invented:
+            problems.append(f"No tool result or user message mentions {', '.join(invented)}. Every value in your "
+                            f"answer must come from a tool result in this conversation or from the user; remove "
+                            f"{'it' if len(invented) == 1 else 'them'}, or say that you do not know.")
         if _ANNOUNCES_ACTION.search(answer):
             problems.append("You described actions you are going to take but did not take them. Call the "
                             "tools now, then answer from their results.")
@@ -244,7 +271,11 @@ class Agent:
                     problems.append(f"Memory holds records about {entity} that you have not looked at "
                                     f"({', '.join(hidden)}). Call query_beliefs(entity=\"{entity}\") and take "
                                     f"every record into account before answering.")
-        for (entity, prop), d in self.tools.shown_disagreements.items():
+        store = self.tools.store
+        named = {e for e in store.subjects() if e != "robot" and _says(answer, e)}
+        groups = {(d["entity"], d["property"]): d for e in named
+                  for d in self.tools._disagreements([self.tools._with_age(b) for b in store.query(e)])}
+        for (entity, prop), d in {**self.tools.shown_disagreements, **groups}.items():
             records = [r for r in d["newest_first"] if r["perspective"] != SELF]
             if len({r["value"] for r in records}) < 2:
                 continue
@@ -271,7 +302,9 @@ class Agent:
         return problems
 
 
-_MEMORY_READS = {"query_beliefs", "get_provenance"}
+_MEMORY_READS = {"query_beliefs"}  # current beliefs; get_provenance is the history behind them
+_COLOURS = ("red", "blue", "green", "brown", "yellow", "orange", "black", "white", "purple", "grey", "gray",
+            "pink", "olive", "beige")
 
 
 def _says(text: str, term: str) -> bool:
@@ -286,6 +319,10 @@ _SAYS_UNKNOWN = re.compile(r"\b(don't know|do not know|no (memory )?records?|no 
                            r"do not have|no (sensor )?readings?)\b", re.IGNORECASE)
 _CLAIMS_UPDATE = re.compile(r"\b(i\s+(have\s+)?updated|i've updated|updated my (belief|memory)|"
                             r"i\s+(have\s+)?(recorded|downgraded))", re.IGNORECASE)
+_CLAIMS_DOWNGRADE = re.compile(r"\b(downgraded|lowered (its|their|the) confidence|reduced (its|their|the) "
+                               r"confidence)\b", re.IGNORECASE)
+_ASKS_PROVENANCE = re.compile(r"\b(why|where did you (learn|get|hear)|who (told|reported|said)|when (was|did)|"
+                              r"what caused|how do you know|history)\b", re.IGNORECASE)
 _ANNOUNCES_ACTION = re.compile(r"\b(i will|i'll|let me|i am going to|i'm going to)\s+(now\s+|first\s+)?"
                                r"(check|verify|read|use|query|look|scan|update|record|confirm|inspect|call)\b",
                                re.IGNORECASE)

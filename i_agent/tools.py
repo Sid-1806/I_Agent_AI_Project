@@ -15,6 +15,7 @@ Ablation switches (all on by default) let the evaluation measure what each safeg
   memory_check     cross-check sensor readings against memory and track open conflicts
   grounded_writes  refuse to write values that never appeared in a tool result
   disagreement_summary  list disagreeing records newest first in query_beliefs
+  safe_moves       refuse move() unless the latest LiDAR scan of that route this turn said clear
   allowed_tools    expose only some tools (e.g. sensors only, for the "sensors" level)
 Argument repair and error messages stay on at every level: they fix formatting, not reasoning.
 """
@@ -100,6 +101,10 @@ TOOL_SCHEMAS = [
 ]
 
 
+def _norm(value: str) -> str:
+    return "_".join(str(value).strip().lower().split())
+
+
 def _ago(seconds: float) -> str:
     seconds = int(seconds)
     if seconds < 120:
@@ -114,12 +119,13 @@ def _ago(seconds: float) -> str:
 class ToolRegistry:
     def __init__(self, store: BeliefStore, env: MockEnv, memory_check: bool = True,
                  grounded_writes: bool = True, disagreement_summary: bool = True,
-                 allowed_tools: list[str] | None = None):
+                 safe_moves: bool = True, allowed_tools: list[str] | None = None):
         self.store = store
         self.env = env
         self.memory_check = memory_check
         self.grounded_writes = grounded_writes
         self.disagreement_summary = disagreement_summary
+        self.safe_moves = safe_moves
         self._impl: dict[str, Callable[..., Any]] = {
             "query_beliefs": self.query_beliefs,
             "get_provenance": self.get_provenance,
@@ -137,11 +143,15 @@ class ToolRegistry:
         # (subject, predicate) -> conflict between a live reading and a stored map/self belief
         self.open_conflicts: dict[tuple[str, str], dict] = {}
         self._last_lidar: dict[str, str] = {}
+        # route -> status of its latest LiDAR scan in the current user turn (for safe_moves)
+        self.scanned: dict[str, str] = {}
         # Everything the agent has been shown by a read tool. update_belief may only write values
         # that appear here, so an invented fact can never enter memory.
         self._observed = ""
-        # Entities a sensor actually measured or detected in this conversation.
+        # Entities a sensor actually measured or detected in this conversation, and what each sensor
+        # reported: (sensor kind, entity, value) e.g. ("lidar", "route_A", "blocked").
         self._sensed: set[str] = set()
+        self._sensor_facts: set[tuple[str, str, str]] = set()
         # (entity, property, perspective) of every stored belief a tool result has shown the agent,
         # and the disagreements query_beliefs reported. The self-check uses both.
         self.shown: set[tuple[str, str, str]] = set()
@@ -285,6 +295,13 @@ class ToolRegistry:
                                  f"of your sensors (lidar, camera, bumper, odometry). Reports from other robots, "
                                  f"the map and the user are already stored under their own perspective: report "
                                  f"them in your answer with their source and age instead of copying them.")
+            kind = next((k for k in ("lidar", "camera", "bumper", "odometry") if k in source.lower()), None)
+            if kind and not v.startswith(NEGATIVE_VALUES) and (kind, entity, _norm(v)) not in self._sensor_facts:
+                said = sorted(val for k, e, val in self._sensor_facts if k == kind and e == entity)
+                raise ValueError(f"Your {kind} never reported {entity} = '{value}'. "
+                                 + (f"It reported: {', '.join(said)}. " if said else
+                                    f"It has not reported anything about {entity}. ")
+                                 + "Write only what that sensor actually showed, or do not update.")
         belief = Belief(subject=entity, predicate=property, obj=str(value), perspective=SELF,
                         source=source, confidence=float(confidence), timestamp=self.store.clock.now())
         self.open_conflicts.pop((entity, property), None)
@@ -330,6 +347,8 @@ class ToolRegistry:
         route, status = reading["payload"].get("route"), reading["payload"]["status"]
         if route is not None:
             self._sensed.add(route)
+            self.scanned[route] = status
+            self._sensor_facts.add(("lidar", route, status))
         if route is None or not self.memory_check:
             return reading
         confirmed = self._last_lidar.get(route) == status
@@ -351,6 +370,8 @@ class ToolRegistry:
         room, light = payload["room"], payload["ambient_light"]
         seen = {d["object_id"]: d for d in payload["detections"]}
         self._sensed |= set(seen) | {room}
+        for obj_id, det in seen.items():
+            self._sensor_facts |= {("camera", obj_id, _norm(det["perceived_color"])), ("camera", obj_id, _norm(room))}
         payload["note"] = (f"The camera sees only {room}, the room you are in. Objects not listed in "
                            f"detections are not in view, and their colours are unknown to the camera.")
         if not self.memory_check:
@@ -378,8 +399,20 @@ class ToolRegistry:
         return reading
 
     def move(self, route: str):
+        if self.safe_moves and self.scanned.get(route) != "clear":
+            facing = {r: d for d, r in self.env.robot["facing"].items()}
+            how = (f'Scan it first with read_lidar(direction="{facing[route]}").' if route in facing else
+                   f"Known routes by direction: {dict(self.env.robot['facing'])}.")
+            state = ("its latest scan says blocked" if self.scanned.get(route) == "blocked"
+                     else "it has not been scanned in this turn")
+            raise ValueError(f"Refused to drive {route}: {state}. The robot only drives a route after a "
+                             f"LiDAR scan shows it clear. {how}")
         result = self.env.move(route).model_dump()
         self._sensed.add(route)
+        if "bumper" in result["detail"].get("error", ""):
+            self._sensor_facts.add(("bumper", route, "blocked"))
+        elif result.get("success"):
+            self._sensor_facts.add(("odometry", "robot", _norm(self.env.robot["room"])))
         if self.memory_check and "bumper" in result["detail"].get("error", ""):
             conflicts = self._conflicts_with(route, "status", "blocked")
             self._track(route, "status", "blocked", conflicts, True, "bumper")

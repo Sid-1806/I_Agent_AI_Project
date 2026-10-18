@@ -1,0 +1,263 @@
+{
+  "scenario": "A5_stale_belief",
+  "set": "dev",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Can you drive your planned route right now?",
+      "answer": "I have updated my belief: route_A is now blocked. The previous clear status recorded by the lidar_front sensor has been downgraded due to the new evidence.\n\nTo ensure safety, I will not proceed along route_A. If you need to find an alternative route, I can help you explore other options.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_101",
+                "facing": {
+                  "front": "route_A"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "I am currently in Room_101 facing route_A. To drive my planned route, I will first check if it is clear using my LiDAR sensor."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_A",
+                "distance_cm": 20,
+                "status": "blocked"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "self",
+                    "stored_value": "clear",
+                    "source": "lidar_front",
+                    "confidence": 0.9,
+                    "age_s": 7201
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "draft",
+          "text": "My LiDAR sensor in the front direction detected an object 20 cm away, indicating that the path along route_A is blocked. This single reading contradicts my previous belief that the route was clear. I should read the LiDAR again to confirm before updating my belief.\n\nI will read the LiDAR in the front direction once more to verify the status of the route."
+        },
+        {
+          "step": 3,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location). You described actions you are going to take but did not take them. Call the tools now, then answer from their results. Unconfirmed conflict: one lidar_front reading gave route_A.status = blocked, but memory has self says clear. Read the sensor again; if it agrees, call update_belief, otherwise trust the readings that agree."
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "robot",
+                  "property": "planned_route",
+                  "value": "route_A",
+                  "perspective": "self",
+                  "source": "mission_plan",
+                  "confidence": 1.0,
+                  "age_s": 61
+                },
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "value": "clear",
+                  "perspective": "self",
+                  "source": "lidar_front",
+                  "confidence": 0.9,
+                  "age_s": 7201
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "thought",
+          "text": "I have checked my beliefs and found that my planned route is route_A, and the status of route_A was previously recorded as clear based on a single lidar_front reading. However, the most recent lidar_front reading indicates that the route is blocked.\n\nI will read the LiDAR in the front direction once more to confirm the status of the route before updating my belief.\n\nLet me read the LiDAR again."
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_A",
+                "distance_cm": 20,
+                "status": "blocked"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "self",
+                    "stored_value": "clear",
+                    "source": "lidar_front",
+                    "confidence": 0.9,
+                    "age_s": 7202
+                  }
+                ],
+                "advice": "Confirmed by consecutive readings. Update your own belief with update_belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "thought",
+          "text": "The LiDAR sensor in the front direction has confirmed that the route is blocked, with the object detected 20 cm away. This reading agrees with the previous one, so I will update my own belief that the route is blocked.\n\nI will now update my belief and inform you of the current status.\n\nUpdating my belief that route_A is blocked."
+        },
+        {
+          "step": 6,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "route_A",
+            "property": "status",
+            "value": "blocked",
+            "source": "lidar_front",
+            "confidence": 0.9,
+            "reason": "Confirmed by consecutive LiDAR readings."
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_A",
+                "property": "status",
+                "value": "blocked",
+                "perspective": "self",
+                "source": "lidar_front",
+                "confidence": 0.9
+              },
+              "replaced": {
+                "entity": "route_A",
+                "property": "status",
+                "value": "clear",
+                "perspective": "self",
+                "source": "lidar_front",
+                "confidence": 0.9
+              },
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 7,
+          "type": "answer",
+          "text": "I have updated my belief: route_A is now blocked. The previous clear status recorded by the lidar_front sensor has been downgraded due to the new evidence.\n\nTo ensure safety, I will not proceed along route_A. If you need to find an alternative route, I can help you explore other options."
+        }
+      ],
+      "belief_changes": [
+        "~ route_A.status [self]: clear (0.9) -> blocked (0.9, lidar_front)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "self",
+      "source": "lidar_front",
+      "confidence": 0.9,
+      "timestamp": 1000002.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
+      "passed": true,
+      "detail": "found ['blocked']"
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'route is clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'path is clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'yes, i can'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [self] state",
+      "passed": true,
+      "detail": "= blocked (conf 0.9)"
+    }
+  ],
+  "passed": true
+}

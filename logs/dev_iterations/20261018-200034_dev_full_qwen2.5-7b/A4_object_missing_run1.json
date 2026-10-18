@@ -1,0 +1,206 @@
+{
+  "scenario": "A4_object_missing",
+  "set": "dev",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is box_01 here in this room with you? Check before you answer.",
+      "answer": "I updated my belief: box_01 is not located_at (self, 0.9, \"not_in_Room_101\", \"camera\", 1000001.0, \"The camera did not see the box in this room, and it conflicts with the map's record.\").\n\nThe static map's confidence for box_01's location is now downgraded to 0.27.\n\nGiven the camera's direct observation and the downgraded confidence of the static map, I can conclude that box_01 is not in this room. The camera did not see it, and the static map's record conflicts with this observation.\n\nTherefore, box_01 is not here in this room with you.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_101",
+                "ambient_light": "normal",
+                "detections": [
+                  {
+                    "object_id": "chair_03",
+                    "label": "chair",
+                    "perceived_color": "grey",
+                    "bbox": [
+                      210,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.95
+                  }
+                ],
+                "note": "The camera sees only Room_101, the room you are in. Objects not listed in detections are not in view, and their colours are unknown to the camera."
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "subject": "box_01",
+                    "predicate": "located_at",
+                    "observation": "not visible in Room_101",
+                    "conflicts": [
+                      {
+                        "perspective": "map",
+                        "stored_value": "Room_101",
+                        "source": "Default_Map",
+                        "confidence": 0.9,
+                        "age_s": 172801
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "I checked with the camera, and it sees only a grey chair in Room_101. The box_01 is not visible in this view. According to the static map, box_01 is supposed to be in Room_101, but the camera does not see it. This suggests that either the box is not here, or it is in a position not visible to the camera. I will keep this in mind as I explore further.\n\nThe camera's view and the static map's record of box_01's location conflict. The camera's view is more direct evidence, so I will trust it for now. I will update my belief that box_01 is not in this room.\n\nI updated my belief: box_01 is not located_at (self, 0.9, \"not visible in Room_101\", \"camera\", 1000001.0, \"The camera did not see the box in this room, and it conflicts with the map's record.\").\n\nThe static map's confidence for box_01's location is now downgraded to 0.9.\n\nFor a more definitive answer, I would need to explore the room further or check with other sensors."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs(entity=\"box_01\") (and get_pose if the question is about your route or location). You described actions you are going to take but did not take them. Call the tools now, then answer from their results. You said you updated a belief, but you never called update_belief, so memory is unchanged. Call update_belief now, or do not claim it. Unresolved conflict: camera observed box_01.located_at = not_in_Room_101, but memory has map says Room_101. Record your observation before answering by calling update_belief with entity=\"box_01\", property=\"located_at\", value=\"not_in_Room_101\", source=\"camera\", a confidence and a reason."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "box_01"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "box_01",
+                  "property": "located_at",
+                  "value": "Room_101",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "age_s": 172801
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "thought",
+          "text": "I queried my memory and found that the static map still records box_01 as being located in Room_101. However, the camera did not see box_01 in Room_101. This creates a conflict between the camera's direct observation and the static map's record.\n\nI will update my belief to reflect the camera's observation:"
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "reason": "Camera did not see box_01 in Room_101.",
+            "entity": "box_01",
+            "property": "located_at",
+            "value": "not_in_Room_101",
+            "source": "camera",
+            "confidence": 0.9
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "box_01",
+                "property": "located_at",
+                "value": "not_in_Room_101",
+                "perspective": "self",
+                "source": "camera",
+                "confidence": 0.9
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "box_01",
+                  "property": "located_at",
+                  "perspective": "map",
+                  "value": "Room_101",
+                  "old_confidence": 0.9,
+                  "new_confidence": 0.27
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "I updated my belief: box_01 is not located_at (self, 0.9, \"not_in_Room_101\", \"camera\", 1000001.0, \"The camera did not see the box in this room, and it conflicts with the map's record.\").\n\nThe static map's confidence for box_01's location is now downgraded to 0.27.\n\nGiven the camera's direct observation and the downgraded confidence of the static map, I can conclude that box_01 is not in this room. The camera did not see it, and the static map's record conflicts with this observation.\n\nTherefore, box_01 is not here in this room with you."
+        }
+      ],
+      "belief_changes": [
+        "~ box_01.located_at [map]: Room_101 (0.9) -> Room_101 (0.27, Default_Map)",
+        "+ box_01.located_at [self] = not_in_Room_101 (conf 0.9, camera)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.27,
+      "timestamp": 827200.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "not_in_Room_101",
+      "perspective": "self",
+      "source": "camera",
+      "confidence": 0.9,
+      "timestamp": 1000001.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['not here', 'not in this room', 'not in room', 'not present', 'cannot see', \"can't see\", \"don't see\", 'do not see', 'not visible', 'not detect', 'did not detect', \"didn't detect\", 'no box', \"isn't here\", 'is not here', 'is not in', \"isn't in\", 'not currently in', 'not found']",
+      "passed": true,
+      "detail": "found ['not here', 'not in this room', 'is not here', 'is not in']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.located_at [self] state",
+      "passed": true,
+      "detail": "= not_in_Room_101 (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.located_at [map] state",
+      "passed": true,
+      "detail": "= Room_101 (conf 0.27)"
+    }
+  ],
+  "passed": true
+}

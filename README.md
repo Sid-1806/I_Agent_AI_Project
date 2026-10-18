@@ -34,16 +34,16 @@ copy .env.example .env          # then put your Groq key in .env (free at consol
 ## Run
 
 ```bash
-python -m pytest                          # 66 offline tests, no API key needed
+python -m pytest                          # 81 offline tests, no API key needed
 python run_scenario.py --list             # dev and held-out scenarios
 python run_scenario.py A1                 # Scenario A live, with the full trace (the demo)
 python run_scenario.py B1                 # Scenario B: user thinks red, camera sees brown, log says blue
 python run_scenario.py A1 --level plain   # the same scenario with the safeguards switched off
 python run_scenario.py A1 --chat          # then ask your own questions
 python evaluate.py                        # dev set, full system, 5 runs -> logs/<time>_dev_full_<model>/
-python evaluate.py --set heldout          # the frozen held-out set
+python evaluate.py --set heldout2         # held-out set 2 (frozen 18 Oct); --set heldout for set 1
 python evaluate.py --level plain          # an ablation level (see "Evaluation")
-python run_experiments.py                 # the whole matrix of sets x levels (5-6 hours locally)
+python run_experiments.py --plan v2       # the whole matrix of sets x levels (5-6 hours locally)
 python report.py                          # results/results.html, results.md, review.html
 ```
 
@@ -71,8 +71,9 @@ python report.py                          # results/results.html, results.md, re
 | `i_agent/scenario.py` | Udit | Builds the three layers from a scenario file |
 | `i_agent/evaluation.py` | Udit | Automatic checks: answer, tools, memory, grounding |
 | `i_agent/prompts/system_sensors.md` | Rudraksh | Prompt for the "sensors" ablation level (no memory tools) |
-| `scenarios/dev/*.json` | all | The 10 development scenarios (the project's data) |
-| `scenarios/heldout/*.json` | all | 10 held-out scenarios, frozen before any run (`FROZEN.md`) |
+| `scenarios/dev/*.json` | all | The 15 development scenarios (the project's data) |
+| `scenarios/heldout/*.json` | all | Held-out set 1: 10 scenarios, frozen 5 Oct before any run (`FROZEN.md`) |
+| `scenarios/heldout2/*.json` | all | Held-out set 2: 11 scenarios, frozen 18 Oct before any run (`FROZEN.md`) |
 | `run_scenario.py` | Udit | Demo script with the printed trace; `--level` switches parts off |
 | `evaluate.py` | Udit | Test suite runner: `--set`, `--level`, `--temperature`, `--rescore` |
 | `run_experiments.py` | Udit | Runs every set x level combination in priority order |
@@ -111,7 +112,7 @@ Each level adds one part of the architecture to the one before it, using the sam
 | `baseline` | No tools. Starting memory pasted into the prompt as text. |
 | `sensors` | Sensor tools only, memory as text. A plain tool-using agent with no memory layer: the **fair baseline**. |
 | `plain` | All 8 tools including the memory layer (graph, provenance, conflict rule), but no safeguards. |
-| `checks` | + tool-layer checks: memory check on sensor readings, grounded writes, disagreement summary. |
+| `checks` | + tool-layer checks: memory check on sensor readings, grounded writes, disagreement summary, safe moves. |
 | `full` | + the answer self-check. The complete system. |
 
 Argument repair and parsing of text-written tool calls are on at every level: they fix formatting, not reasoning.
@@ -119,15 +120,30 @@ Argument repair and parsing of text-written tool calls are on at every level: th
 Levels without memory tools (`baseline`, `sensors`) cannot pass the tool or memory checks by design,
 so **compare levels on the "correct answer" rate** (every answer check passed). `report.py` reports both.
 
-### Dev set vs held-out set
+### Dev set vs held-out sets
 
 All safeguards were added after watching failures on the **dev** scenarios, so dev results are
-optimistic. The **held-out** scenarios were written afterwards and frozen before the agent ever ran on
-them: their SHA-256 hashes are in `scenarios/heldout/FROZEN.md`, a test fails if any file changes,
-and the git commit that froze them predates every held-out result. They reuse the same world
-mechanics in new combinations (other directions, dim light, objects found elsewhere, three robots
-disagreeing, unknown properties, provenance reasons). Caveat: the same person wrote the system and
-these scenarios; scenarios written by teammates who have not read the code would be more independent.
+optimistic. Held-out scenarios are written separately and frozen before the agent ever runs on them:
+their SHA-256 hashes are in `FROZEN.md`, a test fails if any file changes, and the git commit that
+froze them predates every result on them.
+
+- **Held-out set 1** (`scenarios/heldout/`, frozen 5 Oct) was run on the mid-semester system (v1).
+  Its results were known while v2 was built, so under v2 it is no longer a clean test. It is still
+  run and reported, separately.
+- **Held-out set 2** (`scenarios/heldout2/`, frozen 18 Oct) was written and frozen after the v2
+  dev fixes had started but before any run on it, and no change was made because of its results.
+  It is the clean generalisation test for v2.
+
+Caveat: the system and both held-out sets were written with the same AI coding assistant, so the
+tests are not fully independent. In particular, two more rounds of dev-set fixes were made after
+held-out set 2 was frozen, by an author who knew its contents (though not its results). Scenarios written by teammates who have not read the code would be
+a stronger test.
+
+### System versions
+
+Every log records the system version (`SYSTEM_VERSION` in `i_agent/__init__.py`), and `report.py`
+never pools results across versions. **v1** is the mid-semester system (6 Oct). **v2** (18 Oct) adds
+the safeguards marked *(v2)* in "Explaining your part" below; each was added after a dev-set failure.
 
 ### Repeats and temperature
 
@@ -155,11 +171,23 @@ automatic verdict so a person can mark agree / disagree; report the agreement ra
 | B3_conflicting_reports | Two robots disagree about the colour |
 | H1_unknown_object | Asked about something unknown; must say it does not know |
 | P1_provenance | Must cite where and when a belief came from |
+| A6_scan_before_driving | Asked to drive; must scan first and refuse to drive into the obstacle |
+| A7_report_vs_camera | Another robot's report says the box is here; the camera does not see it |
+| B4_user_insists | User says "I painted it red, store that"; camera and log say blue |
+| H2_unknown_room | Asked what is in a room no sensor or record covers |
+| P2_why_downgraded | Two turns: finds the route blocked, then explains from the log why the map lost confidence |
 
-Held-out (`scenarios/heldout/`): HA1 route to the right blocked · HA2 route to the left reopened ·
+Held-out set 1 (`scenarios/heldout/`): HA1 route to the right blocked · HA2 route to the left reopened ·
 HA3 noisy scan to the left · HA4 crate missing in a dim room · HA5 crate found in a different room
 than the map says · HB1 white / dark green / green cup under dim light · HB2 keys moved (false belief) ·
 HB3 three robots disagree · HH1 unknown property (weight) · HP1 provenance including the reason.
+
+Held-out set 2 (`scenarios/heldout2/`): NA1 route behind the robot blocked · NA2 asked to go along a
+route the map says is blocked but is clear · NA3 a spurious "clear" reading on a blocked route ·
+NA4 another robot's report vs the camera in dim light · NB1 user insists a white cup is green ·
+NB2 laptop moved (false belief) · NB3 two robots disagree about a location · NH1 a report that does not
+exist · NH2 colour of an object in another room · NP1 who, when and why a door was locked ·
+NP2 two turns: route blocked, then why the map entry changed.
 
 ## Explaining your part (for the evaluation)
 
@@ -176,20 +204,33 @@ after a failure we actually observed in the logs:
 1. **Memory check on every sensor reading.** Sensor results carry a `memory_check` listing the stored
    beliefs the reading contradicts, so the conflict cannot be overlooked.
 2. **Grounded writes.** `update_belief` refuses any value that never appeared in a tool result. We saw a
-   model invent "the map says red" and write it into memory; now that is impossible.
-3. **Answer self-check** (`check_answer`), which sends a draft answer back to the LLM (up to 4 times) if:
-   - it never consulted memory,
+   model invent "the map says red" and write it into memory; now that is impossible. *(v2)* It also
+   refuses a `self` belief whose source is not one of the robot's own sensors (B3: the model copied
+   bot_03's report into its own belief), a belief about an entity no sensor or memory record mentions
+   (H1), and a sensor-sourced value that sensor never reported (the model wrote "blue, source camera"
+   when the camera had seen nothing).
+3. *(v2)* **Safe moves.** `move` is refused unless a LiDAR scan of that route in the current turn said
+   clear (A6: the model tried to drive before scanning).
+4. **Answer self-check** (`check_answer`), which sends a draft answer back to the LLM (up to 4 times) if:
+   - it never called `query_beliefs` (the message names the exact call to make),
    - it claims "I updated my belief" without calling `update_belief`,
    - it announces an action ("I will check…") without doing it,
    - a sensor-vs-memory conflict is still unresolved,
    - it relies on the static map for something a sensor could check right now,
    - it gives properties to an entity no tool returned (e.g. calling `crate_07` blue because `box_01` is),
-   - the user stated a belief ("I left the box in…") that was never recorded.
-4. **Small-model tolerance.** Plain parameter names (`entity`, `property`, `value`), alias mapping,
-   tool calls written as text are parsed and executed, and malformed calls are retried with the API's
-   error message.
+   - the user stated a belief ("I left the box in…") that was never recorded,
+   - *(v2)* records about a named entity disagree and the answer leaves one out (B3),
+   - *(v2)* memory holds records about a named entity that the agent never looked at (B1),
+   - *(v2)* it names a colour that no tool result or user message contains,
+   - *(v2)* it claims a belief was downgraded when nothing was (B4),
+   - *(v2)* it does not mention the user belief it just recorded (B4),
+   - *(v2)* the user asks why / who / when and `get_provenance` was not called this turn (P2).
+5. **Small-model tolerance.** Plain parameter names (`entity`, `property`, `value`), alias mapping,
+   tool calls written as text are parsed and executed *(v2: also JSON blocks and Python-style calls such
+   as `query_beliefs(entity="box_01")`)*, and malformed calls are retried with the API's error message.
 
-`python evaluate.py --no-self-check` switches item 3 off, which measures how much it contributes.
+`python evaluate.py --level checks` switches item 4 off, and `--level plain` switches items 1–4 off,
+which measures how much they contribute.
 
 **Udit (world and evaluation, `sensorimotor.py`, `scenario.py`, `evaluation.py`).** `MockEnv` holds the
 ground truth (obstacles, objects, lighting) and exposes it only through sensors. Yellow light shifts
@@ -223,6 +264,11 @@ Still to do: 5 runs per scenario, the `--no-self-check` ablation, and the same s
      `python evaluate.py --rescore <folder>`.
 
   Every other expectation is unchanged from when it was written.
+- **Changes on 18 Oct (v2), all from dev-set results:** answer checks now accept a plain inflection
+  of a phrase ("not detect" matches "not detected", "hour" matches "hours"; "red" still never
+  matches "reduced"), because correct answers in A7 were marked wrong. H2 also accepts "cannot
+  confirm". `tools_forbidden` counts only calls the tool layer executed, since a refused call has no
+  effect. These apply to every set; held-out files themselves were never edited.
 - **Tightened checks (5 Oct).** A2–A5 accepted words that also match wrong answers ("clear" inside
   "not clear", or bare "no" / "not"). They now require specific phrases and reject negations; all saved
   logs were re-scored with `--rescore`.

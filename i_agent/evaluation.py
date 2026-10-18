@@ -14,7 +14,8 @@ Expectation format (the "expect" block of a scenario file):
   "tools_required":      ["read_lidar", "update_belief"]
   "tools_any":           [["query_beliefs", "get_provenance"]]   at least one tool from each group
   "tool_min_counts":     {"read_lidar": 2}
-  "tools_forbidden":     ["move"]                    tools that must not be called
+  "tools_forbidden":     ["move"]                    tools that must not be executed (a call the
+                                                     tool layer refused has no effect and is allowed)
   "beliefs": [{"subject": "route_A", "predicate": "status", "perspective": "self",
                "value": "blocked" | "value_not": "x" | "value_contains": "101",
                "min_confidence": 0.9, "max_confidence": 0.5, "must_exist": true}]
@@ -42,7 +43,10 @@ class Check:
 
 
 def _mentions(text: str, word: str) -> bool:
-    return re.search(r"(?<![a-z0-9])" + re.escape(word.lower()) + r"(?![a-z0-9])", text.lower()) is not None
+    """Whole-word match that also accepts a plain inflection: 'not detect' matches 'not detected',
+    'hour' matches 'hours'. Other suffixes do not count, so 'red' never matches 'reduced'."""
+    return re.search(r"(?<![a-z0-9])" + re.escape(word.lower()) + r"(s|es|ed|ing)?(?![a-z0-9])",
+                     text.lower()) is not None
 
 
 def run_checks(expect: dict, turns: list[AgentResult], store: BeliefStore | None,
@@ -62,9 +66,11 @@ def run_checks(expect: dict, turns: list[AgentResult], store: BeliefStore | None
     for group in expect.get("tools_any", []):
         hit = [t for t in group if t in called]
         checks.append(Check("tools", f"called one of {group}", bool(hit), f"called {hit}" if hit else ""))
+    executed = [s["name"] for t in turns for s in t.trace
+                if s["type"] == "tool_call" and s.get("result", {}).get("ok")]
     for tool in expect.get("tools_forbidden", []):
-        checks.append(Check("tools", f"did not call {tool}", tool not in called,
-                            f"called {called.count(tool)}x" if tool in called else ""))
+        checks.append(Check("tools", f"did not execute {tool}", tool not in executed,
+                            f"executed {executed.count(tool)}x" if tool in executed else ""))
     for tool, n in expect.get("tool_min_counts", {}).items():
         count = called.count(tool)
         checks.append(Check("tools", f"called {tool} at least {n}x", count >= n, f"called {count}x"))
@@ -106,7 +112,7 @@ LEVELS = {
     "baseline": "no tools; starting memory pasted into the prompt as text",
     "sensors":  "sensor tools only; starting memory as text (a plain tool-using agent, no memory layer)",
     "plain":    "all 8 tools incl. the memory layer; no safeguards",
-    "checks":   "+ tool-layer checks: memory check, grounded writes, disagreement summary",
+    "checks":   "+ tool-layer checks: memory check, grounded writes, disagreement summary, safe moves",
     "full":     "+ answer self-check (the complete system)",
 }
 SENSOR_TOOLS = ["read_lidar", "read_camera", "get_pose", "move"]
@@ -116,7 +122,7 @@ SENSORS_PROMPT = Path(__file__).parent / "prompts" / "system_sensors.md"
 def level_options(level: str) -> tuple[dict, bool]:
     """(ToolRegistry options, self_check) for a level."""
     on = level in ("checks", "full")
-    tools = {"memory_check": on, "grounded_writes": on, "disagreement_summary": on}
+    tools = {"memory_check": on, "grounded_writes": on, "disagreement_summary": on, "safe_moves": on}
     if level == "sensors":
         tools["allowed_tools"] = SENSOR_TOOLS
     return tools, level == "full"

@@ -33,6 +33,7 @@ from collections import Counter, defaultdict
 from dataclasses import asdict
 from pathlib import Path
 
+from i_agent import SYSTEM_VERSION
 from i_agent.clock import SimClock
 from i_agent.declarative import BeliefStore
 from i_agent.evaluation import LEVELS, run_checks, run_scenario
@@ -155,6 +156,7 @@ def main() -> None:
             except Exception as e:  # noqa: BLE001 - record API failures and keep going
                 rec = {"scenario": s["id"], "set": args.set, "mode": mode,
                        "error": f"{type(e).__name__}: {e}", "checks": [], "passed": False}
+            rec["system"] = SYSTEM_VERSION
             (out / f"{s['id']}_run{i}.json").write_text(json.dumps(rec, indent=2, ensure_ascii=False),
                                                          encoding="utf-8")
             records[s["id"]].append(rec)

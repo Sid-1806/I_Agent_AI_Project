@@ -282,7 +282,7 @@ def test_evidence_from_earlier_turns_counts_and_user_beliefs_are_required():
         "box_01 is not here; bot_02 logged it in Room_205.",
         [("record_user_belief", {"entity": "box_01", "property": "located_at", "value": "Room_101",
                                  "evidence": "I left box_01 in Room 101"})],
-        "box_01 is not here; bot_02 logged it in Room_205.",
+        "You left box_01 in Room_101, but it is not here; bot_02 logged it in Room_205.",
         "You think box_01 is in Room 101; my records say Room_205.",   # turn 2: no new tools needed
     ])
     agent = Agent(world.tools, llm)
@@ -299,8 +299,17 @@ def test_invented_values_cannot_be_written_to_memory():
     out = json.loads(world.tools.execute("update_belief", {**write, "value": "red"}))
     assert out["ok"] is False and "does not appear" in out["error"]
     world.tools.execute("query_beliefs", {"entity": "box_01"})
+    # "green" is in memory now, but the camera never saw box_01: a sensor write must match that sensor
     out = json.loads(world.tools.execute("update_belief", {**write, "value": "green", "source": "camera"}))
-    assert out["ok"] is True
+    assert out["ok"] is False and "never reported" in out["error"]
+
+
+def test_a_write_that_matches_the_sensor_is_accepted():
+    world = build_world(load_scenario("A1"))
+    world.tools.execute("read_lidar", {"direction": "front"})
+    write = {"entity": "route_A", "property": "status", "source": "lidar_front", "confidence": 1.0, "reason": "x"}
+    assert json.loads(world.tools.execute("update_belief", {**write, "value": "clear"}))["ok"] is False
+    assert json.loads(world.tools.execute("update_belief", {**write, "value": "blocked"}))["ok"] is True
 
 
 def test_another_robots_report_cannot_be_copied_into_self():
@@ -427,3 +436,26 @@ def test_python_style_tool_calls_are_parsed():
     assert [(c["name"], json.loads(c["arguments"])) for c in calls] == [
         ("query_beliefs", {"entity": "crate_07"}), ("get_pose", {})]
     assert "query_beliefs" not in rest
+
+
+def test_move_is_refused_until_a_scan_shows_the_route_clear():
+    world = build_world(load_scenario("A6"))  # route_C blocked 20 cm ahead
+    out = json.loads(world.tools.execute("move", {"route": "route_C"}))
+    assert out["ok"] is False and "not been scanned" in out["error"]
+    world.tools.execute("read_lidar", {"direction": "front"})
+    out = json.loads(world.tools.execute("move", {"route": "route_C"}))
+    assert out["ok"] is False and "blocked" in out["error"]
+    assert world.env.robot["room"] == "Room_101"
+
+
+def test_self_check_rejects_downgrade_claims_and_missing_provenance():
+    world = build_world(load_scenario("P1"))
+    llm = ScriptedLLM([
+        [("query_beliefs", {"entity": "box_01"})],
+        "bot_02 said box_01 is blue an hour ago; its report has been downgraded.",
+        [("get_provenance", {"entity": "box_01"})],
+        "bot_02 logged box_01 as blue about an hour ago.",
+    ])
+    result = Agent(world.tools, llm).ask("Where did you learn that box_01 is blue?")
+    checks = [s["text"] for s in result.trace if s["type"] == "self_check"]
+    assert len(checks) == 1 and "downgraded" in checks[0] and "get_provenance" in checks[0]
