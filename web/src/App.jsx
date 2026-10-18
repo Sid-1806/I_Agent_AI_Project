@@ -1,158 +1,126 @@
 import { useCallback, useEffect, useState } from "react";
+import { X } from "lucide-react";
 import * as api from "./api.js";
+import { useLiveSession, useReplay } from "./hooks.js";
+import Rail from "./components/Rail.jsx";
 import TopBar from "./components/TopBar.jsx";
-import StepBar from "./components/StepBar.jsx";
-import WorldPanel from "./components/WorldPanel.jsx";
-import BrainPanel from "./components/BrainPanel.jsx";
-import MemoryPanel from "./components/MemoryPanel.jsx";
+import PageHeader from "./components/PageHeader.jsx";
+import WorldCard from "./components/world/WorldCard.jsx";
+import BrainCard from "./components/brain/BrainCard.jsx";
+import MemoryCard from "./components/memory/MemoryCard.jsx";
+import Timeline from "./components/Timeline.jsx";
 
-// Two modes over the same three panels:
-//   live  a fresh world, memory and agent for a scenario; the user asks questions and every agent
-//         step streams in as it happens
-//   logs  a logged evaluation run, rebuilt step by step by the server
+// Two views over the same three layers:
+//   live  talk to the agent in a scenario's world; each step streams in as it happens
+//   logs  replay a logged evaluation run step by step
 export default function App() {
   const [mode, setMode] = useState("live");
   const [config, setConfig] = useState(null);
-  const [scenarios, setScenarios] = useState([]);
-  const [scenarioId, setScenarioId] = useState("A1_route_blocked");
-  const [level, setLevel] = useState("full");
-  const [session, setSession] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [runs, setRuns] = useState([]);
-  const [runFile, setRunFile] = useState("");
-  const [replay, setReplay] = useState(null);
+  const [error, setError] = useState("");
   const [cursor, setCursor] = useState(0);
   const [follow, setFollow] = useState(true);
-  const [error, setError] = useState("");
+  const [overlay, setOverlay] = useState(true);
+  const [type, setType] = useState("all");
+  const [runFilter, setRunFilter] = useState("all");
 
-  const fail = (e) => setError(e.message || String(e));
-
-  useEffect(() => {
-    api.getConfig().then(setConfig).catch(fail);
-    api.getScenarios().then(setScenarios).catch(fail);
-  }, []);
-
-  const startSession = useCallback(async (id, lv) => {
-    setError("");
-    const s = await api.newSession(id, lv);
-    setSession({ id: s.session, scenario: s.scenario, frames: s.frames });
-    setCursor(0);
-    setFollow(true);
-  }, []);
+  const onError = useCallback((e) => setError(e?.message || String(e)), []);
+  const live = useLiveSession(onError);
+  const logs = useReplay(mode === "logs", onError);
 
   useEffect(() => {
-    if (scenarios.length) startSession(scenarioId, level).catch(fail);
-  }, [scenarios.length, scenarioId, level, startSession]);
+    api.getConfig().then(setConfig).catch(onError);
+  }, [onError]);
 
-  useEffect(() => {
-    if (mode === "logs" && !runs.length) api.getRuns().then(setRuns).catch(fail);
-  }, [mode, runs.length]);
-
-  const frames = (mode === "live" ? session?.frames : replay?.frames) || [];
-  const scenario = mode === "live" ? session?.scenario : replay?.scenario;
+  const frames = (mode === "live" ? live.session?.frames : logs.replay?.frames) || [];
+  const scenario = mode === "live" ? live.session?.scenario : logs.replay?.scenario;
+  const at = Math.min(cursor, Math.max(0, frames.length - 1));
+  const frame = frames[at];
+  const previous = at > 0 ? frames[at - 1] : null;
 
   useEffect(() => {
     if (follow && frames.length) setCursor(frames.length - 1);
   }, [frames.length, follow]);
 
+  useEffect(() => {
+    if (mode === "logs") {
+      setFollow(false);
+      setCursor(0);
+    }
+  }, [mode, logs.replay]);
+
   const select = (i) => {
     setCursor(i);
-    setFollow(i >= frames.length - 1);
+    if (i < frames.length - 1) setFollow(false);
   };
-
-  const onAsk = async (question) => {
-    setBusy(true);
-    setError("");
-    setFollow(true);
-    try {
-      await api.ask(session.id, question, (ev) => {
-        if (ev.event === "frame") setSession((s) => ({ ...s, frames: [...s.frames, ev.frame] }));
-        if (ev.event === "error") setError(ev.message);
-      });
-    } catch (e) {
-      fail(e);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onRun = async (file) => {
-    setRunFile(file);
-    setReplay(null);
-    if (!file) return;
-    try {
-      setError("");
-      setReplay(await api.getReplay(file));
-      setCursor(0);
-      setFollow(false);
-    } catch (e) {
-      fail(e);
-    }
-  };
-
-  const frame = frames[Math.min(cursor, frames.length - 1)];
-  const previous = cursor > 0 ? frames[cursor - 1] : null;
-  const failedChecks = replay?.checks?.filter((c) => !c.passed).map((c) => `${c.kind}: ${c.name}`) || [];
 
   return (
-    <div className="app">
-      <TopBar
+    <div className="shell">
+      <Rail
         mode={mode}
         onMode={(m) => {
           setMode(m);
           setFollow(m === "live");
         }}
-        config={config}
-        scenarios={scenarios}
-        scenarioId={scenarioId}
-        onScenario={setScenarioId}
-        level={level}
-        onLevel={setLevel}
-        onRestart={() => startSession(scenarioId, level).catch(fail)}
-        runs={runs}
-        runFile={runFile}
-        onRun={onRun}
-        busy={busy}
       />
-      <div className="context">
-        {scenario ? (
-          <p>
-            <strong>{scenario.id}</strong> <span className="muted">({scenario.set})</span> {scenario.description}
-            {mode === "live" && level !== "full" && (
-              <span className="warn"> Safeguards level “{level}”: {config?.levels?.[level]}.</span>
-            )}
-            {mode === "logs" && replay && (
-              <span className="muted">
-                {" "}
-                Evaluation: {replay.passed ? "passed" : `failed (${failedChecks.join("; ")})`}. {replay.level} {replay.system}, {replay.model}.
-              </span>
-            )}
-          </p>
-        ) : (
-          <p className="muted">{mode === "logs" ? "Choose a logged run." : "Loading…"}</p>
+      <div className="main">
+        <TopBar frames={frames.slice(0, at + 1)} frame={frame} config={config} />
+        <PageHeader
+          mode={mode}
+          scenario={scenario}
+          busy={live.busy}
+          follow={follow}
+          onFollow={(v) => {
+            setFollow(v);
+            if (v) setCursor(frames.length - 1);
+          }}
+          overlay={overlay}
+          onOverlay={setOverlay}
+          live={{
+            scenarios: live.scenarios,
+            scenarioId: live.scenarioId,
+            onScenario: live.setScenarioId,
+            type,
+            onType: setType,
+            level: live.level,
+            onLevel: live.setLevel,
+            levels: config?.levels,
+            onRestart: live.restart,
+          }}
+          logs={{ runs: logs.runs, file: logs.file, onRun: logs.open, filter: runFilter, onFilter: setRunFilter }}
+        />
+        {error && (
+          <div className="error-bar" role="alert">
+            <span>{error}</span>
+            <button type="button" onClick={() => setError("")} aria-label="Dismiss">
+              <X size={14} />
+            </button>
+          </div>
         )}
-        {frames.length > 0 && <StepBar count={frames.length} cursor={Math.min(cursor, frames.length - 1)} onChange={select} />}
+        {scenario ? (
+          <div className="workspace">
+            <div className="left">
+              <WorldCard world={scenario.world} frames={frames} frame={frame} overlay={overlay} onOverlay={setOverlay} />
+              <MemoryCard frame={frame} previous={previous} />
+            </div>
+            <BrainCard
+              frames={frames}
+              cursor={at}
+              onSelect={select}
+              live={mode === "live"}
+              busy={live.busy}
+              suggestions={scenario.turns || []}
+              onAsk={(q) => {
+                setFollow(true);
+                live.ask(q);
+              }}
+              replay={mode === "logs" ? logs.replay : null}
+            />
+          </div>
+        ) : (
+          <div className="empty">{mode === "logs" ? "Choose a logged run above to replay it." : "Starting a session…"}</div>
+        )}
+        {frames.length > 0 && <Timeline frames={frames} cursor={at} onChange={select} />}
       </div>
-      {error && (
-        <div className="error-bar" role="alert">
-          {error}
-        </div>
-      )}
-      {scenario && (
-        <main className="layers">
-          <WorldPanel world={scenario.world} frames={frames} frame={frame} />
-          <BrainPanel
-            frames={frames}
-            cursor={Math.min(cursor, frames.length - 1)}
-            onSelect={select}
-            live={mode === "live"}
-            busy={busy}
-            suggestions={scenario.turns || []}
-            onAsk={onAsk}
-          />
-          <MemoryPanel frame={frame} previous={previous} />
-        </main>
-      )}
     </div>
   );
 }

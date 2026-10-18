@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { ArrowUp, Loader2 } from "lucide-react";
 
-// Question input for live mode, with the scenario's own test questions as shortcuts.
-export default function AskBox({ suggestions, busy, onAsk }) {
+// Question input, with the scenario's own test questions as shortcuts.
+export default function Composer({ suggestions, busy, onAsk }) {
   const [text, setText] = useState("");
   const send = (q) => {
     const question = (q ?? text).trim();
@@ -10,27 +11,27 @@ export default function AskBox({ suggestions, busy, onAsk }) {
     setText("");
   };
   return (
-    <div className="ask">
+    <div className="composer">
       {suggestions.length > 0 && (
         <div className="suggestions">
-          <span className="muted">Scenario questions:</span>
           {suggestions.map((q) => (
-            <button key={q} type="button" className="link" disabled={busy} onClick={() => send(q)}>
+            <button key={q} type="button" className="suggestion" disabled={busy} onClick={() => send(q)} title="Ask this question">
               {q}
             </button>
           ))}
         </div>
       )}
       <form
+        className="ask-field"
         onSubmit={(e) => {
           e.preventDefault();
           send();
         }}
       >
         <textarea
-          rows={2}
+          rows={1}
           value={text}
-          placeholder={busy ? "The agent is answering…" : "Ask the agent, e.g. “Is your route clear?”"}
+          placeholder={busy ? "The agent is working…" : "Ask the agent or give it a task, e.g. “Drive to Room 102”"}
           disabled={busy}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -39,9 +40,10 @@ export default function AskBox({ suggestions, busy, onAsk }) {
               send();
             }
           }}
+          aria-label="Question for the agent"
         />
-        <button type="submit" disabled={busy || !text.trim()}>
-          {busy ? "Working" : "Send"}
+        <button type="submit" className="send" disabled={busy || !text.trim()} aria-label="Send">
+          {busy ? <Loader2 size={16} className="spin" /> : <ArrowUp size={16} strokeWidth={2.4} />}
         </button>
       </form>
     </div>
