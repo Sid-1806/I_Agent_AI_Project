@@ -50,28 +50,32 @@ python server.py                          # the web UI on http://localhost:8000 
 
 ## Web UI
 
-`python server.py` serves a React app (built into `web/dist`) on http://localhost:8000. Pick a world
-(any scenario), type a question or click one of the scenario's own questions, and watch the three
-layers side by side as the agent works:
+`python server.py` serves a React app (built into `web/dist`) on http://localhost:8000, with three
+screens on the left rail:
 
-- **World** (sensorimotor): the mock environment's ground truth (rooms, routes, obstacles, lighting,
-  objects in their true colour, the robot) with the sensor used at the current step drawn on top:
-  the LiDAR ray and its hit point, or the room the camera saw and what colour it perceived.
-- **Brain** (procedural): every LLM step as it streams in: thoughts, tool calls and their results,
-  rejected drafts with the self-check's reason, and the answer. Click a step to see the other two
-  panels at that moment.
-- **Memory** (declarative): the belief graph (one row per entity, property and perspective, with
-  source, confidence and age; rows changed by the step are marked) and the SQLite provenance log.
-
-"Safeguards" switches between `full`, `checks` and `plain`, to show live what each layer of
-safeguards adds. "Test logs" replays any logged evaluation run step by step, without the LLM.
+- **Operations.** Pick a world (any scenario), type a question or task, or click one of the
+  scenario's own questions, and watch all three layers as the agent works:
+  - *World* (sensorimotor): the mock environment as a map, showing the ground truth: rooms,
+    roads, obstacles, lighting, objects in their true colour, the robot and its planned route.
+    A robot card shows the last LiDAR reading on a gauge, what the camera saw (and the true
+    colour), and memory-check or refusal warnings. A compass shows which way the last scan pointed.
+  - *Agent* (procedural): every LLM step as it streams in: thoughts, tool calls and results, drafts
+    rejected by the self-check (with the reason), and the answer.
+  - *Memory* (declarative): the belief graph and the SQLite provenance log at the selected step,
+    with changed rows marked.
+  "Safeguards" switches between all safeguards, tool checks only and none, to show live what they
+  add. A timeline at the bottom steps through the run (arrow keys, space to play).
+- **Replay.** Any logged evaluation run, rebuilt step by step without calling the LLM, with its
+  automatic checks.
+- **Results.** Every logged run by system version: failing full-system runs (each opens in Replay),
+  recent runs, what each safeguard level adds, and the full system across versions.
 
 A backend is needed because the agent is Python (NetworkX, SQLite, the mock world and the LLM loop);
-`server.py` only wraps the existing classes and streams each step to the page. To change the
-frontend: `cd web && npm install && npm run dev` (port 5173, with `server.py` running), then
-`npm run build`.
+`server.py` only wraps the existing classes, streams each step to the page, and summarises the logs
+with `report.py`'s code. To change the frontend: `cd web && npm install && npm run dev` (port 5173,
+with `server.py` running), then `npm run build`.
 
-### Models and limits
+## Models and limits
 
 - **Groq (default):** `openai/gpt-oss-20b`, open-weight, fast. Groq no longer serves Llama 3.
   The free tier allows about **200k tokens per model per day**, and one scenario run uses 6–12k

@@ -134,6 +134,30 @@ def ask(sid: str, body: Question):
     return StreamingResponse(stream(), media_type="application/x-ndjson")
 
 
+@app.get("/api/results")
+def results():
+    """Evaluation summary for the results screen, from the same code as report.py."""
+    import report
+    report.LOGS = LOGS
+    runs = report.load_runs()
+    rows = report.summary_rows(report.group(runs))
+    failing = [{"file": f"logs/{r['folder']}/{r['file']}", "scenario": r["scenario"], "set": r["set"],
+                "system": r["system"], "level": r["level"], "model": r.get("model"), "folder": r["folder"],
+                "answer_ok": r["answer_ok"],
+                "failed": [f"{c['kind']}: {c['name']}" for c in r.get("checks", []) if not c["passed"]]}
+               for r in runs if r["level"] == "full" and not r["passed"] and not r["errored"]]
+    failing.sort(key=lambda f: f["folder"], reverse=True)
+    folders: dict[str, dict] = {}
+    for r in runs:
+        f = folders.setdefault(r["folder"], {"folder": r["folder"], "set": r["set"], "level": r["level"],
+                                             "system": r["system"], "model": r.get("model"),
+                                             "temperature": r["temperature"], "runs": 0, "passed": 0})
+        f["runs"] += 1
+        f["passed"] += bool(r["passed"])
+    return {"rows": rows, "failing": failing[:40],
+            "folders": sorted(folders.values(), key=lambda f: f["folder"], reverse=True)}
+
+
 @app.get("/api/runs")
 def runs():
     out = []

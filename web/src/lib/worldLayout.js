@@ -1,7 +1,20 @@
-// Places rooms on a grid: the robot's room in the middle, connected rooms in the direction their
-// route leaves it (front = right, back = left, left = up, right = down), other rooms in a row below.
+// Places rooms on a grid: the robot's room in the middle, each connected room in the direction its
+// route leaves (front = right, back = left, left = up, right = down), other rooms in a row below.
 
 const OFFSET = { front: [1, 0], back: [-1, 0], left: [0, -1], right: [0, 1] };
+
+export function roomsOf(world, frames) {
+  const rooms = new Set([world.robot?.room]);
+  Object.values(world.routes || {}).forEach((r) => {
+    rooms.add(r.from);
+    rooms.add(r.to);
+  });
+  Object.values(world.objects || {}).forEach((o) => rooms.add(o.room));
+  Object.keys(world.lighting || {}).forEach((r) => rooms.add(r));
+  frames.forEach((f) => rooms.add(f.room));
+  rooms.delete(undefined);
+  return rooms;
+}
 
 export function layoutRooms(world, rooms) {
   const robot = world.robot || {};
@@ -39,20 +52,7 @@ export function layoutRooms(world, rooms) {
   return pos;
 }
 
-export function roomsOf(world, frames) {
-  const rooms = new Set([world.robot?.room]);
-  Object.values(world.routes || {}).forEach((r) => {
-    rooms.add(r.from);
-    rooms.add(r.to);
-  });
-  Object.values(world.objects || {}).forEach((o) => rooms.add(o.room));
-  Object.keys(world.lighting || {}).forEach((r) => rooms.add(r));
-  frames.forEach((f) => rooms.add(f.room));
-  rooms.delete(undefined);
-  return rooms;
-}
-
-// Point where the segment from c towards `toward` leaves a w x h box centred on c.
+// Where the segment from c towards `toward` leaves a box of half-size hw x hh centred on c.
 export function edgePoint(c, toward, hw, hh) {
   const dx = toward[0] - c[0];
   const dy = toward[1] - c[1];

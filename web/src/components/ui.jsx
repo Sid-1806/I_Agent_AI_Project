@@ -1,37 +1,33 @@
-// Small shared building blocks.
+// Shared building blocks.
 
-export function Badge({ tone = "muted", children, dot = false }) {
+export function Badge({ tone = "muted", dot = false, children }) {
   return (
     <span className={`badge tone-${tone}`}>
-      {dot && <i className="dot" />}
+      {dot && <i className="badge-dot" />}
       {children}
     </span>
   );
 }
 
-export function Card({ className = "", children, ...rest }) {
-  return (
-    <section className={`card ${className}`} {...rest}>
-      {children}
-    </section>
-  );
+export function Card({ className = "", children }) {
+  return <section className={`card ${className}`}>{children}</section>;
 }
 
-export function CardHeader({ icon: Icon, title, children }) {
+export function CardHead({ icon: Icon, title, children }) {
   return (
-    <header className="card-header">
+    <header className="card-head">
       <h2>
-        {Icon && <Icon size={15} strokeWidth={2} />}
+        {Icon && <Icon size={16} strokeWidth={2} />}
         {title}
       </h2>
-      <div className="card-header-side">{children}</div>
+      {children && <div className="card-head-side">{children}</div>}
     </header>
   );
 }
 
-export function IconButton({ icon: Icon, label, onClick, disabled, active }) {
+export function IconButton({ icon: Icon, label, onClick, disabled, className = "" }) {
   return (
-    <button type="button" className={`icon-btn${active ? " active" : ""}`} onClick={onClick} disabled={disabled} aria-label={label} title={label}>
+    <button type="button" className={`icon-btn ${className}`} onClick={onClick} disabled={disabled} aria-label={label} title={label}>
       <Icon size={16} strokeWidth={2} />
     </button>
   );
@@ -40,16 +36,16 @@ export function IconButton({ icon: Icon, label, onClick, disabled, active }) {
 export function Toggle({ label, checked, onChange }) {
   return (
     <label className="toggle">
-      <span>{label}</span>
+      {label}
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <i aria-hidden="true" />
     </label>
   );
 }
 
-export function Segmented({ options, value, onChange, disabled }) {
+export function Segmented({ options, value, onChange, disabled, label }) {
   return (
-    <div className="segmented" role="radiogroup">
+    <div className="segmented" role="radiogroup" aria-label={label}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -70,9 +66,21 @@ export function Segmented({ options, value, onChange, disabled }) {
 
 export function Chip({ active, count, onClick, children }) {
   return (
-    <button type="button" className={`chip${active ? " on" : ""}`} onClick={onClick}>
+    <button type="button" className={`chip${active ? " on" : ""}`} onClick={onClick} aria-pressed={active}>
       {children}
       {count != null && <span className="chip-count">{count}</span>}
     </button>
   );
+}
+
+export function Select({ value, onChange, label, disabled, children }) {
+  return (
+    <select className="select" value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} disabled={disabled}>
+      {children}
+    </select>
+  );
+}
+
+export function Empty({ children }) {
+  return <div className="empty">{children}</div>;
 }

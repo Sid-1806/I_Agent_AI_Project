@@ -1,32 +1,39 @@
 import { useCallback, useEffect, useState } from "react";
 import * as api from "./api.js";
 
-// A live session: fresh world, memory and agent on the server; questions stream steps back.
-export function useLiveSession(onError) {
-  const [scenarios, setScenarios] = useState([]);
-  const [scenarioId, setScenarioId] = useState("A1_route_blocked");
-  const [level, setLevel] = useState("full");
+// Fetches once (or when `key` changes) and reports errors.
+export function useFetch(load, onError, key = "") {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    load()
+      .then((d) => alive && setData(d))
+      .catch(onError);
+    return () => {
+      alive = false;
+    };
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  return data;
+}
+
+// A live session on the server: fresh world, memory and agent; questions stream steps back.
+export function useLiveSession(scenarioId, level, onError) {
   const [session, setSession] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    api.getScenarios().then(setScenarios).catch(onError);
-  }, [onError]);
-
   const restart = useCallback(() => {
+    if (!scenarioId) return;
     api
       .newSession(scenarioId, level)
       .then((s) => setSession({ id: s.session, scenario: s.scenario, frames: s.frames }))
       .catch(onError);
   }, [scenarioId, level, onError]);
 
-  useEffect(() => {
-    if (scenarios.length) restart();
-  }, [scenarios.length, restart]);
+  useEffect(restart, [restart]);
 
   const ask = useCallback(
     async (question) => {
-      if (!session) return;
+      if (!session || busy) return;
       setBusy(true);
       try {
         await api.ask(session.id, question, (ev) => {
@@ -39,30 +46,68 @@ export function useLiveSession(onError) {
         setBusy(false);
       }
     },
-    [session, onError]
+    [session, busy, onError]
   );
 
-  return { scenarios, scenarioId, setScenarioId, level, setLevel, session, busy, restart, ask };
+  return { session, busy, restart, ask };
 }
 
-// A logged evaluation run, rebuilt step by step by the server.
-export function useReplay(active, onError) {
-  const [runs, setRuns] = useState([]);
-  const [file, setFile] = useState("");
-  const [replay, setReplay] = useState(null);
+// The selected step of a run: follows the newest step until the user picks an earlier one.
+// Arrow keys step, space plays.
+export function usePlayer(count, { followByDefault = true } = {}) {
+  const [cursor, setCursor] = useState(0);
+  const [follow, setFollow] = useState(followByDefault);
+  const [playing, setPlaying] = useState(false);
+  const last = Math.max(0, count - 1);
+  const at = Math.min(cursor, last);
 
   useEffect(() => {
-    if (active && !runs.length) api.getRuns().then(setRuns).catch(onError);
-  }, [active, runs.length, onError]);
+    if (follow) setCursor(last);
+  }, [last, follow]);
 
-  const open = useCallback(
-    (f) => {
-      setFile(f);
-      setReplay(null);
-      if (f) api.getReplay(f).then(setReplay).catch(onError);
+  const go = useCallback(
+    (i) => {
+      const next = Math.max(0, Math.min(last, i));
+      setCursor(next);
+      setFollow(next >= last && followByDefault);
     },
-    [onError]
+    [last, followByDefault]
   );
 
-  return { runs, file, replay, open };
+  useEffect(() => {
+    if (!playing) return undefined;
+    if (at >= last) {
+      setPlaying(false);
+      return undefined;
+    }
+    const t = setTimeout(() => setCursor(at + 1), 1000);
+    return () => clearTimeout(t);
+  }, [playing, at, last]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (["TEXTAREA", "INPUT", "SELECT"].includes(e.target.tagName)) return;
+      if (e.key === "ArrowRight") go(at + 1);
+      if (e.key === "ArrowLeft") go(at - 1);
+      if (e.key === " ") {
+        e.preventDefault();
+        setPlaying((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [at, go]);
+
+  const togglePlay = () => {
+    if (!playing && at >= last) setCursor(0);
+    setFollow(false);
+    setPlaying((p) => !p);
+  };
+  const reset = () => {
+    setCursor(0);
+    setPlaying(false);
+    setFollow(followByDefault);
+  };
+
+  return { at, follow, setFollow, playing, togglePlay, go, reset };
 }

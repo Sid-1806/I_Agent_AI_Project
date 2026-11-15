@@ -1,0 +1,44 @@
+.agent-card { min-height: 0; }
+.feed { flex: 1; min-height: 0; overflow: auto; position: relative; list-style: none; margin: 0; padding: 0 12px 12px; }
+.feed-item { margin-bottom: 8px; }
+.feed-item > button { width: 100%; display: flex; align-items: flex-start; gap: 11px; padding: 11px 12px; text-align: left; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-2); }
+.feed-item > button:hover { border-color: var(--line-2); }
+.feed-item.current > button { border-color: var(--lime); }
+
+.feed-icon { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--inset); border: 1px solid var(--line); }
+.feed-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.feed-title { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+.feed-body { color: var(--muted); font-size: 13px; }
+.feed-body p { margin: 0; white-space: pre-wrap; }
+.feed-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; color: var(--dim); font-size: 11px; }
+.arg { padding: 0 6px; border-radius: 6px; background: var(--raised); color: var(--muted); font: 11.5px/20px var(--mono); }
+.tool-lines { font: 12px/1.5 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.tool-lines.error { color: var(--red); }
+.feed-warning { display: flex; align-items: flex-start; gap: 6px; color: var(--amber); font-size: 12px; }
+.feed-warning svg { flex: none; margin-top: 3px; }
+
+/* alert-style kinds */
+.feed-item.kind-question > button { background: var(--raised); }
+.feed-item.kind-question .feed-title { font-size: 14px; }
+.feed-item.kind-self_check > button { border-color: rgba(240, 82, 77, 0.35); background: rgba(240, 82, 77, 0.07); }
+.feed-item.kind-draft > button { border-color: rgba(242, 169, 59, 0.3); background: rgba(242, 169, 59, 0.05); }
+.feed-item.kind-answer > button { border-color: rgba(212, 240, 92, 0.35); background: rgba(212, 240, 92, 0.06); }
+.feed-item.tone-bad.kind-tool_call > button { border-color: rgba(240, 82, 77, 0.35); }
+.feed-item.kind-answer .feed-body, .feed-item.kind-self_check .feed-body { color: var(--text); }
+.feed-item.current > button { border-color: var(--lime); }
+
+.checks { margin: 0 12px 12px; padding: 10px 12px; border: 1px solid; border-radius: 14px; font-size: 12.5px; }
+.checks.ok { border-color: rgba(212, 240, 92, 0.35); background: rgba(212, 240, 92, 0.06); color: var(--lime); }
+.checks.fail { border-color: rgba(240, 82, 77, 0.4); background: rgba(240, 82, 77, 0.07); color: var(--red); }
+.checks-head { display: flex; align-items: center; gap: 7px; font-weight: 600; }
+.checks-row { margin-top: 4px; color: var(--text); font-size: 12px; }
+
+.composer { flex: none; padding: 10px 12px 12px; border-top: 1px solid var(--line); }
+.suggestions { display: flex; gap: 6px; margin-bottom: 9px; overflow-x: auto; padding-bottom: 2px; }
+.suggestion { flex: none; max-width: 320px; height: 30px; padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--line-2); border-radius: 999px; background: var(--panel-2); color: var(--muted); font-size: 12.5px; }
+.suggestion:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+.ask { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 16px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--panel-2); }
+.ask:focus-within { border-color: var(--lime); }
+.ask textarea { flex: 1; min-height: 24px; max-height: 110px; padding: 7px 0; border: 0; outline: 0; resize: none; background: none; font-size: 14px; }
+.ask textarea::placeholder { color: var(--dim); }
+.send { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--lime); color: var(--lime-ink); }

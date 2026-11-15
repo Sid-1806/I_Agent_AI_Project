@@ -1,4 +1,4 @@
-// Thin client for server.py.
+// Client for server.py.
 
 async function json(res) {
   if (!res.ok) {
@@ -13,25 +13,19 @@ async function json(res) {
   return res.json();
 }
 
+const post = (url, body) =>
+  fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
 export const getConfig = () => fetch("/api/config").then(json);
 export const getScenarios = () => fetch("/api/scenarios").then(json);
 export const getRuns = () => fetch("/api/runs").then(json);
+export const getResults = () => fetch("/api/results").then(json);
 export const getReplay = (file) => fetch(`/api/replay?file=${encodeURIComponent(file)}`).then(json);
+export const newSession = (scenario, level) => post("/api/sessions", { scenario, level }).then(json);
 
-export const newSession = (scenario, level) =>
-  fetch("/api/sessions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scenario, level }),
-  }).then(json);
-
-// Streams the agent's steps: onEvent is called with {event: "frame" | "done" | "error", ...}.
+// Streams the agent's steps; onEvent gets {event: "frame" | "done" | "error", ...}.
 export async function ask(session, question, onEvent) {
-  const res = await fetch(`/api/sessions/${session}/ask`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
-  });
+  const res = await post(`/api/sessions/${session}/ask`, { question });
   if (!res.ok) await json(res);
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
