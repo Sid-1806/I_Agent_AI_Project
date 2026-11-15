@@ -1,10 +1,10 @@
-# Results: heldout set, level sensors, qwen2.5:7b, temperature 0, 1 runs per scenario
+# Results: heldout set, level sensors, qwen2.5:7b, temperature 0, 1 runs per scenario (rescored 2026-11-15 22:18)
 
 Overall: 0/10 runs passed all checks
 
 | scenario | type | pass_rate | answer | tools | memory | grounding | most_common_failure |
 |---|---|---|---|---|---|---|---|
-| HA1_right_route_blocked | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle'] |
+| HA1_right_route_blocked | A | 0/1 | 0/1 | 0/1 | 0/1 | - | does not say 'route is clear' |
 | HA2_left_route_reopened | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['is clear', 'now clear', 'currently clear', 'is passable', 'is open', 'is free', 'can be used', 'yes'] |
 | HA3_noisy_left_scan | A | 0/1 | 0/1 | 0/1 | 1/1 | - | does not say 'not clear' |
 | HA4_crate_missing_dim_room | A | 0/1 | 1/1 | 0/1 | 0/1 | - | called update_belief |

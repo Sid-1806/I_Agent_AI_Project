@@ -115,8 +115,8 @@
     {
       "kind": "answer",
       "name": "mentions one of ['0.3', 'downgraded', 'lowered', 'reduced', 'contradicted']",
-      "passed": false,
-      "detail": ""
+      "passed": true,
+      "detail": "found ['contradicted']"
     },
     {
       "kind": "tools",
@@ -144,5 +144,6 @@
     }
   ],
   "passed": false,
-  "system": "v2"
+  "system": "v2",
+  "rescored": "2026-11-15 22:19"
 }

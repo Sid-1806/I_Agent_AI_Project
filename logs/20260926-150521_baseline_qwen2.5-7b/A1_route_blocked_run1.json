@@ -22,8 +22,8 @@
     {
       "kind": "answer",
       "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
-      "passed": false,
-      "detail": ""
+      "passed": true,
+      "detail": "found ['obstacle']"
     },
     {
       "kind": "answer",
@@ -57,5 +57,5 @@
     }
   ],
   "passed": false,
-  "rescored": "2026-10-05 21:44"
+  "rescored": "2026-11-15 22:18"
 }

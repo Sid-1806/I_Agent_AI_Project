@@ -64,8 +64,8 @@
     {
       "kind": "answer",
       "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
-      "passed": false,
-      "detail": ""
+      "passed": true,
+      "detail": "found ['blocked']"
     },
     {
       "kind": "answer",
@@ -98,5 +98,6 @@
       "detail": "confidence 1.0 > 0.5"
     }
   ],
-  "passed": false
+  "passed": false,
+  "rescored": "2026-11-15 22:18"
 }

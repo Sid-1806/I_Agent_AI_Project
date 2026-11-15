@@ -226,8 +226,8 @@
     {
       "kind": "answer",
       "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
-      "passed": false,
-      "detail": ""
+      "passed": true,
+      "detail": "found ['blocked']"
     },
     {
       "kind": "answer",
@@ -260,6 +260,7 @@
       "detail": "= clear (conf 0.3)"
     }
   ],
-  "passed": false,
-  "system": "v3"
+  "passed": true,
+  "system": "v3",
+  "rescored": "2026-11-15 22:19"
 }

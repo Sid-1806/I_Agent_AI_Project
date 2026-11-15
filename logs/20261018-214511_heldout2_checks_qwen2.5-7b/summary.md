@@ -1,4 +1,4 @@
-# Results: heldout2 set, level checks, qwen2.5:7b, temperature 0, 1 runs per scenario
+# Results: heldout2 set, level checks, qwen2.5:7b, temperature 0, 1 runs per scenario (rescored 2026-11-15 22:19)
 
 Overall: 5/11 runs passed all checks
 
@@ -14,4 +14,4 @@ Overall: 5/11 runs passed all checks
 | NH1_unknown_robot_report | grounding | 1/1 | 1/1 | 1/1 | - | - |  |
 | NH2_unknown_chair_colour | grounding | 0/1 | 0/1 | 0/1 | - | 1/1 | mentions one of ["don't know", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', "can't determine", 'no data', "don't have", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', "can't provide", 'no sensor reading', 'not aware'] |
 | NP1_who_when_why | provenance | 1/1 | 1/1 | 1/1 | - | - |  |
-| NP2_why_downgraded_left | provenance | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['0.3', 'downgraded', 'lowered', 'reduced', 'contradicted'] |
+| NP2_why_downgraded_left | provenance | 0/1 | 1/1 | 0/1 | 0/1 | - | called update_belief |

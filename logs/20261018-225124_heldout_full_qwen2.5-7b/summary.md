@@ -1,4 +1,4 @@
-# Results: heldout set, level full, qwen2.5:7b, temperature 0, 1 runs per scenario
+# Results: heldout set, level full, qwen2.5:7b, temperature 0, 1 runs per scenario (rescored 2026-11-15 22:19)
 
 Overall: 7/10 runs passed all checks
 

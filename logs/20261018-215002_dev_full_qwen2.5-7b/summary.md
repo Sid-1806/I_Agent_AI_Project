@@ -1,4 +1,4 @@
-# Results: dev set, level full, qwen2.5:7b, temperature 0, 3 runs per scenario
+# Results: dev set, level full, qwen2.5:7b, temperature 0, 3 runs per scenario (rescored 2026-11-15 22:19)
 
 Overall: 44/45 runs passed all checks
 

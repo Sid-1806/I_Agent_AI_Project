@@ -1,10 +1,10 @@
-# Results: dev set, level full, qwen2.5:7b-8k, temperature 0, 1 runs per scenario
+# Results: dev set, level full, qwen2.5:7b-8k, temperature 0, 1 runs per scenario (rescored 2026-11-15 22:19)
 
-Overall: 12/15 runs passed all checks
+Overall: 13/15 runs passed all checks
 
 | scenario | type | pass_rate | answer | tools | memory | grounding | most_common_failure |
 |---|---|---|---|---|---|---|---|
-| A1_route_blocked | A | 0/1 | 0/1 | 1/1 | 1/1 | - | mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle'] |
+| A1_route_blocked | A | 1/1 | 1/1 | 1/1 | 1/1 | - |  |
 | A2_route_reopened | A | 1/1 | 1/1 | 1/1 | 1/1 | - |  |
 | A3_noisy_lidar | A | 1/1 | 1/1 | 1/1 | 1/1 | - |  |
 | A4_object_missing | A | 1/1 | 1/1 | 1/1 | 1/1 | - |  |

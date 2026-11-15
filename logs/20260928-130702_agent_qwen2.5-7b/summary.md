@@ -1,4 +1,4 @@
-# Results: agent, qwen2.5:7b, 5 runs per scenario (rescored 2026-10-05 21:44)
+# Results: agent, qwen2.5:7b, 5 runs per scenario (rescored 2026-10-05 21:44) (rescored 2026-11-15 22:18)
 
 Overall: 39/50 runs passed all checks
 

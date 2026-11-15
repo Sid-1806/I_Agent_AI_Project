@@ -180,5 +180,6 @@
       "detail": "not in any tool result: ['green']"
     }
   ],
-  "passed": false
+  "passed": false,
+  "rescored": "2026-11-15 22:18"
 }

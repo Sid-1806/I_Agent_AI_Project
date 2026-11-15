@@ -1,10 +1,10 @@
-# Results: dev set, level plain, qwen2.5:7b, temperature 0, 1 runs per scenario
+# Results: dev set, level plain, qwen2.5:7b, temperature 0, 1 runs per scenario (rescored 2026-11-15 22:18)
 
 Overall: 2/10 runs passed all checks
 
 | scenario | type | pass_rate | answer | tools | memory | grounding | most_common_failure |
 |---|---|---|---|---|---|---|---|
-| A1_route_blocked | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle'] |
+| A1_route_blocked | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['map'] |
 | A2_route_reopened | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['is clear', 'now clear', 'currently clear', 'route is clear', 'path is clear', 'is open', 'is free', 'yes'] |
 | A3_noisy_lidar | A | 0/1 | 0/1 | 0/1 | 1/1 | - | does not say 'not clear' |
 | A4_object_missing | A | 0/1 | 1/1 | 0/1 | 0/1 | - | called update_belief |

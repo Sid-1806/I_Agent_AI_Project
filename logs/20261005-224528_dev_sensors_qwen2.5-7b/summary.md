@@ -1,4 +1,4 @@
-# Results: dev set, level sensors, qwen2.5:7b, temperature 0, 1 runs per scenario
+# Results: dev set, level sensors, qwen2.5:7b, temperature 0, 1 runs per scenario (rescored 2026-11-15 22:18)
 
 Overall: 1/10 runs passed all checks
 
@@ -8,7 +8,7 @@ Overall: 1/10 runs passed all checks
 | A2_route_reopened | A | 0/1 | 1/1 | 0/1 | 0/1 | - | called update_belief |
 | A3_noisy_lidar | A | 1/1 | 1/1 | 1/1 | 1/1 | - |  |
 | A4_object_missing | A | 0/1 | 0/1 | 0/1 | 0/1 | - | mentions one of ['not here', 'not in this room', 'not in room', 'not present', 'cannot see', "can't see", "don't see", 'do not see', 'not visible', 'not detect', 'did not detect', "didn't detect", 'no box', "isn't here", 'is not here', 'is not in', "isn't in", 'not currently in', 'not found'] |
-| A5_stale_belief | A | 0/1 | 0/1 | 1/1 | 0/1 | - | mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle'] |
+| A5_stale_belief | A | 0/1 | 1/1 | 1/1 | 0/1 | - | route_A.status [self] state |
 | B1_three_colors | B | 0/1 | 1/1 | 0/1 | 0/1 | 1/1 | called record_user_belief |
 | B2_false_belief | B | 0/1 | 1/1 | 0/1 | 0/1 | - | called record_user_belief |
 | B3_conflicting_reports | B | 0/1 | 1/1 | 0/1 | 1/1 | 1/1 | called query_beliefs |

@@ -22,8 +22,8 @@
     {
       "kind": "answer",
       "name": "mentions one of [\"don't know\", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', \"can't determine\", 'no data', \"don't have\", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', \"can't provide\", 'no sensor reading', 'not aware']",
-      "passed": true,
-      "detail": "found [\"don't have\"]"
+      "passed": false,
+      "detail": ""
     },
     {
       "kind": "tools",
@@ -39,5 +39,5 @@
     }
   ],
   "passed": false,
-  "rescored": "2026-10-05 21:44"
+  "rescored": "2026-11-15 22:18"
 }

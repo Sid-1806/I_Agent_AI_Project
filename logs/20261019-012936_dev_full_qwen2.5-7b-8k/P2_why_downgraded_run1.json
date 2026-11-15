@@ -299,7 +299,7 @@
       "kind": "answer",
       "name": "mentions one of ['0.3', 'downgrad', 'downgraded', 'lowered', 'reduced', 'contradict', 'contradicted']",
       "passed": true,
-      "detail": "found ['0.3', 'downgrad', 'downgraded', 'contradict', 'contradicted']"
+      "detail": "found ['0.3', 'downgrad', 'downgraded', 'lowered', 'contradict', 'contradicted']"
     },
     {
       "kind": "tools",
@@ -327,5 +327,6 @@
     }
   ],
   "passed": true,
-  "system": "v3"
+  "system": "v3",
+  "rescored": "2026-11-15 22:19"
 }
