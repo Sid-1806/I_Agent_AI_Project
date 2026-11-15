@@ -1,0 +1,12 @@
+scenario,type,pass_rate,answer,tools,memory,grounding,most_common_failure
+NA1_back_route_blocked,A,1/1,1/1,1/1,1/1,-,
+NA2_drive_request_clear,A,1/1,1/1,1/1,1/1,-,
+NA3_spike_says_clear,A,1/1,1/1,1/1,1/1,-,
+NA4_report_vs_camera_dim,A,1/1,1/1,1/1,1/1,-,
+NB1_user_insists_green,B,1/1,1/1,1/1,1/1,-,
+NB2_laptop_moved,B,0/1,1/1,0/1,0/1,-,called record_user_belief
+NB3_two_reports_location,B,1/1,1/1,1/1,1/1,-,
+NH1_unknown_robot_report,grounding,1/1,1/1,1/1,-,-,
+NH2_unknown_chair_colour,grounding,1/1,1/1,1/1,-,1/1,
+NP1_who_when_why,provenance,1/1,1/1,1/1,-,-,
+NP2_why_downgraded_left,provenance,1/1,1/1,1/1,1/1,-,

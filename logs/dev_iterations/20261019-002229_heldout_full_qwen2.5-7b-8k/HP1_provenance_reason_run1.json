@@ -1,0 +1,144 @@
+{
+  "scenario": "HP1_provenance_reason",
+  "set": "heldout",
+  "type": "provenance",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Who told you that route_B is blocked, and why is it blocked?",
+      "answer": "I have checked my memory and sensorimotor layer. The current belief is that route_B is blocked, as reported by agent:bot_06 with a confidence of 0.85. This information is based on a direct observation made 2700 seconds ago, where bot_06 reported a fallen shelf blocking route_B.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "property": "status",
+            "entity": "route_B"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "entity": "route_B",
+                  "property": "status",
+                  "perspective": "agent:bot_06",
+                  "old_value": null,
+                  "new_value": "blocked",
+                  "old_confidence": null,
+                  "new_confidence": 0.85,
+                  "source": "bot_06_log",
+                  "reason": "bot_06 reported a fallen shelf blocking route_B",
+                  "age_s": 2700
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The belief that route_B is blocked was reported by another robot, specifically agent:bot_06. According to bot_06's log, a fallen shelf is blocking route_B, and this information was recorded with a confidence of 0.85, which is based on bot_06's direct observation."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location)."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "route_B",
+                  "property": "status",
+                  "value": "blocked",
+                  "perspective": "agent:bot_06",
+                  "source": "bot_06_log",
+                  "confidence": 0.85,
+                  "age_s": 2700
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_300",
+                "facing": {}
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "draft",
+          "text": "I have checked my memory and sensorimotor layer. The current belief is that route_B is blocked, as reported by agent:bot_06 with a confidence of 0.85. This information is based on a direct observation made 2700 seconds ago. My current pose indicates that I am in Room_300 and facing in an unspecified direction."
+        },
+        {
+          "step": 4,
+          "type": "self_check",
+          "text": "The user asked why. The provenance log records the reason: 'bot_06 reported a fallen shelf blocking route_B'. Include that reason in your answer."
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "I have checked my memory and sensorimotor layer. The current belief is that route_B is blocked, as reported by agent:bot_06 with a confidence of 0.85. This information is based on a direct observation made 2700 seconds ago, where bot_06 reported a fallen shelf blocking route_B."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "agent:bot_06",
+      "source": "bot_06_log",
+      "confidence": 0.85,
+      "timestamp": 997300.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_06', 'bot 06']",
+      "passed": true,
+      "detail": "found ['bot_06']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['shelf']",
+      "passed": true,
+      "detail": "found ['shelf']"
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['get_provenance', 'query_beliefs']",
+      "passed": true,
+      "detail": "called ['get_provenance', 'query_beliefs']"
+    }
+  ],
+  "passed": true,
+  "system": "v3"
+}

@@ -1,0 +1,137 @@
+{
+  "scenario": "NB3_two_reports_location",
+  "set": "heldout2",
+  "type": "B",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Where is box_09 according to your records, and which report do you trust more?",
+      "answer": "According to my records, box_09 is reported to be located in Room_141 by bot_09, with a confidence of 0.85 and recorded 15 minutes ago. There is also a report from bot_08 stating that box_09 is in Room_140, with a higher confidence of 0.9 but recorded 3 hours ago. I trust the more recent report from bot_09 more, as it is the most recent and direct evidence.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "box_09",
+            "property": "located_at"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "box_09",
+                  "property": "located_at",
+                  "value": "Room_141",
+                  "perspective": "agent:bot_09",
+                  "source": "bot_09_log",
+                  "confidence": 0.85,
+                  "age_s": 900
+                },
+                {
+                  "entity": "box_09",
+                  "property": "located_at",
+                  "value": "Room_140",
+                  "perspective": "agent:bot_08",
+                  "source": "bot_08_log",
+                  "confidence": 0.9,
+                  "age_s": 10800
+                }
+              ],
+              "disagreements": [
+                {
+                  "entity": "box_09",
+                  "property": "located_at",
+                  "newest_first": [
+                    {
+                      "value": "Room_141",
+                      "perspective": "agent:bot_09",
+                      "source": "bot_09_log",
+                      "recorded": "15 min ago"
+                    },
+                    {
+                      "value": "Room_140",
+                      "perspective": "agent:bot_08",
+                      "source": "bot_08_log",
+                      "recorded": "3 h ago"
+                    }
+                  ],
+                  "newest": "Room_141 from bot_09_log (15 min ago)"
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "answer",
+          "text": "According to my records, box_09 is reported to be located in Room_141 by bot_09, with a confidence of 0.85 and recorded 15 minutes ago. There is also a report from bot_08 stating that box_09 is in Room_140, with a higher confidence of 0.9 but recorded 3 hours ago. I trust the more recent report from bot_09 more, as it is the most recent and direct evidence."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_09",
+      "predicate": "located_at",
+      "obj": "Room_140",
+      "perspective": "agent:bot_08",
+      "source": "bot_08_log",
+      "confidence": 0.9,
+      "timestamp": 989200.0
+    },
+    {
+      "subject": "box_09",
+      "predicate": "located_at",
+      "obj": "Room_141",
+      "perspective": "agent:bot_09",
+      "source": "bot_09_log",
+      "confidence": 0.85,
+      "timestamp": 999100.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['140']",
+      "passed": true,
+      "detail": "found ['140']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['141']",
+      "passed": true,
+      "detail": "found ['141']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_09', 'bot 09']",
+      "passed": true,
+      "detail": "found ['bot_09']"
+    },
+    {
+      "kind": "tools",
+      "name": "called query_beliefs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_09.located_at [agent:bot_08] state",
+      "passed": true,
+      "detail": "= Room_140 (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_09.located_at [agent:bot_09] state",
+      "passed": true,
+      "detail": "= Room_141 (conf 0.85)"
+    }
+  ],
+  "passed": true,
+  "system": "v2"
+}

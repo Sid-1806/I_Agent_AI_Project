@@ -1,0 +1,50 @@
+{
+  "scenario": "NP1_who_when_why",
+  "set": "heldout2",
+  "type": "provenance",
+  "mode": "baseline",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Who reported that door_03 is locked, when was that, and why was it locked?",
+      "answer": "According to the log from bot_10, door_03 was reported as locked. This information was recorded with a high confidence level of 0.9. The exact timestamp of this report is not provided in the stored knowledge, but it was likely recent given the high confidence. The reason for the lock status is not specified in the available data.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "According to the log from bot_10, door_03 was reported as locked. This information was recorded with a high confidence level of 0.9. The exact timestamp of this report is not provided in the stored knowledge, but it was likely recent given the high confidence. The reason for the lock status is not specified in the available data."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_10', 'bot 10']",
+      "passed": true,
+      "detail": "found ['bot_10']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['2 h', '2 hours', 'two hours', '7200', '120 min']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['patrol', 'security']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v2"
+}

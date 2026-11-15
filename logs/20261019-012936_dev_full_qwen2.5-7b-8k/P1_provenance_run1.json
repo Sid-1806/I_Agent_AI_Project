@@ -1,0 +1,137 @@
+{
+  "scenario": "P1_provenance",
+  "set": "dev",
+  "type": "provenance",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Where did you learn that box_01 is blue, and how long ago was that recorded?",
+      "answer": "I learned that box_01 is blue from the report by another robot, specifically \"bot_02\". This information was recorded 1 hour ago, as it was logged 3600 seconds ago.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "entity": "box_01",
+            "property": "color"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "perspective": "agent:bot_02",
+                  "old_value": null,
+                  "new_value": "blue",
+                  "old_confidence": null,
+                  "new_confidence": 0.9,
+                  "source": "bot_02_log",
+                  "reason": "bot_02 logged action painted_blue on item box_01",
+                  "age_s": 3600
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "I learned that box_01 is blue from the report by another robot, specifically \"bot_02\". This information was recorded 1 hour ago, as it was logged 3600 seconds ago."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs(entity=\"box_01\") (and get_pose if the question is about your route or location)."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "property": "color",
+            "entity": "box_01"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "blue",
+                  "perspective": "agent:bot_02",
+                  "source": "bot_02_log",
+                  "confidence": 0.9,
+                  "age_s": 3600
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_300",
+                "facing": {}
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "I learned that box_01 is blue from the report by another robot, specifically \"bot_02\". This information was recorded 1 hour ago, as it was logged 3600 seconds ago."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_02', 'bot 02']",
+      "passed": true,
+      "detail": "found ['bot_02']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['hour', '3600', '60 minutes']",
+      "passed": true,
+      "detail": "found ['hour', '3600']"
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": true,
+  "system": "v3"
+}

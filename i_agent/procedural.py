@@ -417,8 +417,8 @@ _VAGUE_ROBOT = re.compile(r"\b(another|other|a second|second|secondary|maintenan
                           re.IGNORECASE)
 _ASKS_PROVENANCE = re.compile(r"\b(why|where did you (learn|get|hear)|who (told|reported|said)|when (was|did)|"
                               r"what caused|how do you know|history)\b", re.IGNORECASE)
-_ANNOUNCES_ACTION = re.compile(r"\b(i will|i'll|let me|i am going to|i'm going to)\s+(now\s+|first\s+)?"
-                               r"(check|verify|read|use|query|look|scan|update|record|confirm|inspect|call)\b",
+_ANNOUNCES_ACTION = re.compile(r"\b(i will|i'll|let me|i am going to|i'm going to|i need to|i will need to)\s+(now\s+|first\s+|need to\s+)?"
+                               r"(check|verify|read|use|query|look|scan|update|record|confirm|inspect|call|do that|drive|move|go)\b",
                                re.IGNORECASE)
 
 

@@ -1,0 +1,341 @@
+{
+  "scenario": "P2_why_downgraded",
+  "set": "dev",
+  "type": "provenance",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is your route clear? Check before you answer.",
+      "answer": "I have updated my belief that route_A.status is now blocked based on the live lidar_front reading. The static map's confidence in the route being clear has been downgraded to 0.3 due to this new evidence.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_A",
+                "distance_cm": 15,
+                "status": "blocked"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 1.0,
+                    "age_s": 86401
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The front lidar sensor shows that there is an object 15 cm in front of me, which blocks the route. This single reading contradicts the static map's belief that the route is clear. I should read the lidar again to confirm before updating my belief."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_front reading gave route_A.status = blocked, but memory has map says clear. Read the sensor again; if it agrees, call update_belief, otherwise trust the readings that agree. You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location)."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "robot",
+                  "property": "planned_route",
+                  "value": "route_A",
+                  "perspective": "self",
+                  "source": "mission_plan",
+                  "confidence": 1.0,
+                  "age_s": 61
+                },
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "value": "clear",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 1.0,
+                  "age_s": 86401
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "draft",
+          "text": "I queried my beliefs and found that the static map still reports that route_A.status is clear. However, the lidar sensor detected an object 15 cm in front, indicating that the route is blocked. I will read the lidar again to confirm before updating my belief."
+        },
+        {
+          "step": 4,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_front reading gave route_A.status = blocked, but memory has map says clear. Read the sensor again; if it agrees, call update_belief, otherwise trust the readings that agree. You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_A",
+                "distance_cm": 15,
+                "status": "blocked"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 1.0,
+                    "age_s": 86402
+                  }
+                ],
+                "advice": "Confirmed by consecutive readings. Record it now: update_belief(entity=\"route_A\", property=\"status\", value=\"blocked\", source=\"lidar_front\", confidence=1.0, reason=\"two consecutive lidar_front readings\")"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "draft",
+          "text": "The lidar sensor confirmed that the front route is blocked with a distance of 15 cm. Given that this reading agrees with the previous one, I will update my belief to reflect the current state of the route.\n\nI am updating my belief that route_A.status is now blocked based on two consecutive lidar_front readings."
+        },
+        {
+          "step": 6,
+          "type": "self_check",
+          "text": "Unresolved conflict: lidar_front observed route_A.status = blocked, but memory has map says clear. Do not answer yet. Your next reply must be this tool call: update_belief(entity=\"route_A\", property=\"status\", value=\"blocked\", source=\"lidar_front\", confidence=1.0, reason=\"live lidar_front reading\") You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 7,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "route_A",
+            "property": "status",
+            "value": "blocked",
+            "source": "lidar_front",
+            "confidence": 1,
+            "reason": "live lidar_front reading"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_A",
+                "property": "status",
+                "value": "blocked",
+                "perspective": "self",
+                "source": "lidar_front",
+                "confidence": 1.0
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "clear",
+                  "old_confidence": 1.0,
+                  "new_confidence": 0.3
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 8,
+          "type": "answer",
+          "text": "I have updated my belief that route_A.status is now blocked based on the live lidar_front reading. The static map's confidence in the route being clear has been downgraded to 0.3 due to this new evidence."
+        }
+      ],
+      "belief_changes": [
+        "~ route_A.status [map]: clear (1.0) -> clear (0.3, Default_Map)",
+        "+ route_A.status [self] = blocked (conf 1.0, lidar_front)"
+      ]
+    },
+    {
+      "question": "Why does the map entry for route_A have a lower confidence now, and what caused the change?",
+      "answer": "The map's belief about route_A.status was initially set to \"clear\" with a confidence of 1.0 when the static map was loaded. This belief was later downgraded to a confidence of 0.3 because it was contradicted by the live lidar_front reading, which indicated that the route is blocked. The change was recorded in the provenance log with the reason \"contradicted by lidar_front (blocked); map confidence downgraded,\" and the age of the entry is 86402 seconds (approximately 24 hours).",
+      "trace": [
+        {
+          "step": 1,
+          "type": "draft",
+          "text": "The static map's entry for route_A.status had a confidence of 1.0, indicating it was considered certain that the route was clear. However, the live lidar_front reading showed that the route is blocked, which contradicts the map's belief. As a result, the map's confidence in the route being clear has been downgraded to 0.3 to reflect the new evidence from the sensor reading. This change was made to acknowledge that the current physical state of the route is now known to be blocked."
+        },
+        {
+          "step": 1,
+          "type": "self_check",
+          "text": "The user is asking where, when, why or how a belief arose. Answer from the provenance log, not from the conversation: call get_provenance for the entity first and cite its source, reason and age."
+        },
+        {
+          "step": 2,
+          "type": "thought",
+          "text": "To determine where, when, and why the map's belief about route_A.status was downgraded, I will check the provenance log."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "entity": "route_A",
+            "property": "status"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "perspective": "map",
+                  "old_value": null,
+                  "new_value": "clear",
+                  "old_confidence": null,
+                  "new_confidence": 1.0,
+                  "source": "Default_Map",
+                  "reason": "initial load",
+                  "age_s": 86402
+                },
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "perspective": "self",
+                  "old_value": null,
+                  "new_value": "blocked",
+                  "old_confidence": null,
+                  "new_confidence": 1.0,
+                  "source": "lidar_front",
+                  "reason": "live lidar_front reading",
+                  "age_s": 0
+                },
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "perspective": "map",
+                  "old_value": "clear",
+                  "new_value": "clear",
+                  "old_confidence": 1.0,
+                  "new_confidence": 0.3,
+                  "source": "Default_Map",
+                  "reason": "contradicted by lidar_front (blocked); map confidence downgraded",
+                  "age_s": 86402
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "answer",
+          "text": "The map's belief about route_A.status was initially set to \"clear\" with a confidence of 1.0 when the static map was loaded. This belief was later downgraded to a confidence of 0.3 because it was contradicted by the live lidar_front reading, which indicated that the route is blocked. The change was recorded in the provenance log with the reason \"contradicted by lidar_front (blocked); map confidence downgraded,\" and the age of the entry is 86402 seconds (approximately 24 hours)."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.3,
+      "timestamp": 913600.0
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "self",
+      "source": "lidar_front",
+      "confidence": 1.0,
+      "timestamp": 1000002.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['lidar']",
+      "passed": true,
+      "detail": "found ['lidar']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['0.3', 'downgrad', 'downgraded', 'lowered', 'reduced', 'contradict', 'contradicted']",
+      "passed": true,
+      "detail": "found ['0.3', 'downgrad', 'downgraded', 'contradict', 'contradicted']"
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [self] state",
+      "passed": true,
+      "detail": "= blocked (conf 1.0)"
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [map] state",
+      "passed": true,
+      "detail": "= clear (conf 0.3)"
+    }
+  ],
+  "passed": true,
+  "system": "v3"
+}

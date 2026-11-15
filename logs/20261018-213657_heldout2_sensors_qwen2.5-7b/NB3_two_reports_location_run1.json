@@ -1,0 +1,81 @@
+{
+  "scenario": "NB3_two_reports_location",
+  "set": "heldout2",
+  "type": "B",
+  "mode": "sensors",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Where is box_09 according to your records, and which report do you trust more?",
+      "answer": "According to my records, box_09 was last reported to be located at Room_140 by agent bot_08, with a confidence of 0.9, and at Room_141 by agent bot_09, with a confidence of 0.85. Since the report from bot_08 has a higher confidence, I currently trust that box_09 is located at Room_140.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "According to my records, box_09 was last reported to be located at Room_140 by agent bot_08, with a confidence of 0.9, and at Room_141 by agent bot_09, with a confidence of 0.85. Since the report from bot_08 has a higher confidence, I currently trust that box_09 is located at Room_140."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_09",
+      "predicate": "located_at",
+      "obj": "Room_140",
+      "perspective": "agent:bot_08",
+      "source": "bot_08_log",
+      "confidence": 0.9,
+      "timestamp": 989200.0
+    },
+    {
+      "subject": "box_09",
+      "predicate": "located_at",
+      "obj": "Room_141",
+      "perspective": "agent:bot_09",
+      "source": "bot_09_log",
+      "confidence": 0.85,
+      "timestamp": 999100.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['140']",
+      "passed": true,
+      "detail": "found ['140']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['141']",
+      "passed": true,
+      "detail": "found ['141']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_09', 'bot 09']",
+      "passed": true,
+      "detail": "found ['bot_09']"
+    },
+    {
+      "kind": "tools",
+      "name": "called query_beliefs",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_09.located_at [agent:bot_08] state",
+      "passed": true,
+      "detail": "= Room_140 (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_09.located_at [agent:bot_09] state",
+      "passed": true,
+      "detail": "= Room_141 (conf 0.85)"
+    }
+  ],
+  "passed": false,
+  "system": "v2"
+}

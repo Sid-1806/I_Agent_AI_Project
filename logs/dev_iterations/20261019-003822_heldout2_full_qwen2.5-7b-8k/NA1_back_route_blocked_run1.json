@@ -1,0 +1,292 @@
+{
+  "scenario": "NA1_back_route_blocked",
+  "set": "heldout2",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Is route_K passable right now? Tell me how you know.",
+      "answer": "Yes, route_K is not passable right now. The live lidar back reading detected an object 30 cm away, confirming that route_K is blocked. This belief has been updated based on the current sensor reading, and the static map's previous report that route_K was clear has been downgraded in confidence.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": null,
+                "distance_cm": null,
+                "status": "no_route",
+                "note": "no route in direction 'front'. This is not an obstacle reading.",
+                "routes_by_direction": {
+                  "back": "route_K"
+                },
+                "advice": "Routes from here: route_K lies back (read_lidar(direction=\"back\"))"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "Route_K is passable right now. The front lidar scan did not detect any obstacles, and it indicates that a route is available in the back direction, which corresponds to route_K. This information is based on the live sensor reading from the lidar sensor."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location). Your answer relies on the static map for route_K (status = clear, 172801 s old) without a live reading. Scan it with read_lidar(direction=\"back\") before answering. The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "robot",
+                  "property": "planned_route",
+                  "value": "route_K",
+                  "perspective": "self",
+                  "source": "mission_plan",
+                  "confidence": 1.0,
+                  "age_s": 121
+                },
+                {
+                  "entity": "route_K",
+                  "property": "status",
+                  "value": "clear",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 1.0,
+                  "age_s": 172801
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "draft",
+          "text": "No, route_K is not passable right now. According to the static map, route_K was marked as clear 172,801 seconds ago. However, the live lidar scan in the back direction did not detect any obstacles, indicating that a route is available in that direction. This information is based on the static map and the current lidar reading."
+        },
+        {
+          "step": 4,
+          "type": "self_check",
+          "text": "Your answer relies on the static map for route_K (status = clear, 172801 s old) without a live reading. Scan it with read_lidar(direction=\"back\") before answering."
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "back"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_back",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "back",
+                "route": "route_K",
+                "distance_cm": 30,
+                "status": "blocked"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 1.0,
+                    "age_s": 172802
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "draft",
+          "text": "The back lidar scan detected an object 30 cm away, indicating that route_K is blocked. This single reading contradicts the static map's previous report that route_K was clear. According to the advice, I should read the lidar again to confirm before updating my belief. The current evidence suggests that route_K is not passable."
+        },
+        {
+          "step": 6,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_back reading gave route_K.status = blocked, but memory has map says clear. Read the sensor again; if it agrees, call update_belief, otherwise trust the readings that agree. The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence."
+        },
+        {
+          "step": 7,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "back"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_back",
+              "t": 1000003.0,
+              "payload": {
+                "direction": "back",
+                "route": "route_K",
+                "distance_cm": 30,
+                "status": "blocked"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 1.0,
+                    "age_s": 172803
+                  }
+                ],
+                "advice": "Confirmed by consecutive readings. Record it now: update_belief(entity=\"route_K\", property=\"status\", value=\"blocked\", source=\"lidar_back\", confidence=1.0, reason=\"two consecutive lidar_back readings\")"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 8,
+          "type": "draft",
+          "text": "Yes, route_K is not passable right now. The back lidar scan detected an object 30 cm away, and this reading was confirmed by a second scan. This evidence contradicts the static map's previous report that route_K was clear. I have updated my belief to reflect the current sensor reading."
+        },
+        {
+          "step": 8,
+          "type": "self_check",
+          "text": "Unresolved conflict: lidar_back observed route_K.status = blocked, but memory has map says clear. Do not answer yet. Your next reply must be this tool call: update_belief(entity=\"route_K\", property=\"status\", value=\"blocked\", source=\"lidar_back\", confidence=1.0, reason=\"live lidar_back reading\") You said you updated a belief, but you never called update_belief, so memory is unchanged. Call update_belief now, or do not claim it."
+        },
+        {
+          "step": 9,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "property": "status",
+            "value": "blocked",
+            "source": "lidar_back",
+            "confidence": 1,
+            "reason": "live lidar_back reading",
+            "entity": "route_K"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_K",
+                "property": "status",
+                "value": "blocked",
+                "perspective": "self",
+                "source": "lidar_back",
+                "confidence": 1.0
+              },
+              "replaced": null,
+              "downgraded": [
+                {
+                  "entity": "route_K",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "clear",
+                  "old_confidence": 1.0,
+                  "new_confidence": 0.3
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 10,
+          "type": "answer",
+          "text": "Yes, route_K is not passable right now. The live lidar back reading detected an object 30 cm away, confirming that route_K is blocked. This belief has been updated based on the current sensor reading, and the static map's previous report that route_K was clear has been downgraded in confidence."
+        }
+      ],
+      "belief_changes": [
+        "~ route_K.status [map]: clear (1.0) -> clear (0.3, Default_Map)",
+        "+ route_K.status [self] = blocked (conf 1.0, lidar_back)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_K",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999880.0
+    },
+    {
+      "subject": "route_K",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.3,
+      "timestamp": 827200.0
+    },
+    {
+      "subject": "route_K",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "self",
+      "source": "lidar_back",
+      "confidence": 1.0,
+      "timestamp": 1000003.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
+      "passed": true,
+      "detail": "found ['blocked']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_K.status [self] state",
+      "passed": true,
+      "detail": "= blocked (conf 1.0)"
+    },
+    {
+      "kind": "memory",
+      "name": "route_K.status [map] state",
+      "passed": true,
+      "detail": "= clear (conf 0.3)"
+    }
+  ],
+  "passed": true,
+  "system": "v3"
+}

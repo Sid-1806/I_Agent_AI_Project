@@ -1,0 +1,62 @@
+{
+  "scenario": "NH2_unknown_chair_colour",
+  "set": "heldout2",
+  "type": "grounding",
+  "mode": "baseline",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "What colour is chair_05 in Room 207?",
+      "answer": "I don't have information about the color of chair_05 in Room 207. My current knowledge only includes the location of box_01 in Room_101, and there's no data available for Room 207 or chair_05.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "I don't have information about the color of chair_05 in Room 207. My current knowledge only includes the location of box_01 in Room_101, and there's no data available for Room 207 or chair_05."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of [\"don't know\", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', \"can't determine\", 'no data', \"don't have\", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', \"can't provide\", 'no sensor reading', 'not aware']",
+      "passed": true,
+      "detail": "found ['no data', \"don't have\"]"
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'chair_05 is red'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'chair 05 is red'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'green'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v2"
+}

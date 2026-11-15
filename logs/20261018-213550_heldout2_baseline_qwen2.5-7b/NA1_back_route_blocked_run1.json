@@ -1,0 +1,56 @@
+{
+  "scenario": "NA1_back_route_blocked",
+  "set": "heldout2",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Is route_K passable right now? Tell me how you know.",
+      "answer": "Yes, route_K is passable right now. The status of route_K is clear according to the Default_Map, and this information has a confidence level of 1.0, indicating it is reliable.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Yes, route_K is passable right now. The status of route_K is clear according to the Default_Map, and this information has a confidence level of 1.0, indicating it is reliable."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_K.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "route_K.status [map] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "system": "v2"
+}

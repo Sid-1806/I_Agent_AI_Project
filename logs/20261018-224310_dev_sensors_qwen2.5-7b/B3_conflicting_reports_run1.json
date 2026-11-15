@@ -1,0 +1,87 @@
+{
+  "scenario": "B3_conflicting_reports",
+  "set": "dev",
+  "type": "B",
+  "mode": "sensors",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "What color is box_01 according to your records, and which record do you trust more?",
+      "answer": "According to my records, box_01 has been reported as blue by agent:bot_02 with a confidence of 0.9, recorded 3600 seconds ago. It was also reported as green by agent:bot_03 with a confidence of 0.85, recorded 600 seconds ago. I trust the record from agent:bot_02 more because it is more recent and has a higher confidence level.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "According to my records, box_01 has been reported as blue by agent:bot_02 with a confidence of 0.9, recorded 3600 seconds ago. It was also reported as green by agent:bot_03 with a confidence of 0.85, recorded 600 seconds ago. I trust the record from agent:bot_02 more because it is more recent and has a higher confidence level."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "agent:bot_03",
+      "source": "bot_03_log",
+      "confidence": 0.85,
+      "timestamp": 999400.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['green']",
+      "passed": true,
+      "detail": "found ['green']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blue']",
+      "passed": true,
+      "detail": "found ['blue']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_03', 'bot 03']",
+      "passed": true,
+      "detail": "found ['bot_03']"
+    },
+    {
+      "kind": "tools",
+      "name": "called query_beliefs",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [agent:bot_02] state",
+      "passed": true,
+      "detail": "= blue (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "box_01.color [agent:bot_03] state",
+      "passed": true,
+      "detail": "= green (conf 0.85)"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v2"
+}

@@ -1,0 +1,125 @@
+{
+  "scenario": "NB1_user_insists_green",
+  "set": "heldout2",
+  "type": "B",
+  "mode": "plain",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "I'm sure cup_03 is green. Save that in your memory.",
+      "answer": "I have recorded your belief that cup_03 is green. This belief comes from your statement and is marked with a confidence of 1.0 in the user perspective.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "record_user_belief",
+          "arguments": {
+            "value": "green",
+            "evidence": "The user is sure the cup_03 is green.",
+            "entity": "cup_03",
+            "property": "color"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "cup_03",
+                "property": "color",
+                "value": "green",
+                "perspective": "user",
+                "source": "user_utterance",
+                "confidence": 1.0
+              },
+              "replaced": null,
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "answer",
+          "text": "I have recorded your belief that cup_03 is green. This belief comes from your statement and is marked with a confidence of 1.0 in the user perspective."
+        }
+      ],
+      "belief_changes": [
+        "+ cup_03.color [user] = green (conf 1.0, user_utterance)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "cup_03",
+      "predicate": "color",
+      "obj": "white",
+      "perspective": "agent:bot_05",
+      "source": "bot_05_log",
+      "confidence": 0.9,
+      "timestamp": 998200.0
+    },
+    {
+      "subject": "cup_03",
+      "predicate": "color",
+      "obj": "green",
+      "perspective": "user",
+      "source": "user_utterance",
+      "confidence": 1.0,
+      "timestamp": 1000000.0
+    },
+    {
+      "subject": "cup_03",
+      "predicate": "located_at",
+      "obj": "Room_102",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.9,
+      "timestamp": 913600.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['green']",
+      "passed": true,
+      "detail": "found ['green']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['white']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called record_user_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "cup_03.color [user] state",
+      "passed": true,
+      "detail": "= green (conf 1.0)"
+    },
+    {
+      "kind": "memory",
+      "name": "cup_03.color [agent:bot_05] state",
+      "passed": true,
+      "detail": "= white (conf 0.9)"
+    },
+    {
+      "kind": "memory",
+      "name": "cup_03.color [self] state",
+      "passed": true,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "system": "v2"
+}

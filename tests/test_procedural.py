@@ -561,3 +561,11 @@ def test_a_repeated_failing_call_is_flagged():
     result = Agent(world.tools, llm, self_check=False).ask("Go to Room 205.")
     errors = [s["result"]["error"] for s in result.trace if s["type"] == "tool_call"]
     assert "failed 2 times" in errors[1] and "failed" not in errors[0].split("route_B")[0]
+
+
+def test_single_word_phrases_match_other_forms_of_the_word():
+    from i_agent.evaluation import _mentions
+    assert _mentions("an object 12 cm ahead blocks the path", "blocked", inflect=True)
+    assert _mentions("the routes are clear", "route", inflect=True)
+    assert not _mentions("confidence was reduced", "red", inflect=True)
+    assert not _mentions("the route is clear", "blocked", inflect=True)

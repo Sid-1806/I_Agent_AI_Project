@@ -1,0 +1,9 @@
+{
+  "scenario": "H2_unknown_room",
+  "set": "dev",
+  "mode": "full",
+  "error": "APITimeoutError: Request timed out.",
+  "checks": [],
+  "passed": false,
+  "system": "v3"
+}

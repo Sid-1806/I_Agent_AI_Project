@@ -1,0 +1,114 @@
+{
+  "scenario": "NP1_who_when_why",
+  "set": "heldout2",
+  "type": "provenance",
+  "mode": "full",
+  "model": "qwen2.5:7b",
+  "turns": [
+    {
+      "question": "Who reported that door_03 is locked, when was that, and why was it locked?",
+      "answer": "The memory indicates that door_03 is locked, according to a report from another robot (agent:bot_10), with a confidence of 0.9. This report is 2 hours old. There are no recent records in the provenance log about door_03 being locked.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "property": "locked",
+            "entity": "door_03"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [],
+              "note": "No provenance records for 'door_03'."
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "There are no records of who reported that door_03 is locked, when that was, or why it was locked. The static map indicates that door_03 is currently locked, but there is no historical information available in the provenance log."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs(entity=\"door_03\") (and get_pose if the question is about your route or location)."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "door_03",
+            "property": "locked"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "door_03",
+                  "property": "status",
+                  "value": "locked",
+                  "perspective": "agent:bot_10",
+                  "source": "bot_10_log",
+                  "confidence": 0.9,
+                  "age_s": 7200
+                }
+              ],
+              "note": "No 'locked' beliefs about door_03; showing everything known about door_03."
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "The memory indicates that door_03 is locked, according to a report from another robot (agent:bot_10), with a confidence of 0.9. This report is 2 hours old. There are no recent records in the provenance log about door_03 being locked."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "door_03",
+      "predicate": "status",
+      "obj": "locked",
+      "perspective": "agent:bot_10",
+      "source": "bot_10_log",
+      "confidence": 0.9,
+      "timestamp": 992800.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_10', 'bot 10']",
+      "passed": true,
+      "detail": "found ['bot_10']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['2 h', '2 hours', 'two hours', '7200', '120 min']",
+      "passed": true,
+      "detail": "found ['2 hours']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['patrol', 'security']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v2"
+}

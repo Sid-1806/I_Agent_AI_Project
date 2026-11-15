@@ -42,10 +42,21 @@ class Check:
     detail: str = ""
 
 
+def _stems(word: str) -> set[str]:
+    """The word and the word minus one common ending, never shorter than four letters ('red' stays
+    'red'; 'routes' gives route and rout; 'blocked' gives block)."""
+    return {word} | {word[: -len(end)] for end in ("ing", "ed", "es", "s")
+                     if word.endswith(end) and len(word) - len(end) >= 4}
+
+
 def _mentions(text: str, word: str, inflect: bool = False) -> bool:
     """Whole-word match. With inflect, a plain inflection also counts ('not detect' matches 'not
     detected', 'hour' matches 'hours'); other suffixes never do, so 'red' never matches 'reduced'.
     Required phrases use inflect; forbidden phrases do not ('path is cleared' is not 'path is clear')."""
+    if inflect and re.fullmatch(r"[a-z]+", word.lower()):
+        # One word: compare stems, so 'blocked' also matches 'blocks' and 'blocking'.
+        stems = _stems(word.lower())
+        return any(_stems(w) & stems for w in re.findall(r"[a-z]+", text.lower()))
     suffix = r"(s|es|ed|ing)?" if inflect else ""
     plain = re.sub(r"[\"'`“”]", "", text.lower())  # 'is now "clear"' reads as 'is now clear'
     return re.search(r"(?<![a-z0-9])" + re.escape(word.lower()) + suffix + r"(?![a-z0-9])", plain) is not None

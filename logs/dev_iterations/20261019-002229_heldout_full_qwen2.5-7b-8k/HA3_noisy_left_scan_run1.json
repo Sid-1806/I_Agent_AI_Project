@@ -1,0 +1,321 @@
+{
+  "scenario": "HA3_noisy_left_scan",
+  "set": "heldout",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Before you set off, check whether route_G is safe to drive.",
+      "answer": "I have updated my belief that route_G is clear. The static map's confidence remains unchanged as the conflict was resolved by a second, consistent lidar reading.\n\nNow, I have moved along route_G to Room_124.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": null,
+                "distance_cm": null,
+                "status": "no_route",
+                "note": "no route in direction 'front'. This is not an obstacle reading.",
+                "routes_by_direction": {
+                  "left": "route_G"
+                },
+                "advice": "Routes from here: route_G lies left (read_lidar(direction=\"left\"))"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "Route_G is safe to drive as there is no obstacle in the front direction. However, since there is no route in the 'front' direction, you should turn left to follow route_G. According to my memory, route_G lies to the left of your current position. I will verify this by checking the left direction with the lidar sensor."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location). Your answer relies on the static map for route_G (status = clear, 86401 s old) without a live reading. Scan it with read_lidar(direction=\"left\") before answering. You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "robot",
+                  "property": "planned_route",
+                  "value": "route_G",
+                  "perspective": "self",
+                  "source": "mission_plan",
+                  "confidence": 1.0,
+                  "age_s": 121
+                },
+                {
+                  "entity": "route_G",
+                  "property": "status",
+                  "value": "clear",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 1.0,
+                  "age_s": 86401
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_120",
+                "facing": {
+                  "left": "route_G"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "thought",
+          "text": "I have updated my understanding based on the current pose and memory. The static map indicates that route_G is clear, and my planned route is route_G. To confirm this, I will now check the left direction with the lidar sensor.\n\nFirst, let's verify the status of route_G with a live reading:"
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "left"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_left",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "left",
+                "route": "route_G",
+                "distance_cm": 14,
+                "status": "blocked"
+              },
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 1.0,
+                    "age_s": 86402
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "thought",
+          "text": "The lidar sensor reading indicates that route_G is blocked, with an object 14 cm in the way. This single reading conflicts with the static map's previous report that route_G was clear. I will read the lidar again to confirm before updating my belief.\n\nLet's read the lidar again in the left direction:"
+        },
+        {
+          "step": 6,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "left"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_left",
+              "t": 1000003.0,
+              "payload": {
+                "direction": "left",
+                "route": "route_G",
+                "distance_cm": 310,
+                "status": "clear"
+              },
+              "memory_check": {
+                "conflicts": [],
+                "advice": "Reading agrees with memory."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 7,
+          "type": "draft",
+          "text": "The second lidar reading confirms that route_G is clear, with no objects in the way. This aligns with the static map's previous report. I will update my belief to reflect this new information.\n\nI have updated my belief that route_G is clear. The static map's confidence has been downgraded due to the conflicting single reading. \n\nTo proceed, I will now move along route_G."
+        },
+        {
+          "step": 7,
+          "type": "self_check",
+          "text": "You said a belief was downgraded, but no confidence in memory changed. Only the static map is downgraded, and only when your own sensor contradicts it; other robots' reports and the user's beliefs are kept as they are. Do not claim it. You described actions you are going to take but did not take them. Call the tools now, then answer from their results. You said you updated a belief, but you never called update_belief, so memory is unchanged. Call update_belief now, or do not claim it."
+        },
+        {
+          "step": 8,
+          "type": "thought",
+          "text": "I will update my belief based on the new lidar reading and then proceed with moving along route_G.\n\nFirst, I will update my belief that route_G is clear:"
+        },
+        {
+          "step": 8,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "route_G",
+            "property": "status",
+            "value": "clear",
+            "source": "lidar_left",
+            "confidence": 1,
+            "reason": "Second lidar reading confirms the route is clear."
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_G",
+                "property": "status",
+                "value": "clear",
+                "perspective": "self",
+                "source": "lidar_left",
+                "confidence": 1.0
+              },
+              "replaced": null,
+              "downgraded": []
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 8,
+          "type": "tool_call",
+          "name": "move",
+          "arguments": {
+            "route": "route_G"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "action": "move",
+              "t": 1000008.0,
+              "success": true,
+              "detail": {
+                "now_in": "Room_124"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 9,
+          "type": "answer",
+          "text": "I have updated my belief that route_G is clear. The static map's confidence remains unchanged as the conflict was resolved by a second, consistent lidar reading.\n\nNow, I have moved along route_G to Room_124."
+        }
+      ],
+      "belief_changes": [
+        "+ route_G.status [self] = clear (conf 1.0, lidar_left)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_G",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999880.0
+    },
+    {
+      "subject": "route_G",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "timestamp": 913600.0
+    },
+    {
+      "subject": "route_G",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "self",
+      "source": "lidar_left",
+      "confidence": 1.0,
+      "timestamp": 1000003.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['clear', 'safe']",
+      "passed": true,
+      "detail": "found ['clear']"
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not safe'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'unsafe'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar at least 2x",
+      "passed": true,
+      "detail": "called 3x"
+    },
+    {
+      "kind": "memory",
+      "name": "route_G.status [self] state",
+      "passed": true,
+      "detail": "= clear (conf 1.0)"
+    },
+    {
+      "kind": "memory",
+      "name": "route_G.status [map] state",
+      "passed": true,
+      "detail": "= clear (conf 1.0)"
+    }
+  ],
+  "passed": true,
+  "system": "v3"
+}

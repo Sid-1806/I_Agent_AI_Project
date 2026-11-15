@@ -1,0 +1,9 @@
+{
+  "scenario": "B2_false_belief",
+  "set": "dev",
+  "mode": "full",
+  "error": "APITimeoutError: Request timed out.",
+  "checks": [],
+  "passed": false,
+  "system": "v3"
+}
