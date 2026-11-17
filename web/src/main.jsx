@@ -6,7 +6,6 @@ import "./styles/shell.css";
 import "./styles/map.css";
 import "./styles/agent.css";
 import "./styles/memory.css";
-import "./styles/results.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

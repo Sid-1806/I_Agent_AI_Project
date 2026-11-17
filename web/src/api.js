@@ -19,7 +19,6 @@ const post = (url, body) =>
 export const getConfig = () => fetch("/api/config").then(json);
 export const getScenarios = () => fetch("/api/scenarios").then(json);
 export const getRuns = () => fetch("/api/runs").then(json);
-export const getResults = () => fetch("/api/results").then(json);
 export const getReplay = (file) => fetch(`/api/replay?file=${encodeURIComponent(file)}`).then(json);
 export const newSession = (scenario, level) => post("/api/sessions", { scenario, level }).then(json);
 

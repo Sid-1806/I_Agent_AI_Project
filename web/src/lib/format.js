@@ -1,8 +1,6 @@
 export const ago = (s) =>
   s < 120 ? `${s}s` : s < 7200 ? `${Math.round(s / 60)}m` : s < 172800 ? `${Math.round(s / 3600)}h` : `${Math.round(s / 86400)}d`;
 
-export const pct = (k, n) => (n ? Math.round((100 * k) / n) : 0);
-
 export const perspectiveKind = (p = "") => (p.startsWith("agent:") ? "agent" : p);
 
 // "A1_route_blocked" -> {code: "A1", name: "Route blocked"}
@@ -13,22 +11,6 @@ export function scenarioTitle(id = "") {
 }
 
 export const SET_LABEL = { dev: "Dev set", heldout: "Held-out 1", heldout2: "Held-out 2" };
-
-export const SCENARIO_TYPES = [
-  { key: "all", label: "All" },
-  { key: "A", label: "Sensor vs map" },
-  { key: "B", label: "Perspectives" },
-  { key: "grounding", label: "Unknowns" },
-  { key: "provenance", label: "Provenance" },
-];
-
-export const LEVEL_LABEL = {
-  baseline: "No tools",
-  sensors: "Sensors only",
-  plain: "+ Memory",
-  checks: "+ Tool checks",
-  full: "+ Self-check",
-};
 
 export const COLOURS = {
   red: "#e5484d", blue: "#3e7bfa", green: "#46a758", brown: "#8d5a33", yellow: "#f5d90a", orange: "#f76b15",

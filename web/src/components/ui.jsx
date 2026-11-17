@@ -25,51 +25,15 @@ export function CardHead({ icon: Icon, title, children }) {
   );
 }
 
-export function IconButton({ icon: Icon, label, onClick, disabled, className = "" }) {
-  return (
-    <button type="button" className={`icon-btn ${className}`} onClick={onClick} disabled={disabled} aria-label={label} title={label}>
-      <Icon size={16} strokeWidth={2} />
-    </button>
-  );
-}
-
-export function Toggle({ label, checked, onChange }) {
-  return (
-    <label className="toggle">
-      {label}
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <i aria-hidden="true" />
-    </label>
-  );
-}
-
 export function Segmented({ options, value, onChange, disabled, label }) {
   return (
     <div className="segmented" role="radiogroup" aria-label={label}>
       {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          role="radio"
-          aria-checked={value === o.value}
-          className={value === o.value ? "on" : ""}
-          onClick={() => onChange(o.value)}
-          disabled={disabled}
-          title={o.title}
-        >
+        <button key={o.value} type="button" role="radio" aria-checked={value === o.value} className={value === o.value ? "on" : ""} onClick={() => onChange(o.value)} disabled={disabled} title={o.title}>
           {o.label}
         </button>
       ))}
     </div>
-  );
-}
-
-export function Chip({ active, count, onClick, children }) {
-  return (
-    <button type="button" className={`chip${active ? " on" : ""}`} onClick={onClick} aria-pressed={active}>
-      {children}
-      {count != null && <span className="chip-count">{count}</span>}
-    </button>
   );
 }
 

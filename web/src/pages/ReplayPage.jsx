@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { Ban, CheckCircle2, Database, FileText, ShieldAlert, Wrench, XCircle } from "lucide-react";
-import StatBar from "../components/shell/StatBar.jsx";
 import PageHeader from "../components/shell/PageHeader.jsx";
-import LayersView, { stepStats } from "./LayersView.jsx";
-import { Chip, Empty, Select, Toggle } from "../components/ui.jsx";
+import LayersView from "./LayersView.jsx";
+import { Empty, Select } from "../components/ui.jsx";
 import { usePlayer } from "../hooks.js";
 import * as api from "../api.js";
 import { SET_LABEL, folderTime, scenarioTitle } from "../lib/format.js";
@@ -12,12 +10,11 @@ function Checks({ replay }) {
   const failed = replay.checks.filter((c) => !c.passed);
   return (
     <div className={`checks ${replay.passed ? "ok" : "fail"}`}>
-      <div className="checks-head">
-        {replay.passed ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
+      <b>
         Automatic checks: {replay.checks.length - failed.length} of {replay.checks.length} passed
-      </div>
+      </b>
       {failed.map((c, i) => (
-        <div key={i} className="checks-row">
+        <div key={i}>
           {c.kind}: {c.name} {c.detail}
         </div>
       ))}
@@ -25,12 +22,11 @@ function Checks({ replay }) {
   );
 }
 
-// Step through any logged evaluation run, rebuilt by the server without calling the LLM.
-export default function ReplayPage({ config, file, onFile, onError }) {
+// Step through a logged evaluation run, rebuilt by the server without calling the LLM.
+export default function ReplayPage({ onError }) {
   const [runs, setRuns] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [file, setFile] = useState("");
   const [replay, setReplay] = useState(null);
-  const [showRobot, setShowRobot] = useState(true);
   const frames = replay?.frames || [];
   const player = usePlayer(frames.length, { followByDefault: false });
 
@@ -44,45 +40,21 @@ export default function ReplayPage({ config, file, onFile, onError }) {
     if (file) api.getReplay(file).then(setReplay).catch(onError);
   }, [file]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const s = stepStats(frames, player.at);
   const scenario = replay?.scenario;
   const { code, name } = scenarioTitle(scenario?.id);
-  const shown = runs.filter((r) => filter === "all" || (filter === "passed") === !!r.passed);
-  const folders = [...new Set(shown.map((r) => r.folder))];
+  const folders = [...new Set(runs.map((r) => r.folder))];
 
   return (
     <div className="page">
-      <StatBar
-        config={config}
-        stats={[
-          { icon: Wrench, label: "Tool calls", value: s.tools },
-          { icon: ShieldAlert, label: "Self-checks", value: s.checks },
-          { icon: Ban, label: "Refused", value: s.refused },
-          { icon: Database, label: "Beliefs", value: s.beliefs },
-          { icon: FileText, label: "Log records", value: s.records },
-        ]}
-      />
       <PageHeader
-        title={
-          scenario ? (
-            <>
-              <span className="title-code">{code}</span> {name}
-            </>
-          ) : (
-            "Replay"
-          )
-        }
-        subtitle={
-          scenario
-            ? `${SET_LABEL[scenario.set]} · system ${replay.system} · ${replay.level} · ${replay.model}`
-            : "Choose a logged run to replay it step by step. The LLM is not called; the layers are rebuilt from the log."
-        }
+        title={scenario ? <><span className="title-code">{code}</span> {name}</> : "Replay a test log"}
+        subtitle={scenario ? `${SET_LABEL[scenario.set]} · system ${replay.system} · ${replay.model}` : "The layers are rebuilt from the log; the LLM is not called."}
         controls={
-          <Select value={file} onChange={onFile} label="Logged run">
+          <Select value={file} onChange={setFile} label="Logged run">
             <option value="">Choose a logged run…</option>
             {folders.map((f) => (
               <optgroup key={f} label={`${folderTime(f)} · ${f.split("_").slice(1).join(" · ")}`}>
-                {shown
+                {runs
                   .filter((r) => r.folder === f)
                   .map((r) => (
                     <option key={r.file} value={r.file}>
@@ -93,20 +65,12 @@ export default function ReplayPage({ config, file, onFile, onError }) {
             ))}
           </Select>
         }
-        filters={["all", "passed", "failed"].map((k) => (
-          <Chip key={k} active={filter === k} onClick={() => setFilter(k)} count={k === "all" ? runs.length : runs.filter((r) => (k === "passed") === !!r.passed).length}>
-            {k[0].toUpperCase() + k.slice(1)}
-          </Chip>
-        ))}
-        side={<Toggle label="Robot card" checked={showRobot} onChange={setShowRobot} />}
       />
       {replay ? (
         <LayersView
           world={scenario.world}
           frames={frames}
           player={player}
-          showRobot={showRobot}
-          onShowRobot={setShowRobot}
           agentStatus={replay.passed ? { tone: "good", label: "passed" } : { tone: "bad", label: "failed" }}
           agentHeader={<Checks replay={replay} />}
         />

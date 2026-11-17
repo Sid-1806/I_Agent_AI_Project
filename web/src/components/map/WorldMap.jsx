@@ -95,7 +95,7 @@ function Room({ name, c, light, objects, seenBy, robotHere }) {
 
 // The mock world's ground truth, drawn as a dark map. The robot's planned route is the lime road;
 // the LiDAR beam and the room the camera saw show the sensor in use at the selected step.
-export default function WorldMap({ world, frames, frame, plannedRoute, zoom }) {
+export default function WorldMap({ world, frames, frame, plannedRoute }) {
   const pos = layoutRooms(world, roomsOf(world, frames));
   const xs = Object.values(pos).map((v) => v[0]);
   const ys = Object.values(pos).map((v) => v[1]);
@@ -109,10 +109,8 @@ export default function WorldMap({ world, frames, frame, plannedRoute, zoom }) {
   const camera = frame?.name === "read_camera" && data ? data.payload : null;
   const facing = Object.fromEntries(Object.entries(world.robot?.facing || {}).map(([d, id]) => [id, d]));
   const roads = Object.entries(world.routes || {}).filter(([, r]) => r.from in pos && r.to in pos);
-  const vw = W / zoom;
-  const vh = H / zoom;
   return (
-    <svg className="world-map" viewBox={`${(W - vw) / 2} ${(H - vh) / 2} ${vw} ${vh}`} role="img" aria-label="Map of the simulated world">
+    <svg className="world-map" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Map of the simulated world">
       <defs>
         <pattern id="streets" width="64" height="64" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
           <path d="M0 32 H64 M32 0 V64" className="street" />
