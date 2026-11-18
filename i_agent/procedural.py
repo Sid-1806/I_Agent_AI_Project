@@ -94,7 +94,7 @@ class AgentResult:
 class Agent:
     def __init__(self, tools: ToolRegistry, llm: LLM, system_prompt: Optional[str] = None,
                  max_steps: int = 12, max_format_retries: int = 2, self_check: bool = True,
-                 max_self_checks: int = 4):
+                 max_self_checks: int = 6):
         self.tools = tools
         self.llm = llm
         self.system_prompt = system_prompt or PROMPT_PATH.read_text(encoding="utf-8")
