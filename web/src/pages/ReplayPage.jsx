@@ -52,7 +52,12 @@ export default function ReplayPage({ onError, initialFile = "", initialStep = 0 
     <div className="page">
       <PageHeader
         title={scenario ? <><span className="title-code">{code}</span> {name}</> : "Replay a test log"}
-        subtitle={scenario ? `${SET_LABEL[scenario.set]} · system ${replay.system} · ${replay.model}` : "The layers are rebuilt from the log; the LLM is not called."}
+        subtitle={
+          scenario
+            ? `${SET_LABEL[scenario.set]} · system ${replay.system} · ${replay.model}` +
+              (replay.system !== replay.current_system ? ` · memory rebuilt with ${replay.current_system} rules` : "")
+            : "The layers are rebuilt from the log; the LLM is not called."
+        }
         controls={
           <Select value={file} onChange={setFile} label="Logged run">
             <option value="">Choose a logged run…</option>

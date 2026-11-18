@@ -240,12 +240,14 @@ class Agent:
             problems.append(f"Your answer relies on the static map for {entity['subject']} "
                             f"({entity['predicate']} = {entity['value']}, {entity['age_s']} s old) without a live "
                             f"reading. {entity['how_to_check']} before answering.")
-        downgrades = any(s["type"] == "tool_call" and s["result"].get("ok") and
-                         (s["result"].get("data") or {}).get("downgraded") for s in trace)
+        downgrades = any(u["new_confidence"] < u["old_confidence"] for s in trace
+                         if s["type"] == "tool_call" and s["result"].get("ok")
+                         for u in (s["result"].get("data") or {}).get("confidence_updates", []))
         if _CLAIMS_DOWNGRADE.search(answer) and not downgrades:
-            problems.append("You said a belief was downgraded, but no confidence in memory changed. Only the "
-                            "static map is downgraded, and only when your own sensor contradicts it; other "
-                            "robots' reports and the user's beliefs are kept as they are. Do not claim it.")
+            problems.append("You said a belief was downgraded, but no confidence in memory went down. Only the "
+                            "static map's confidence changes, and only when a live sensor reading contradicts "
+                            "it; other robots' reports and the user's beliefs are kept as they are. Do not "
+                            "claim it.")
         this_turn = trace[len(self.history):]
         if _ASKS_PROVENANCE.search(self.user_turns[-1]) and not any(
                 s["type"] == "tool_call" and s["name"] == "get_provenance" for s in this_turn):

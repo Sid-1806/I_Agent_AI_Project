@@ -32,6 +32,7 @@ class ScriptedLLM:
 IDEAL_A1 = [
     [("query_beliefs", {"subject": "route_A"})],
     [("read_lidar", {"direction": "front"})],
+    [("read_lidar", {"direction": "front"})],
     [("update_belief", {"subject": "route_A", "predicate": "status", "value": "blocked", "source": "lidar_front",
                         "confidence": 0.95, "reason": "LiDAR shows obstacle at 12 cm"})],
     "No. My static map says route_A is clear, but my live LiDAR shows an obstacle 12 cm ahead, so it is "
@@ -44,7 +45,7 @@ def test_react_loop_runs_tools_and_passes_scenario_a_checks():
     world = build_world(scenario)
     agent = Agent(world.tools, ScriptedLLM(IDEAL_A1))
     result = agent.ask(scenario["turns"][0])
-    assert result.tools_called == ["query_beliefs", "read_lidar", "update_belief"]
+    assert result.tools_called == ["query_beliefs", "read_lidar", "read_lidar", "update_belief"]
     assert result.answer.startswith("No.")
     assert any("route_A.status [self] = blocked" in line for line in result.belief_changes)
     checks = run_checks(scenario["expect"], [result], world.store, scenario["turns"])

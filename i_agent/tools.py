@@ -25,7 +25,7 @@ import inspect
 import json
 from typing import Any, Callable
 
-from .declarative import BeliefStore, source_kind
+from .declarative import SENSOR_RELIABILITY, BeliefStore, source_kind
 from .schemas import MAP, SELF, USER, Belief, ToolResult
 from .sensorimotor import MockEnv
 
@@ -58,6 +58,8 @@ TOOL_SCHEMAS = [
         "arguments to list everything you know. Results always include every perspective: 'self' "
         "(your own belief), 'map' (static baseline map), 'user' (what the user believes), "
         "'agent:<id>' (a report logged by another robot). age_s = seconds since it was recorded. "
+        "weighted_confidence = confidence discounted by age (older records count for less); use it "
+        "to decide which of several disagreeing records to trust. "
         "To see where a belief came from, use get_provenance.",
         {"entity": _ENTITY, "property": _PROPERTY},
         []),
@@ -68,7 +70,8 @@ TOOL_SCHEMAS = [
         ["entity"]),
     _fn("update_belief",
         "MEMORY (declarative layer). Write YOUR OWN ('self') belief, e.g. after a sensor reading. "
-        "If it contradicts the static map, the map's confidence is automatically downgraded. "
+        "(Your sensor readings already update the static map's confidence automatically; the result "
+        "of each reading lists those changes under confidence_updates.) "
         "Only use values you actually observed in a tool result.",
         {"entity": _ENTITY, "property": _PROPERTY,
          "value": {**_STR, "description": "New value, e.g. 'blocked'"},
@@ -143,6 +146,7 @@ class ToolRegistry:
         # (subject, predicate) -> conflict between a live reading and a stored map/self belief
         self.open_conflicts: dict[tuple[str, str], dict] = {}
         self._last_lidar: dict[str, str] = {}
+        self._last_camera: dict[tuple[str, str], str] = {}
         # route -> status of its latest LiDAR scan in the current user turn (for safe_moves)
         self.scanned: dict[str, str] = {}
         # Everything the agent has been shown by a read tool. update_belief may only write values
@@ -213,6 +217,7 @@ class ToolRegistry:
     def _with_age(self, b: Belief) -> dict:
         return {"entity": b.subject, "property": b.predicate, "value": b.obj, "perspective": b.perspective,
                 "source": b.source, "confidence": b.confidence,
+                "weighted_confidence": self.store.weighted_confidence(b),
                 "age_s": round(self.store.clock.now() - b.timestamp)}
 
     def query_beliefs(self, entity: str = None, property: str = None, perspective: str = None):
@@ -258,10 +263,14 @@ class ToolRegistry:
             if len({r["value"] for r in group}) < 2:
                 continue
             ordered = sorted(group, key=lambda r: r["age_s"])
+            trusted = max(group, key=lambda r: r.get("weighted_confidence", r["confidence"]))
             out.append({"entity": entity, "property": prop,
                         "newest_first": [{"value": r["value"], "perspective": r["perspective"],
-                                          "source": r["source"], "recorded": _ago(r["age_s"])} for r in ordered],
-                        "newest": f"{ordered[0]['value']} from {ordered[0]['source']} ({_ago(ordered[0]['age_s'])})"})
+                                          "source": r["source"], "recorded": _ago(r["age_s"]),
+                                          "weighted_confidence": r.get("weighted_confidence")} for r in ordered],
+                        "newest": f"{ordered[0]['value']} from {ordered[0]['source']} ({_ago(ordered[0]['age_s'])})",
+                        "most_trusted": f"{trusted['value']} from {trusted['source']} (weighted confidence "
+                                        f"{trusted.get('weighted_confidence')})"})
         return out
 
     def get_provenance(self, entity: str, property: str = None):
@@ -331,15 +340,22 @@ class ToolRegistry:
         written = change["written"]
         if written:
             self.shown.add((written["subject"], written["predicate"], written["perspective"]))
-        self.shown |= {(d["subject"], d["predicate"], d["perspective"]) for d in change["downgraded"]}
         def plain(b):
             return None if b is None else {"entity": b["subject"], "property": b["predicate"], "value": b["obj"],
                                            "perspective": b["perspective"], "source": b["source"],
                                            "confidence": b["confidence"]}
-        return {"written": plain(change["written"]), "replaced": plain(change["replaced"]),
-                "downgraded": [{"entity": d["subject"], "property": d["predicate"], "perspective": d["perspective"],
-                                "value": d["value"], "old_confidence": d["old_confidence"],
-                                "new_confidence": d["new_confidence"]} for d in change["downgraded"]]}
+        return {"written": plain(change["written"]), "replaced": plain(change["replaced"])}
+
+    def _evidence(self, result: dict, subject: str, predicate: str, observed: str, reliability: float,
+                  source: str) -> None:
+        """Let the memory layer weigh a live reading against the static map, and report the change."""
+        changes = self.store.update_with_evidence(subject, predicate, observed, reliability, source)
+        if changes:
+            result.setdefault("confidence_updates", []).extend(
+                {"entity": c["subject"], "property": c["predicate"], "perspective": c["perspective"],
+                 "value": c["value"], "old_confidence": c["old_confidence"], "new_confidence": c["new_confidence"]}
+                for c in changes)
+            self.shown |= {(c["subject"], c["predicate"], c["perspective"]) for c in changes}
 
     # ------------------------------------------------------------ sensor tools
     def _conflicts_with(self, subject: str, predicate: str, observed: str) -> list[dict]:
@@ -364,6 +380,7 @@ class ToolRegistry:
             self._sensed.add(route)
             self.scanned[route] = status
             self._sensor_facts.add(("lidar", route, status))
+            self._evidence(reading, route, "status", status, SENSOR_RELIABILITY["lidar"], reading["sensor"])
         if route is None:
             routes = reading["payload"].get("routes_by_direction") or {}
             reading["payload"]["advice"] = (
@@ -397,6 +414,15 @@ class ToolRegistry:
             self._sensor_facts |= {("camera", obj_id, _norm(det["perceived_color"])), ("camera", obj_id, _norm(room))}
         payload["note"] = (f"The camera sees only {room}, the room you are in. Objects not listed in "
                            f"detections are not in view, and their colours are unknown to the camera.")
+        # The camera's own detection confidence is its reliability (lower in dim or yellow light).
+        reliability = SENSOR_RELIABILITY["camera"] if light == "normal" else 0.82
+        for b in self.store.query(predicate="located_at", perspective=MAP):
+            if b.obj == room or b.subject in seen:
+                self._evidence(reading, b.subject, "located_at", room if b.subject in seen else f"not_in_{room}",
+                               reliability, "camera")
+        if light == "normal":  # colours seen under coloured or dim light are not evidence of true colour
+            for obj_id, det in seen.items():
+                self._evidence(reading, obj_id, "color", det["perceived_color"], reliability, "camera")
         if not self.memory_check:
             return reading
         found = []
@@ -404,7 +430,10 @@ class ToolRegistry:
         for b in self.store.query(predicate="located_at"):
             if b.obj == room and b.subject not in seen:
                 c = self._conflicts_with(b.subject, "located_at", f"not_in_{room}")
-                self._track(b.subject, "located_at", f"not_in_{room}", c, True, "camera")
+                key = (b.subject, room)
+                confirmed = light == "normal" or self._last_camera.get(key) == "absent"
+                self._last_camera[key] = "absent"
+                self._track(b.subject, "located_at", f"not_in_{room}", c, confirmed, "camera")
                 found.append({"subject": b.subject, "predicate": "located_at",
                               "observation": f"not visible in {room}", "conflicts": c})
         # Colours that differ from memory.
@@ -439,7 +468,9 @@ class ToolRegistry:
         self._sensed.add(route)
         if "bumper" in result["detail"].get("error", ""):
             self._sensor_facts.add(("bumper", route, "blocked"))
+            self._evidence(result, route, "status", "blocked", SENSOR_RELIABILITY["bumper"], "bumper")
         elif result.get("success"):
+            self._evidence(result, route, "status", "clear", SENSOR_RELIABILITY["odometry"], "odometry")
             self._sensor_facts.add(("odometry", "robot", _norm(self.env.robot["room"])))
         if self.memory_check and "bumper" in result["detail"].get("error", ""):
             conflicts = self._conflicts_with(route, "status", "blocked")

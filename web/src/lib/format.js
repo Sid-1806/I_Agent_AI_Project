@@ -94,14 +94,18 @@ export function toolResult(frame) {
     case "record_user_belief": {
       const w = d.written;
       lines = w ? [`stored ${w.entity}.${w.property} = ${w.value} as ${w.perspective}, confidence ${w.confidence}`] : [];
-      for (const x of d.downgraded || []) lines.push(`conflict rule: ${x.perspective} "${x.value}" ${x.old_confidence} → ${x.new_confidence}`);
       break;
     }
     default:
       lines = [JSON.stringify(d).slice(0, 160)];
   }
+  for (const u of d.confidence_updates || []) lines.push(confidenceUpdate(u));
   return { lines, error: false, conflicts };
 }
+
+// "map: route_A.status 'clear' 0.99 → 0.839"
+export const confidenceUpdate = (u) =>
+  `${u.perspective} confidence in ${u.entity}.${u.property} = ${u.value}: ${u.old_confidence} → ${u.new_confidence}`;
 
 // The latest reading of each sensor up to and including frame `upto`.
 export function sensorState(frames, upto) {

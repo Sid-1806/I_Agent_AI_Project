@@ -19,15 +19,25 @@ from typing import Iterable, Optional
 import networkx as nx
 
 from .clock import SimClock
-from .schemas import MAP, SELF, Belief, ProvenanceRecord
+from .schemas import AGENT_PREFIX, MAP, SELF, USER, Belief, ProvenanceRecord
 
-# Conflict rule: when the agent's own belief is updated from a source of this kind, any
-# disagreeing belief held by a *lower* ranked perspective is downgraded. Only the static map is
-# ever downgraded automatically: user and third-party beliefs are other minds' views, which the
-# agent must keep (Theory of Mind), not overwrite.
 SOURCE_RANK = {"sensor": 3, "agent": 2, "map": 1, "user": 0}
 SENSOR_SOURCES = ("lidar", "camera", "sensor", "bumper", "odometry")
-MAP_DOWNGRADE_FACTOR = 0.3
+
+# Weighted confidence (v4).
+#
+# 1. Evidence. Every live sensor reading is evidence about the static map's belief for the same
+#    fact. The map's confidence is updated in log-odds by the reading's likelihood ratio
+#    r / (1 - r), where r is the sensor's reliability: up if the reading agrees, down if it
+#    contradicts. One reading barely moves a confident map; consistent readings move it a lot;
+#    a single spike is undone by the readings after it. Only the map is updated: user and other
+#    robots' beliefs are other minds' views (Theory of Mind) and are kept as they are.
+# 2. Age. When records are compared, each counts with confidence * 0.5 ** (age / half-life),
+#    with a half-life that depends on where it came from. The user's beliefs do not decay: they
+#    are a record of what the user thinks, not evidence about the world.
+SENSOR_RELIABILITY = {"lidar": 0.95, "camera": 0.95, "bumper": 0.99, "odometry": 0.99}
+CONFIDENCE_BOUNDS = (0.01, 0.99)   # so a single belief can never become certain or impossible
+HALF_LIFE_S = {"sensor": 1800, "agent": 7200, "map": 7 * 86400}
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS provenance (
@@ -140,29 +150,40 @@ class BeliefStore:
         return old
 
     def assert_belief(self, belief: Belief, reason: str = "asserted") -> dict:
-        """Write a belief and apply the conflict rule. Returns a summary of what changed."""
+        """Write a belief. Returns a summary of what changed."""
         old = self._write(belief, reason)
-        downgraded = []
-        if belief.perspective == SELF:
-            downgraded = self._apply_conflict_rule(belief)
-        return {
-            "written": belief.model_dump(),
-            "replaced": old.model_dump() if old else None,
-            "downgraded": downgraded,
-        }
+        return {"written": belief.model_dump(), "replaced": old.model_dump() if old else None}
 
-    def _apply_conflict_rule(self, new: Belief) -> list[dict]:
-        new_rank = SOURCE_RANK[source_kind(new.source)]
-        changed = []
-        for other in self.query(new.subject, new.predicate, MAP):
-            if other.obj == new.obj or SOURCE_RANK["map"] >= new_rank:
+    def update_with_evidence(self, subject: str, predicate: str, observed: str, reliability: float,
+                             source: str) -> list[dict]:
+        """A live reading observed subject.predicate = observed. Update the static map's belief about
+        the same fact by Bayes' rule in log-odds, weighted by the sensor's reliability, and log it.
+        Returns the confidence changes."""
+        lo, hi = CONFIDENCE_BOUNDS
+        ratio = reliability / (1 - reliability)
+        changes = []
+        for b in self.query(subject, predicate, MAP):
+            p = min(hi, max(lo, b.confidence))
+            agrees = _same(b.obj, observed)
+            odds = p / (1 - p) * (ratio if agrees else 1 / ratio)
+            new = round(min(hi, max(lo, odds / (1 + odds))), 3)
+            if new == b.confidence:
                 continue
-            lowered = round(other.confidence * MAP_DOWNGRADE_FACTOR, 3)
-            self._write(other.model_copy(update={"confidence": lowered}),
-                        reason=f"contradicted by {new.source} ({new.obj}); map confidence downgraded")
-            changed.append({"subject": other.subject, "predicate": other.predicate, "perspective": MAP,
-                            "value": other.obj, "old_confidence": other.confidence, "new_confidence": lowered})
-        return changed
+            verb = "confirmed" if agrees else "contradicted"
+            self._write(b.model_copy(update={"confidence": new}),
+                        reason=f"{source} (reliability {reliability}) read {observed}, which {verb} "
+                               f"'{b.obj}': confidence {b.confidence} -> {new}")
+            changes.append({"subject": b.subject, "predicate": b.predicate, "perspective": MAP, "value": b.obj,
+                            "observed": observed, "old_confidence": b.confidence, "new_confidence": new})
+        return changes
+
+    def weighted_confidence(self, b: Belief) -> float:
+        """Confidence discounted by age, for comparing records: confidence * 0.5 ** (age / half-life)."""
+        half_life = _half_life(b)
+        if half_life is None:
+            return b.confidence
+        age = max(0.0, self.clock.now() - b.timestamp)
+        return round(b.confidence * 0.5 ** (age / half_life), 3)
 
     def load(self, beliefs: Iterable[Belief], reason: str = "initial load") -> None:
         for b in beliefs:
@@ -206,3 +227,19 @@ class BeliefStore:
             return "(empty)"
         return "\n".join(f"  {b.subject}.{b.predicate} [{b.perspective}] = {b.obj}"
                          f"  (conf {b.confidence}, src {b.source})" for b in rows)
+
+
+def _same(a: str, b: str) -> bool:
+    norm = lambda x: "_".join(str(x).lower().split())
+    return norm(a) == norm(b)
+
+
+def _half_life(b: Belief):
+    if b.perspective == USER:
+        return None
+    if b.perspective == MAP:
+        return HALF_LIFE_S["map"]
+    if b.perspective.startswith(AGENT_PREFIX):
+        return HALF_LIFE_S["agent"]
+    # The robot's own beliefs: sensor readings go stale; plans (e.g. mission_plan) do not.
+    return HALF_LIFE_S["sensor"] if source_kind(b.source) == "sensor" else None

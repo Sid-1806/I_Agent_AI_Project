@@ -47,6 +47,11 @@ function Beliefs({ beliefs, previous }) {
                     {old && old.conf !== b.conf && <s className="muted">{old.conf}</s>} {b.conf}
                   </span>
                 </span>
+                {b.weighted != null && b.weighted !== b.conf && (
+                  <span className="weighted" title="Confidence discounted by age, used to compare records">
+                    {b.weighted} weighted by age
+                  </span>
+                )}
               </td>
               <td className="mono muted num">{ago(b.age)}</td>
             </tr>

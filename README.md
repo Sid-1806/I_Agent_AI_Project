@@ -88,7 +88,7 @@ with `server.py` running), then `npm run build`.
 | File | Owner | What it does |
 |---|---|---|
 | `i_agent/schemas.py` | team | Data contracts: `Belief`, `ProvenanceRecord`, `SensorReading`, `ToolResult` |
-| `i_agent/declarative.py` | Siddh | Belief graph, provenance log, conflict rule, snapshots and diffs |
+| `i_agent/declarative.py` | Siddh | Belief graph, provenance log, weighted confidence, snapshots and diffs |
 | `i_agent/tools.py` | Rudraksh | Tool schemas the LLM sees, and safe execution |
 | `i_agent/procedural.py` | Rudraksh | ReAct loop, LLM client, retries, no-tools baseline |
 | `i_agent/prompts/system.md` | Rudraksh | The epistemic rules given to the LLM |
@@ -112,9 +112,22 @@ with `server.py` running), then `npm run build`.
 - **Perspectives.** Every belief carries a perspective: `self`, `map`, `user` or `agent:<id>`.
   They sit side by side in the graph (edge key `predicate|perspective`), so "what the user thinks",
   "what I see" and "what the records say" never overwrite one another.
-- **Conflict rule** (in `declarative.py`). When the agent writes its own belief from a live sensor
-  and it contradicts the static map, the map belief's confidence is multiplied by 0.3 and the
-  change is logged. User and other-robot beliefs are never downgraded automatically.
+- **Weighted confidence** (in `declarative.py`, v4; replaces the earlier fixed ×0.3).
+  - *Evidence.* Every live reading updates the static map's belief about the same fact by Bayes'
+    rule in log-odds, weighted by the sensor's reliability r (LiDAR 0.95, camera 0.95 or 0.82 in dim
+    or yellow light, bumper and odometry 0.99): odds × r/(1−r) if the reading agrees, ÷ if it
+    contradicts, kept within 0.01–0.99. For a map that says "clear" (0.99), one "blocked" reading
+    gives 0.84 and a second gives 0.21; a spike followed by a "clear" reading returns it to 0.99.
+    Each change is logged with the sensor, its reliability and the old and new confidence.
+  - *Age.* Records are compared by confidence × 0.5^(age / half-life): 30 min for the robot's own
+    sensor-based beliefs, 2 h for other robots' reports, 7 days for the map. `query_beliefs` returns
+    this as `weighted_confidence`, and disagreements name the most trusted record. bot_02's
+    1-hour-old 0.9 counts as 0.64 against bot_03's 10-minute-old 0.85 at 0.80.
+  - Only the map is ever updated automatically. User and other-robot beliefs are other minds' views
+    and are kept as they are; the user's beliefs do not decay, since they are a record of what the
+    user thinks, not evidence about the world.
+  - In dim or yellow light, a camera that does not see an object counts as unconfirmed until a second
+    look agrees, as a single LiDAR reading does.
 - **Provenance.** Every write goes to SQLite with old value, new value, source, confidence, time and reason.
 - **Epistemic state as a sequence of graphs.** The graph is snapshotted before and after each turn;
   `diff()` shows exactly what the agent changed.
@@ -139,7 +152,7 @@ Each level adds one part of the architecture to the one before it, using the sam
 |---|---|
 | `baseline` | No tools. Starting memory pasted into the prompt as text. |
 | `sensors` | Sensor tools only, memory as text. A plain tool-using agent with no memory layer: the **fair baseline**. |
-| `plain` | All 8 tools including the memory layer (graph, provenance, conflict rule), but no safeguards. |
+| `plain` | All 8 tools including the memory layer (graph, provenance, weighted confidence), but no safeguards. |
 | `checks` | + tool-layer checks: memory check on sensor readings, grounded writes, disagreement summary, safe moves. |
 | `full` | + the answer self-check. The complete system. |
 
@@ -184,6 +197,8 @@ user actually said (the model had stored another robot's report as the user's be
 self-check gives the exact `record_user_belief` call built from the user's words. Each fix is general
 (no scenario ids or answers are hard-coded) and has a unit test on a dev scenario. v3 results use
 `qwen2.5:7b-8k` (same weights, 8192-token context; see "Models and limits").
+**v4** (18 Nov) replaces the fixed ×0.3 map downgrade with weighted confidence (see "Key design
+decisions"), at the course instructor's suggestion. It was not tuned on any scenario's results.
 
 ### Repeats and temperature
 
@@ -233,9 +248,11 @@ NP2 two turns: route blocked, then why the map entry changed.
 
 **Siddh (memory, `declarative.py`).** Beliefs are edges in a NetworkX MultiDiGraph keyed by
 `predicate|perspective`, so the map's, the user's and other robots' views of the same fact coexist.
-Every write goes through `_write()`, which also inserts a provenance row into SQLite. `assert_belief()`
-applies the conflict rule: a sensor-based `self` belief that contradicts a `map` belief multiplies
-the map's confidence by 0.3. User and other-robot beliefs are never downgraded, because they are other minds' views.
+Every write goes through `_write()`, which also inserts a provenance row into SQLite.
+`update_with_evidence()` weighs each live sensor reading against the static map (Bayes' rule in
+log-odds, by the sensor's reliability) and `weighted_confidence()` discounts a record by its age when
+records are compared (see "Weighted confidence" above). User and other-robot beliefs are never
+changed automatically, because they are other minds' views.
 `snapshot()` and `diff()` store the epistemic state as a sequence of graphs.
 
 **Rudraksh (LLM, `procedural.py`, `tools.py`, `prompts/system.md`).** A hand-written ReAct loop over the

@@ -16,4 +16,7 @@
 #   v3  19 Oct 2026: exact tool calls in self-check messages, planned route must be scanned,
 #       unnamed robot sources rejected, get_provenance recovers from a wrong property, LiDAR
 #       names the routes that exist. Driven partly by held-out set 2 failures (see README).
-SYSTEM_VERSION = "v3"
+#   v4  18 Nov 2026: weighted confidence. Each live reading updates the static map's confidence
+#       by Bayes' rule weighted by the sensor's reliability (replacing the fixed x0.3), and
+#       records are compared by confidence discounted by age.
+SYSTEM_VERSION = "v4"

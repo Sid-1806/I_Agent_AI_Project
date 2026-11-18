@@ -49,8 +49,8 @@ def test_a_logged_run_replays_exactly():
     if not logs:
         pytest.skip("log not present")
     run = replay(logs[0])
-    assert run["mismatches"] == 0
+    assert run["mismatches"] == 0  # the world replays exactly
     assert run["frames"][0]["type"] == "start" and run["frames"][-1]["type"] == "answer"
     last = {(b["s"], b["p"], b["persp"]): b for b in run["frames"][-1]["beliefs"]}
     assert last[("route_A", "status", "self")]["o"] == "blocked"
-    assert last[("route_A", "status", "map")]["conf"] == 0.3
+    assert last[("route_A", "status", "map")]["conf"] == 0.215   # two LiDAR readings, weighted (v4)

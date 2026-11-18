@@ -11,14 +11,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from . import SYSTEM_VERSION
 from .evaluation import level_options
 from .scenario import World, build_world, load_scenario
+
+
+SENSOR_TOOLS = ("read_lidar", "read_camera", "get_pose", "move")
 
 
 def beliefs(world: World) -> list[dict]:
     now = world.store.clock.now()
     return [{"s": b.subject, "p": b.predicate, "o": b.obj, "persp": b.perspective, "src": b.source,
-             "conf": b.confidence, "age": round(now - b.timestamp)} for b in world.store.query()]
+             "conf": b.confidence, "weighted": world.store.weighted_confidence(b),
+             "age": round(now - b.timestamp)} for b in world.store.query()]
 
 
 def provenance(world: World) -> list[dict]:
@@ -60,19 +65,19 @@ def replay(log_path: Path) -> dict:
                 frames.append(frame(world, t, step))
                 continue
             result = json.loads(world.tools.execute(step["name"], step.get("arguments") or {}))
-            differs = _data(result) != _data(step["result"])
+            differs = step["name"] in SENSOR_TOOLS and _data(result) != _data(step["result"])
             mismatches += differs
             frames.append(frame(world, t, {**step, "result": result}, mismatch=differs))
     return {"scenario": scenario_info(scenario), "level": level, "system": log.get("system", "v1"),
+            "current_system": SYSTEM_VERSION,
             "model": log.get("model"), "passed": log.get("passed"), "checks": log.get("checks", []),
             "file": Path(log_path).as_posix(), "frames": frames, "mismatches": mismatches}
 
 
 def _data(x):
-    """A tool result without its explanatory text (advice, notes, errors), which may be reworded
-    between system versions; what remains is the data the layers produced."""
-    if isinstance(x, dict):
-        return {k: _data(v) for k, v in x.items() if k not in ("advice", "note", "error")}
-    if isinstance(x, list):
-        return [_data(v) for v in x]
-    return x
+    """What the sensorimotor layer returned (payload, success, detail), which must replay exactly.
+    Memory-side parts of a result (memory checks, confidence changes) follow the current system's
+    rules, so for logs from an earlier version they can legitimately differ."""
+    data = (x or {}).get("data") or {}
+    return {"ok": (x or {}).get("ok"), "payload": data.get("payload"), "success": data.get("success"),
+            "detail": data.get("detail")}

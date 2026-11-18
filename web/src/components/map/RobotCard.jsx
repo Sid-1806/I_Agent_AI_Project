@@ -1,7 +1,7 @@
 import { AlertTriangle, Bot, Camera, Radar } from "lucide-react";
 import Gauge from "./Gauge.jsx";
 import { Badge } from "../ui.jsx";
-import { COLOURS, describeConflict } from "../../lib/format.js";
+import { COLOURS, confidenceUpdate, describeConflict } from "../../lib/format.js";
 
 const BLOCKED_BELOW_CM = 50;
 
@@ -81,6 +81,11 @@ export default function RobotCard({ world, frame, sensors }) {
           )}
         </Tile>
       </div>
+      {(data?.confidence_updates || []).map((u, i) => (
+        <div key={`u${i}`} className="update-strip">
+          <b>Memory updated</b> {confidenceUpdate(u)}
+        </div>
+      ))}
       {warnings.map((w, i) => (
         <div key={i} className="warning-strip">
           <AlertTriangle size={14} />
