@@ -313,9 +313,9 @@ class Agent:
                                     for persp, e, p in unnamed if (b := self.tools.store.get(e, p, persp)))
                 problems.append(f"Name the robot instead of writing 'another robot': {listing}. Say which robot "
                                 f"reported it and how long ago.")
-        if _YES_NO_QUESTION.match(self.user_turns[-1].strip()) and not _YES_NO_ANSWER.search(answer[:80]):
-            problems.append("The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", "
-                            "then give the evidence.")
+        if _YES_NO_QUESTION.match(self.user_turns[-1].strip()) and not _YES_NO_ANSWER.search(answer):
+            problems.append("The user asked a yes/no question. Answer it with a sentence starting \"Yes\" or "
+                            "\"No\", and give the evidence.")
         used = {s["name"] for s in trace if s["type"] == "tool_call" and s["result"].get("ok")}
         for m in _CLAIMS_SENSOR.finditer(answer):
             tool = "read_camera" if m.group(1).lower() == "camera" else "read_lidar"
@@ -411,7 +411,7 @@ _CLAIMS_DOWNGRADE = re.compile(r"\b(downgraded|lowered (its|their|the) confidenc
 _CLAIMS_SENSOR = re.compile(r"\b(camera|lidar)\b[^.]{0,40}?\b(confirm|show|detect|see|saw|sees|report|indicat|observ|perceiv)",
                             re.IGNORECASE)
 _YES_NO_QUESTION = re.compile(r"(can|is|are|do|does|did|has|have|will)\b", re.IGNORECASE)
-_YES_NO_ANSWER = re.compile(r"\b(yes|no)\b", re.IGNORECASE)
+_YES_NO_ANSWER = re.compile(r"(^|[.!?:]\s+|\n\s*)(yes|no)\b", re.IGNORECASE)  # at the start of a sentence
 _ASKS_WHY = re.compile(r"\bwhy\b", re.IGNORECASE)
 _STOPWORDS = {"the", "and", "from", "with", "that", "this", "item", "logged", "action", "reported", "robot",
               "during", "because", "after", "before", "into", "onto", "were", "was", "has", "have"}
