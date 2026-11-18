@@ -104,3 +104,9 @@ def test_source_kind():
     assert source_kind("camera") == "sensor"
     assert source_kind("Default_Map") == "map"
     assert source_kind("bot_02_log") == "agent"
+
+
+def test_agreeing_evidence_never_lowers_confidence():
+    store = make_store()  # map: route_A clear at 1.0
+    assert store.update_with_evidence("route_A", "status", "clear", 0.95, "lidar_front") == []
+    assert store.get("route_A", "status", "map").confidence == 1.0

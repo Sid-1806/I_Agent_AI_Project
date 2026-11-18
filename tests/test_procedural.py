@@ -570,3 +570,14 @@ def test_single_word_phrases_match_other_forms_of_the_word():
     assert _mentions("the routes are clear", "route", inflect=True)
     assert not _mentions("confidence was reduced", "red", inflect=True)
     assert not _mentions("the route is clear", "blocked", inflect=True)
+
+
+def test_a_lowered_map_confidence_must_be_reported():
+    world = build_world(load_scenario("A1"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["Is your route clear?"]
+    reading = json.loads(world.tools.execute("read_lidar", {"direction": "front"}))
+    trace = [{"type": "tool_call", "name": "read_lidar", "arguments": {}, "result": reading}]
+    assert any("lowered the static map" in p for p in agent.check_answer("No, route_A is blocked.", trace))
+    assert not any("lowered the static map" in p
+                   for p in agent.check_answer("No, route_A is blocked; the map said clear, now 0.839.", trace))

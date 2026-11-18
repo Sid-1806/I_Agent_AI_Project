@@ -167,6 +167,8 @@ class BeliefStore:
             agrees = _same(b.obj, observed)
             odds = p / (1 - p) * (ratio if agrees else 1 / ratio)
             new = round(min(hi, max(lo, odds / (1 + odds))), 3)
+            # The bounds must not turn evidence around: agreement never lowers, contradiction never raises.
+            new = max(new, b.confidence) if agrees else min(new, b.confidence)
             if new == b.confidence:
                 continue
             verb = "confirmed" if agrees else "contradicted"

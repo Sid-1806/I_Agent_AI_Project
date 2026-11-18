@@ -249,6 +249,14 @@ class Agent:
                             "it; other robots' reports and the user's beliefs are kept as they are. Do not "
                             "claim it.")
         this_turn = trace[len(self.history):]
+        lowered = [u for s in this_turn if s["type"] == "tool_call" and s["result"].get("ok")
+                   for u in (s["result"].get("data") or {}).get("confidence_updates", [])
+                   if u["new_confidence"] < u["old_confidence"]]
+        if lowered and not _says(answer, lowered[-1]["perspective"]):
+            u = lowered[-1]
+            problems.append(f"Your readings lowered the static {u['perspective']}'s confidence in {u['entity']}."
+                            f"{u['property']} = {u['value']} to {u['new_confidence']}. Say in your answer that the "
+                            f"{u['perspective']} said {u['value']} and that its confidence is now {u['new_confidence']}.")
         if _ASKS_PROVENANCE.search(self.user_turns[-1]) and not any(
                 s["type"] == "tool_call" and s["name"] == "get_provenance" for s in this_turn):
             problems.append("The user is asking where, when, why or how a belief arose. Answer from the "
