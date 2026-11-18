@@ -135,7 +135,8 @@ def test_self_check_catches_claimed_but_missing_update():
     llm = ScriptedLLM([
         [("query_beliefs", {"subject": "route_A"}), ("read_lidar", {"direction": "front"})],
         "No. The route is blocked, so I updated my belief.",          # claims an update it never made
-        [("update_belief", {"subject": "route_A", "predicate": "status", "value": "blocked",
+        [("read_lidar", {"direction": "front"}),
+         ("update_belief", {"subject": "route_A", "predicate": "status", "value": "blocked",
                             "source": "lidar_front", "confidence": 0.95, "reason": "LiDAR 20 cm"})],
         "No. LiDAR shows route_A blocked at 20 cm; I updated my belief.",
     ])
@@ -592,3 +593,13 @@ def test_a_contradicted_robot_report_must_be_named():
     assert any("contradicts bot_04" in p for p in agent.check_answer("No, box_05 is not here.", trace))
     assert not any("contradicts bot_04" in p
                    for p in agent.check_answer("No. bot_04 reported it here 2 h ago, but my camera sees nothing.", trace))
+
+
+def test_writing_a_belief_does_not_settle_an_unconfirmed_reading():
+    world = build_world(load_scenario("A1"))
+    world.tools.execute("read_lidar", {"direction": "front"})          # one reading: unconfirmed
+    world.tools.execute("update_belief", {"entity": "route_A", "property": "status", "value": "blocked",
+                                          "source": "lidar_front", "confidence": 1.0, "reason": "x"})
+    assert world.tools.actionable_conflicts() and not world.tools.actionable_conflicts()[0]["confirmed"]
+    world.tools.execute("read_lidar", {"direction": "front"})          # second reading agrees; already recorded
+    assert world.tools.actionable_conflicts() == []

@@ -323,7 +323,9 @@ class ToolRegistry:
                                  + "Write only what that sensor actually showed, or do not update.")
         belief = Belief(subject=entity, predicate=property, obj=str(value), perspective=SELF,
                         source=source, confidence=float(confidence), timestamp=self.store.clock.now())
-        self.open_conflicts.pop((entity, property), None)
+        # Writing settles a confirmed conflict; an unconfirmed one still needs a second reading.
+        if self.open_conflicts.get((entity, property), {}).get("confirmed", True):
+            self.open_conflicts.pop((entity, property), None)
         return self._summary(self.store.assert_belief(belief, reason=reason))
 
     def record_user_belief(self, entity: str, property: str, value: str, evidence: str):
@@ -366,6 +368,9 @@ class ToolRegistry:
     def _track(self, subject: str, predicate: str, observed: str, conflicts: list[dict],
                confirmed: bool, sensor: str) -> None:
         actionable = [c for c in conflicts if c["perspective"] in (MAP, SELF)]
+        own = self.store.get(subject, predicate, SELF)
+        if confirmed and own is not None and _norm(own.obj) == _norm(observed):
+            actionable = []  # already recorded as the robot's own belief
         if actionable:
             self.open_conflicts[(subject, predicate)] = {
                 "subject": subject, "predicate": predicate, "observed": observed, "sensor": sensor,
