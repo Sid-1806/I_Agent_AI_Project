@@ -366,9 +366,9 @@ def test_self_check_requires_looking_at_all_records_about_a_named_entity():
         [("query_beliefs", {"entity": "box_01", "property": "located_at"})],
         "box_01 is in Room_101.",
         [("query_beliefs", {"entity": "box_01"}), ("read_camera", {})],
-        "box_01 is in Room_101.",
-        "box_01 is in Room_101.",
-        "box_01 is in Room_101.",
+        "box_01 is in Room_101; it looks brown in this yellow light, and bot_02 logged it as blue 1 h ago.",
+        "box_01 is in Room_101; it looks brown in this yellow light, and bot_02 logged it as blue 1 h ago.",
+        "box_01 is in Room_101; it looks brown in this yellow light, and bot_02 logged it as blue 1 h ago.",
     ])
     agent = Agent(world.tools, llm, self_check=True)
     result = agent.ask("Where is box_01?")
@@ -581,3 +581,14 @@ def test_a_lowered_map_confidence_must_be_reported():
     assert any("lowered the static map" in p for p in agent.check_answer("No, route_A is blocked.", trace))
     assert not any("lowered the static map" in p
                    for p in agent.check_answer("No, route_A is blocked; the map said clear, now 0.839.", trace))
+
+
+def test_a_contradicted_robot_report_must_be_named():
+    world = build_world(load_scenario("A7"))  # bot_04 reported box_05 here; the camera does not see it
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["Is box_05 here?"]
+    reading = json.loads(world.tools.execute("read_camera", {}))
+    trace = [{"type": "tool_call", "name": "read_camera", "arguments": {}, "result": reading}]
+    assert any("contradicts bot_04" in p for p in agent.check_answer("No, box_05 is not here.", trace))
+    assert not any("contradicts bot_04" in p
+                   for p in agent.check_answer("No. bot_04 reported it here 2 h ago, but my camera sees nothing.", trace))

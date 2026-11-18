@@ -249,6 +249,19 @@ class Agent:
                             "it; other robots' reports and the user's beliefs are kept as they are. Do not "
                             "claim it.")
         this_turn = trace[len(self.history):]
+        contradicted = {}
+        for s in this_turn:
+            if s["type"] != "tool_call" or not s["result"].get("ok"):
+                continue
+            for c in ((s["result"].get("data") or {}).get("memory_check") or {}).get("conflicts", []):
+                for x in [c] + c.get("conflicts", []):
+                    if x.get("perspective", "").startswith("agent:"):
+                        contradicted[x["perspective"][6:]] = x
+        for robot, x in contradicted.items():
+            if not _says(answer, robot):
+                problems.append(f"Your sensor reading contradicts {robot}'s record ({x['stored_value']}, "
+                                f"{round(x['age_s'] / 60)} min old). Name {robot}, say what it reported and how old "
+                                f"the report is, and why you trust your own reading now.")
         lowered = [u for s in this_turn if s["type"] == "tool_call" and s["result"].get("ok")
                    for u in (s["result"].get("data") or {}).get("confidence_updates", [])
                    if u["new_confidence"] < u["old_confidence"]]
