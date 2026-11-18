@@ -157,8 +157,7 @@ class Agent:
                     trace.append({"step": step, "type": "draft", "text": candidate})
                     trace.append({"step": step, "type": "self_check", "text": " ".join(problems)})
                     self.messages.append({"role": "user", "content": "[Self-check] " + " ".join(problems) +
-                                          f" Then answer the user's question: \"{question}\", keeping everything "
-                                          f"in your draft that is still correct."})
+                                          f" Then answer the user's question: \"{question}\""})
                     continue
                 answer = candidate
                 trace.append({"step": step, "type": "answer", "text": answer})
@@ -367,9 +366,12 @@ class Agent:
                                 f"property=\"{c['predicate']}\", value=\"{c['observed']}\", "
                                 f"source=\"{c['sensor']}\", confidence=1.0, reason=\"live {c['sensor']} reading\")")
             else:
+                again = (f'read_lidar(direction="{c["sensor"].split("_", 1)[1]}")' if c["sensor"].startswith("lidar_")
+                         else "read_camera()")
                 problems.append(f"Unconfirmed conflict: one {c['sensor']} reading gave {c['subject']}."
-                                f"{c['predicate']} = {c['observed']}, but memory has {stored}. Read the sensor "
-                                f"again; if it agrees, call update_belief, otherwise trust the readings that agree.")
+                                f"{c['predicate']} = {c['observed']}, but memory has {stored}. A single reading can be "
+                                f"noise. Do not answer yet; your next reply must be this tool call: {again}. If it "
+                                f"agrees, record it with update_belief; otherwise trust the readings that agree.")
         conflicts = [p for p in problems if p.startswith(("Unresolved conflict", "Unconfirmed conflict"))]
         return conflicts + [p for p in problems if p not in conflicts]
 
