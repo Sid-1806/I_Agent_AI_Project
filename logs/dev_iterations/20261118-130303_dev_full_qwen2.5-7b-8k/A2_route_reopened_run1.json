@@ -1,0 +1,354 @@
+{
+  "scenario": "A2_route_reopened",
+  "set": "dev",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Can you take your planned route right now? Check before you answer.",
+      "answer": "Yes, the route (route_B) is clear based on the live lidar_front reading. This belief comes directly from the sensor and has a high confidence of 1.0. Therefore, you can take your planned route right now.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "right"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_right",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "right",
+                "route": null,
+                "distance_cm": null,
+                "status": "no_route",
+                "note": "no route in direction 'right'. This is not an obstacle reading.",
+                "routes_by_direction": {
+                  "front": "route_B"
+                },
+                "advice": "Routes from here: route_B lies front (read_lidar(direction=\"front\"))"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The route to the right is not clear; there is no route in that direction. However, a route (route_B) lies in front according to the static map. I will not drive to find out, as live sensors indicate no obstacles but no route either. This belief comes from the lidar sensor reading."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location). Memory says your planned route is route_B, which lies front of you. Scan that route before answering: read_lidar(direction=\"front\")."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "robot",
+                  "property": "planned_route",
+                  "value": "route_B",
+                  "perspective": "self",
+                  "source": "mission_plan",
+                  "confidence": 1.0,
+                  "weighted_confidence": 1.0,
+                  "age_s": 61
+                },
+                {
+                  "entity": "route_B",
+                  "property": "status",
+                  "value": "blocked",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "weighted_confidence": 0.45,
+                  "age_s": 604801
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_101",
+                "facing": {
+                  "front": "route_B"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_B",
+                "distance_cm": 650,
+                "status": "clear"
+              },
+              "confidence_updates": [
+                {
+                  "entity": "route_B",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "blocked",
+                  "old_confidence": 0.9,
+                  "new_confidence": 0.321
+                }
+              ],
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "blocked",
+                    "source": "Default_Map",
+                    "confidence": 0.321,
+                    "age_s": 604802
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 6,
+          "type": "draft",
+          "text": "The lidar sensor in the front direction reports that the route (route_B) is clear, with a distance of 650 cm to any obstacles. This reading slightly updates the confidence in the map's belief that the route is blocked, reducing it from 0.9 to 0.321. However, the advice is to read the lidar again to confirm before updating the belief. Therefore, I will read the lidar once more in the front direction to verify the current state of the route."
+        },
+        {
+          "step": 6,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_front reading gave route_B.status = clear, but memory has map says blocked. Read the sensor again; if it agrees, call update_belief, otherwise trust the readings that agree. The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence. You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 7,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000003.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_B",
+                "distance_cm": 650,
+                "status": "clear"
+              },
+              "confidence_updates": [
+                {
+                  "entity": "route_B",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "blocked",
+                  "old_confidence": 0.321,
+                  "new_confidence": 0.024
+                }
+              ],
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "blocked",
+                    "source": "Default_Map",
+                    "confidence": 0.024,
+                    "age_s": 604803
+                  }
+                ],
+                "advice": "Confirmed by consecutive readings. Record it now: update_belief(entity=\"route_B\", property=\"status\", value=\"clear\", source=\"lidar_front\", confidence=1.0, reason=\"two consecutive lidar_front readings\")"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 8,
+          "type": "draft",
+          "text": "The lidar sensor in the front direction again reports that the route (route_B) is clear, with a distance of 650 cm to any obstacles. This reading is consistent with the previous one, further reducing the confidence in the map's belief that the route is blocked from 0.321 to 0.024. The advice is to update the belief based on these consecutive readings.\n\nI will now update the belief to reflect the current state of the route.\n\nUpdate belief: route_B.status = clear, source = lidar_front, confidence = 1.0, reason = two consecutive lidar_front readings.\n\nNow, to answer the user's question: \"Can you take your planned route right now?\" Yes, the route is clear."
+        },
+        {
+          "step": 8,
+          "type": "self_check",
+          "text": "Unresolved conflict: lidar_front observed route_B.status = clear, but memory has map says blocked. Do not answer yet. Your next reply must be this tool call: update_belief(entity=\"route_B\", property=\"status\", value=\"clear\", source=\"lidar_front\", confidence=1.0, reason=\"live lidar_front reading\") The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence. You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 9,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "route_B",
+            "property": "status",
+            "value": "clear",
+            "source": "lidar_front",
+            "confidence": 1,
+            "reason": "live lidar_front reading"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_B",
+                "property": "status",
+                "value": "clear",
+                "perspective": "self",
+                "source": "lidar_front",
+                "confidence": 1.0
+              },
+              "replaced": null
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 10,
+          "type": "draft",
+          "text": "The route (route_B) is now marked as clear based on the live lidar_front reading. This belief comes directly from the sensor and has a high confidence of 1.0.\n\nTo answer the user's question: \"Can you take your planned route right now? Check before you answer.\" Yes, the route is clear."
+        },
+        {
+          "step": 10,
+          "type": "self_check",
+          "text": "The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence."
+        },
+        {
+          "step": 11,
+          "type": "answer",
+          "text": "Yes, the route (route_B) is clear based on the live lidar_front reading. This belief comes directly from the sensor and has a high confidence of 1.0. Therefore, you can take your planned route right now."
+        }
+      ],
+      "belief_changes": [
+        "~ route_B.status [map]: blocked (0.9) -> blocked (0.024, Default_Map)",
+        "+ route_B.status [self] = clear (conf 1.0, lidar_front)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_B",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.024,
+      "timestamp": 395200.0
+    },
+    {
+      "subject": "route_B",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "self",
+      "source": "lidar_front",
+      "confidence": 1.0,
+      "timestamp": 1000003.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['is clear', 'now clear', 'currently clear', 'route is clear', 'path is clear', 'is open', 'is free', 'yes']",
+      "passed": true,
+      "detail": "found ['is clear', 'yes']"
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'not clear'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'cannot take'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'can't take'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'unable to take'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "does not say 'should not take'",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [self] state",
+      "passed": true,
+      "detail": "= clear (conf 1.0)"
+    },
+    {
+      "kind": "memory",
+      "name": "route_B.status [map] state",
+      "passed": true,
+      "detail": "= blocked (conf 0.024)"
+    }
+  ],
+  "passed": true,
+  "system": "v4"
+}

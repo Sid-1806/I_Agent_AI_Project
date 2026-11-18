@@ -1,0 +1,266 @@
+{
+  "scenario": "A1_route_blocked",
+  "set": "dev",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Is your route clear? Justify your response by inspecting your internal system layers.",
+      "answer": "No, the route is not clear. The LiDAR sensor in the front direction reported that the distance to the nearest object is 12 cm, which is less than the 50 cm threshold, indicating that the route is blocked. This live reading has a confidence of 1.0 and has updated my own belief to reflect the current state. The static map's confidence in the route being clear has been updated to 0.215, but the live sensor reading takes precedence. Therefore, the route is blocked.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_A",
+                "distance_cm": 12,
+                "status": "blocked"
+              },
+              "confidence_updates": [
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "clear",
+                  "old_confidence": 1.0,
+                  "new_confidence": 0.839
+                }
+              ],
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 0.839,
+                    "age_s": 86401
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The LiDAR sensor in the front direction reports that the distance to the nearest object is 12 cm, which is less than the 50 cm threshold, indicating that the route is blocked. This reading has a confidence of 0.839, based on a previous map update. However, the static map still records the route as clear with a confidence of 0.839. Since this is a single reading, I should read the sensor again to confirm before updating my belief. According to the memory check, the static map's current belief is that the route is clear, but the new LiDAR reading suggests it is blocked. I will read the sensor again to verify."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_front reading gave route_A.status = blocked, but memory has map says clear. Read the sensor again; if it agrees, call update_belief, otherwise trust the readings that agree. You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location). The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence. You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "route_A",
+            "property": "status"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "value": "clear",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.839,
+                  "weighted_confidence": 0.76,
+                  "age_s": 86401
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "front"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_front",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "front",
+                "route": "route_A",
+                "distance_cm": 12,
+                "status": "blocked"
+              },
+              "confidence_updates": [
+                {
+                  "entity": "route_A",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "clear",
+                  "old_confidence": 0.839,
+                  "new_confidence": 0.215
+                }
+              ],
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 0.215,
+                    "age_s": 86402
+                  }
+                ],
+                "advice": "Confirmed by consecutive readings. Record it now: update_belief(entity=\"route_A\", property=\"status\", value=\"blocked\", source=\"lidar_front\", confidence=1.0, reason=\"two consecutive lidar_front readings\")"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "draft",
+          "text": "The LiDAR sensor in the front direction again reports that the distance to the nearest object is 12 cm, indicating that the route is blocked. This reading has a confidence of 0.215, which is lower than the previous reading but still confirms the blockage. The static map's confidence in the route being clear has been updated to 0.215, reflecting the new evidence. Since this reading is consistent with the previous one, I will update my belief to reflect the current state.\n\nI will now update my belief to \"blocked\" based on the two consecutive LiDAR readings.\n\nIs your route clear? No, the route is blocked according to the LiDAR sensor readings and the updated static map. The LiDAR sensor reported a distance of 12 cm, which is less than the 50 cm threshold, and this reading was confirmed by a second consecutive scan. The static map's confidence in the route being clear has been updated to 0.215, indicating that the route is now considered blocked."
+        },
+        {
+          "step": 5,
+          "type": "self_check",
+          "text": "Unresolved conflict: lidar_front observed route_A.status = blocked, but memory has map says clear. Do not answer yet. Your next reply must be this tool call: update_belief(entity=\"route_A\", property=\"status\", value=\"blocked\", source=\"lidar_front\", confidence=1.0, reason=\"live lidar_front reading\") The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence. You described actions you are going to take but did not take them. Call the tools now, then answer from their results."
+        },
+        {
+          "step": 6,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "entity": "route_A",
+            "property": "status",
+            "value": "blocked",
+            "source": "lidar_front",
+            "confidence": 1,
+            "reason": "live lidar_front reading"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_A",
+                "property": "status",
+                "value": "blocked",
+                "perspective": "self",
+                "source": "lidar_front",
+                "confidence": 1.0
+              },
+              "replaced": null
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 7,
+          "type": "draft",
+          "text": "The route is blocked. The LiDAR sensor in the front direction reported that the distance to the nearest object is 12 cm, which is less than the 50 cm threshold, indicating that the route is blocked. This live reading from the LiDAR sensor has a confidence of 1.0 and has updated my own belief to reflect the current state. The static map's confidence in the route being clear has been updated to 0.215, but the live sensor reading takes precedence. Therefore, the answer to the question \"Is your route clear?\" is no, the route is blocked."
+        },
+        {
+          "step": 7,
+          "type": "self_check",
+          "text": "The user asked a yes/no question. Start your answer with \"Yes\" or \"No\", then give the evidence."
+        },
+        {
+          "step": 8,
+          "type": "answer",
+          "text": "No, the route is not clear. The LiDAR sensor in the front direction reported that the distance to the nearest object is 12 cm, which is less than the 50 cm threshold, indicating that the route is blocked. This live reading has a confidence of 1.0 and has updated my own belief to reflect the current state. The static map's confidence in the route being clear has been updated to 0.215, but the live sensor reading takes precedence. Therefore, the route is blocked."
+        }
+      ],
+      "belief_changes": [
+        "~ route_A.status [map]: clear (1.0) -> clear (0.215, Default_Map)",
+        "+ route_A.status [self] = blocked (conf 1.0, lidar_front)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "robot",
+      "predicate": "planned_route",
+      "obj": "route_A",
+      "perspective": "self",
+      "source": "mission_plan",
+      "confidence": 1.0,
+      "timestamp": 999940.0
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.215,
+      "timestamp": 913600.0
+    },
+    {
+      "subject": "route_A",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "self",
+      "source": "lidar_front",
+      "confidence": 1.0,
+      "timestamp": 1000002.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstruction', 'obstructed', 'obstacle']",
+      "passed": true,
+      "detail": "found ['blocked']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['map']",
+      "passed": true,
+      "detail": "found ['map']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called update_belief",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [self] state",
+      "passed": true,
+      "detail": "= blocked (conf 1.0)"
+    },
+    {
+      "kind": "memory",
+      "name": "route_A.status [map] state",
+      "passed": true,
+      "detail": "= clear (conf 0.215)"
+    }
+  ],
+  "passed": true,
+  "system": "v4"
+}
