@@ -23,9 +23,9 @@ function Checks({ replay }) {
 }
 
 // Step through a logged evaluation run, rebuilt by the server without calling the LLM.
-export default function ReplayPage({ onError }) {
+export default function ReplayPage({ onError, initialFile = "", initialStep = 0 }) {
   const [runs, setRuns] = useState([]);
-  const [file, setFile] = useState("");
+  const [file, setFile] = useState(initialFile);
   const [replay, setReplay] = useState(null);
   const frames = replay?.frames || [];
   const player = usePlayer(frames.length, { followByDefault: false });
@@ -39,6 +39,10 @@ export default function ReplayPage({ onError }) {
     player.reset();
     if (file) api.getReplay(file).then(setReplay).catch(onError);
   }, [file]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (replay && file === initialFile && initialStep) player.go(initialStep);
+  }, [replay]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scenario = replay?.scenario;
   const { code, name } = scenarioTitle(scenario?.id);

@@ -6,8 +6,11 @@ import ReplayPage from "./pages/ReplayPage.jsx";
 import { useFetch } from "./hooks.js";
 import * as api from "./api.js";
 
+// A link like #replay=logs/<run>/<scenario>_run1.json&step=7 opens that moment of a logged run.
+const link = Object.fromEntries(new URLSearchParams(window.location.hash.slice(1)));
+
 export default function App() {
-  const [page, setPage] = useState("operations");
+  const [page, setPage] = useState(link.replay ? "replay" : "operations");
   const [error, setError] = useState("");
   const onError = useCallback((e) => setError(e?.message || String(e)), []);
   const config = useFetch(api.getConfig, onError);
@@ -29,7 +32,7 @@ export default function App() {
         <div hidden={page !== "operations"} className="page-slot">
           <OperationsPage config={config} scenarios={scenarios} onError={onError} />
         </div>
-        {page === "replay" && <ReplayPage onError={onError} />}
+        {page === "replay" && <ReplayPage onError={onError} initialFile={link.replay} initialStep={Number(link.step) || 0} />}
       </main>
     </div>
   );
