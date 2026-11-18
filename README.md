@@ -268,7 +268,7 @@ after a failure we actually observed in the logs:
    when the camera had seen nothing).
 3. *(v2)* **Safe moves.** `move` is refused unless a LiDAR scan of that route in the current turn said
    clear (A6: the model tried to drive before scanning).
-4. **Answer self-check** (`check_answer`), which sends a draft answer back to the LLM (up to 6 times; 4 before v4) if:
+4. **Answer self-check** (`check_answer`), which sends a draft answer back to the LLM (up to 6 times, within 16 steps; 4 and 12 before v4) if:
    - it never called `query_beliefs` (the message names the exact call to make),
    - it claims "I updated my belief" without calling `update_belief`,
    - it announces an action ("I will check…") without doing it,

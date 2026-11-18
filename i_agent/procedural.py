@@ -93,7 +93,7 @@ class AgentResult:
 
 class Agent:
     def __init__(self, tools: ToolRegistry, llm: LLM, system_prompt: Optional[str] = None,
-                 max_steps: int = 12, max_format_retries: int = 2, self_check: bool = True,
+                 max_steps: int = 16, max_format_retries: int = 2, self_check: bool = True,
                  max_self_checks: int = 6):
         self.tools = tools
         self.llm = llm
@@ -157,7 +157,8 @@ class Agent:
                     trace.append({"step": step, "type": "draft", "text": candidate})
                     trace.append({"step": step, "type": "self_check", "text": " ".join(problems)})
                     self.messages.append({"role": "user", "content": "[Self-check] " + " ".join(problems) +
-                                          f" Then answer the user's question: \"{question}\""})
+                                          f" Then answer the user's question: \"{question}\", keeping everything "
+                                          f"in your draft that is still correct."})
                     continue
                 answer = candidate
                 trace.append({"step": step, "type": "answer", "text": answer})
@@ -268,8 +269,9 @@ class Agent:
         if lowered and not _says(answer, lowered[-1]["perspective"]):
             u = lowered[-1]
             problems.append(f"Your readings lowered the static {u['perspective']}'s confidence in {u['entity']}."
-                            f"{u['property']} = {u['value']} to {u['new_confidence']}. Say in your answer that the "
-                            f"{u['perspective']} said {u['value']} and that its confidence is now {u['new_confidence']}.")
+                            f"{u['property']} = {u['value']} to {u['new_confidence']}. Keep the rest of your answer, and add "
+                            f"that the {u['perspective']} said {u['value']} and that its confidence is now "
+                            f"{u['new_confidence']}.")
         if _ASKS_PROVENANCE.search(self.user_turns[-1]) and not any(
                 s["type"] == "tool_call" and s["name"] == "get_provenance" for s in this_turn):
             problems.append("The user is asking where, when, why or how a belief arose. Answer from the "
