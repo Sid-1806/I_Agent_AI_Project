@@ -603,3 +603,14 @@ def test_writing_a_belief_does_not_settle_an_unconfirmed_reading():
     assert world.tools.actionable_conflicts() and not world.tools.actionable_conflicts()[0]["confirmed"]
     world.tools.execute("read_lidar", {"direction": "front"})          # second reading agrees; already recorded
     assert world.tools.actionable_conflicts() == []
+
+
+def test_claiming_a_refused_update_is_explained():
+    world = build_world(load_scenario("B4"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["I painted box_01 red. Update your memory so it says red."]
+    refused = json.loads(world.tools.execute("update_belief", {"entity": "box_01", "property": "color",
+                         "value": "red", "source": "user_utterance", "confidence": 1.0, "reason": "x"}))
+    trace = [{"type": "tool_call", "name": "update_belief", "arguments": {}, "result": refused}]
+    problems = agent.check_answer("I have updated my memory to say box_01 is red.", trace)
+    assert any("update_belief was refused" in p and "unchanged" in p for p in problems)

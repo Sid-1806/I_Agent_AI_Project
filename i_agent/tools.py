@@ -355,7 +355,11 @@ class ToolRegistry:
         if changes:
             result.setdefault("confidence_updates", []).extend(
                 {"entity": c["subject"], "property": c["predicate"], "perspective": c["perspective"],
-                 "value": c["value"], "old_confidence": c["old_confidence"], "new_confidence": c["new_confidence"]}
+                 "value": c["value"], "old_confidence": c["old_confidence"], "new_confidence": c["new_confidence"],
+                 "summary": f"The static map said {c['subject']}.{c['predicate']} = {c['value']} (confidence "
+                            f"{c['old_confidence']}). This {source} reading "
+                            f"{'contradicts' if c['new_confidence'] < c['old_confidence'] else 'confirms'} it, so "
+                            f"the map's confidence is now {c['new_confidence']}."}
                 for c in changes)
             self.shown |= {(c["subject"], c["predicate"], c["perspective"]) for c in changes}
 

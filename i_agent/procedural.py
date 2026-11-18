@@ -328,8 +328,16 @@ class Agent:
                             "tools now, then answer from their results.")
         claim = _CLAIMS_UPDATE.search(answer)
         if claim and not updated and not (recorded_user and "record" in claim.group(0).lower()):
-            problems.append("You said you updated a belief, but you never called update_belief, "
-                            "so memory is unchanged. Call update_belief now, or do not claim it.")
+            refused = [st for st in trace if st["type"] == "tool_call" and st["name"] == "update_belief"
+                       and not st["result"].get("ok")]
+            if refused:
+                why = refused[-1]["result"].get("error", "").replace("ValueError: ", "")
+                problems.append(f"You said you updated your memory, but update_belief was refused: {why} Your "
+                                f"own belief is unchanged; do not claim it changed. Tell the user what you recorded "
+                                f"as their view, and what your own sensors show.")
+            else:
+                problems.append("You said you updated a belief, but you never called update_belief, "
+                                "so memory is unchanged. Call update_belief now, or do not claim it.")
         if checked_memory:
             store = self.tools.store
             for entity in store.subjects():
