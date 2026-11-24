@@ -1,0 +1,38 @@
+{
+  "scenario": "NH1_unknown_robot_report",
+  "set": "heldout2",
+  "type": "grounding",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "What did bot_12 report about route_D?",
+      "answer": "Bot_12 did not report any information about route_D in the stored knowledge. All available information pertains to route_A being clear and a blue box observed by bot_02.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Bot_12 did not report any information about route_D in the stored knowledge. All available information pertains to route_A being clear and a blue box observed by bot_02."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of [\"don't know\", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', \"can't determine\", 'no data', \"don't have\", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', \"can't provide\", 'no sensor reading', 'not aware']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

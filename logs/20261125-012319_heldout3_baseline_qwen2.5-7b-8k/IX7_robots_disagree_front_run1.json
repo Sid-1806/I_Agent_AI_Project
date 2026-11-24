@@ -1,0 +1,50 @@
+{
+  "scenario": "IX7_robots_disagree_front",
+  "set": "heldout3",
+  "type": "B",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "bot_11 and bot_26 have told me opposite things about the corridor straight ahead of you. Which one should I believe?",
+      "answer": "Given the information, bot_26's log indicates the corridor is clear with higher confidence (0.8) compared to bot_11's log which states it is blocked (0.7 confidence). However, the actual status could depend on the specific circumstances at the time. It might be prudent to verify the status by sending another bot or using sensors to check the corridor.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Given the information, bot_26's log indicates the corridor is clear with higher confidence (0.8) compared to bot_11's log which states it is blocked (0.7 confidence). However, the actual status could depend on the specific circumstances at the time. It might be prudent to verify the status by sending another bot or using sensors to check the corridor."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_11']",
+      "passed": true,
+      "detail": "found ['bot_11']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstacle', 'obstructed', 'not clear', \"isn't clear\", 'is not clear']",
+      "passed": true,
+      "detail": "found ['blocked']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_T.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

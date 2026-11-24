@@ -1,0 +1,44 @@
+{
+  "scenario": "IX4_construction_lifted",
+  "set": "heldout3",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Good, then please go through it to Room_331.",
+      "answer": "Since the corridor to your right is blocked, I will need to find an alternative route to Room_331. Let's check the available paths in the map to determine the best route around the blockage.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Since the corridor to your right is blocked, I will need to find an alternative route to Room_331. Let's check the available paths in the map to determine the best route around the blockage."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['Room_331']",
+      "passed": true,
+      "detail": "found ['Room_331']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called move",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

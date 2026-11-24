@@ -1,0 +1,160 @@
+{
+  "scenario": "HH1_unknown_weight",
+  "set": "heldout",
+  "type": "grounding",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "How heavy is box_01?",
+      "answer": "I still do not have any information about the weight of box_01. The camera in Room_101 confirms that box_01 is blue, but it does not provide any information about its weight. The last report I have is that box_01 is located in Room_101, which is from the static map and is quite old (24 hours).\n\nProvenance: The belief about the location of box_01 comes from the static map and is 24 hours old, while the belief about its color comes from the camera and is recent (about 1 second old). Neither of these reports includes any information about the weight of box_01.\n\nI will not update my belief about the weight of box_01 based on the current information.\n\nSensor: read_camera\nMemory: get_pose\nUser: record_user_belief",
+      "trace": [
+        {
+          "step": 1,
+          "type": "draft",
+          "text": "I do not know the weight of box_01. There are no records or beliefs about its weight in my memory, and my sensors have not been used to measure it.\n\nProvenance: I have no information on this topic, so there is no record to cite."
+        },
+        {
+          "step": 1,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs(entity=\"box_01\") (and get_pose if the question is about your route or location)."
+        },
+        {
+          "step": 2,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "box_01",
+            "property": "weight"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "box_01",
+                  "property": "color",
+                  "value": "blue",
+                  "perspective": "agent:bot_02",
+                  "source": "bot_02_log",
+                  "confidence": 0.9,
+                  "weighted_confidence": 0.636,
+                  "age_s": 3600
+                },
+                {
+                  "entity": "box_01",
+                  "property": "located_at",
+                  "value": "Room_101",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 0.9,
+                  "weighted_confidence": 0.815,
+                  "age_s": 86400
+                }
+              ],
+              "note": "No 'weight' beliefs about box_01; showing everything known about box_01."
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "draft",
+          "text": "I do not have any information about the weight of box_01. The last report I have is that it is located in Room_101 and is blue in color, which was recorded by another robot, bot_02, about an hour ago. There are no recent or stored beliefs about its weight.\n\nProvenance: The belief about the location of box_01 comes from the static map and is quite recent, while the belief about its color comes from another robot and is slightly older. Neither of these reports includes any information about the weight of box_01."
+        },
+        {
+          "step": 3,
+          "type": "self_check",
+          "text": "Your answer relies on the static map for box_01 (located_at = Room_101, 86400 s old) without a live reading. Look with read_camera before answering."
+        },
+        {
+          "step": 4,
+          "type": "tool_call",
+          "name": "read_camera",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "camera",
+              "t": 1000001.0,
+              "payload": {
+                "room": "Room_101",
+                "ambient_light": "normal",
+                "detections": [
+                  {
+                    "object_id": "box_01",
+                    "label": "box",
+                    "perceived_color": "blue",
+                    "bbox": [
+                      120,
+                      200,
+                      80,
+                      80
+                    ],
+                    "confidence": 0.95
+                  }
+                ],
+                "note": "The camera sees only Room_101, the room you are in. Objects not listed in detections are not in view, and their colours are unknown to the camera."
+              },
+              "memory_check": {
+                "conflicts": [],
+                "advice": "Detections agree with memory."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 5,
+          "type": "answer",
+          "text": "I still do not have any information about the weight of box_01. The camera in Room_101 confirms that box_01 is blue, but it does not provide any information about its weight. The last report I have is that box_01 is located in Room_101, which is from the static map and is quite old (24 hours).\n\nProvenance: The belief about the location of box_01 comes from the static map and is 24 hours old, while the belief about its color comes from the camera and is recent (about 1 second old). Neither of these reports includes any information about the weight of box_01.\n\nI will not update my belief about the weight of box_01 based on the current information.\n\nSensor: read_camera\nMemory: get_pose\nUser: record_user_belief"
+        }
+      ],
+      "belief_changes": [
+        "~ box_01.located_at [map]: Room_101 (0.9) -> Room_101 (0.99, Default_Map)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "box_01",
+      "predicate": "color",
+      "obj": "blue",
+      "perspective": "agent:bot_02",
+      "source": "bot_02_log",
+      "confidence": 0.9,
+      "timestamp": 996400.0
+    },
+    {
+      "subject": "box_01",
+      "predicate": "located_at",
+      "obj": "Room_101",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.99,
+      "timestamp": 913600.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of [\"don't know\", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', \"can't determine\", 'no data', \"don't have\", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', \"can't provide\", 'no sensor reading', 'not aware']",
+      "passed": true,
+      "detail": "found ['do not have']"
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": true,
+      "detail": "called ['query_beliefs']"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": true,
+  "system": "v4"
+}

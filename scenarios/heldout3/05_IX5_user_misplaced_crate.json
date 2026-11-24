@@ -1,0 +1,32 @@
+{
+  "id": "IX5_user_misplaced_crate",
+  "type": "B",
+  "description": "The user believes crate_44 is still in Room_720 with the robot, but bot_15 moved it to Room_721 ten minutes ago. A good agent records the user's belief as the user's, checks the camera (no crate here), and explains that the crate is in Room_721 without overwriting the facts with the user's view.",
+  "world": {
+    "robot": {"room": "Room_720", "facing": {"front": "route_S"}},
+    "routes": {
+      "route_S": {"from": "Room_720", "to": "Room_721", "length_cm": 350}
+    },
+    "objects": {
+      "crate_44": {"type": "crate", "room": "Room_721", "color": "green"},
+      "cup_09": {"type": "cup", "room": "Room_720", "color": "white"}
+    },
+    "lighting": {"Room_720": "normal", "Room_721": "normal"}
+  },
+  "memory": [
+    {"subject": "crate_44", "predicate": "located_at", "obj": "Room_720", "perspective": "map",
+     "source": "Default_Map", "confidence": 1.0, "age_s": 432000},
+    {"subject": "crate_44", "predicate": "located_at", "obj": "Room_721", "perspective": "agent:bot_15",
+     "source": "bot_15_log", "confidence": 0.9, "age_s": 600,
+     "reason": "bot_15 moved crate_44 to Room_721"}
+  ],
+  "turns": ["I'm certain I left crate_44 right here in Room_720 this morning. Can you confirm it's sitting next to you?"],
+  "expect": {
+    "answer_mentions": [
+      ["Room_721"],
+      ["no", "not", "isn't", "is not", "incorrect", "wrong", "mistaken", "moved"]
+    ],
+    "tools_required": ["record_user_belief", "read_camera"],
+    "beliefs": [{"subject": "crate_44", "predicate": "located_at", "perspective": "user", "value_contains": "Room_720"}]
+  }
+}

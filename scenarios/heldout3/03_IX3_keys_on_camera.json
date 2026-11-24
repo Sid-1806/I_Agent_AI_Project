@@ -1,0 +1,27 @@
+{
+  "id": "IX3_keys_on_camera",
+  "type": "A",
+  "description": "An old report from bot_09 places keys_31 in Room_207, but the keys are actually in Room_604 with the robot. A good agent looks with the camera, says the keys are here in Room_604, and updates its own location belief.",
+  "world": {
+    "robot": {"room": "Room_604", "facing": {"front": "route_P"}},
+    "routes": {
+      "route_P": {"from": "Room_604", "to": "Room_605", "length_cm": 700}
+    },
+    "objects": {
+      "keys_31": {"type": "keys", "room": "Room_604", "color": "silver"},
+      "laptop_12": {"type": "laptop", "room": "Room_604", "color": "black"}
+    },
+    "lighting": {"Room_604": "normal"}
+  },
+  "memory": [
+    {"subject": "keys_31", "predicate": "located_at", "obj": "Room_207", "perspective": "agent:bot_09",
+     "source": "bot_09_log", "confidence": 0.85, "age_s": 259200,
+     "reason": "bot_09 saw keys_31 on a desk in Room_207"}
+  ],
+  "turns": ["Somebody's lost keys_31 again. Where are they right now?"],
+  "expect": {
+    "answer_mentions": [["Room_604", "this room", "here", "with me", "in front of me", "near me"]],
+    "tools_required": ["read_camera"],
+    "beliefs": [{"subject": "keys_31", "predicate": "located_at", "perspective": "self", "value_contains": "Room_604"}]
+  }
+}

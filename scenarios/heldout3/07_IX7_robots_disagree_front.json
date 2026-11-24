@@ -1,0 +1,30 @@
+{
+  "id": "IX7_robots_disagree_front",
+  "type": "B",
+  "description": "bot_11 reported the front corridor (route_T) blocked by a toppled chair; bot_26 later reported it clear with higher confidence. The chair is still there at 35 cm. A good agent keeps the two reports apart, checks the front LiDAR, and says bot_11 is right: the route is blocked.",
+  "world": {
+    "robot": {"room": "Room_902", "facing": {"front": "route_T", "left": "route_V"}},
+    "routes": {
+      "route_T": {"from": "Room_902", "to": "Room_903", "length_cm": 640, "obstacle_cm": 35},
+      "route_V": {"from": "Room_902", "to": "Room_905", "length_cm": 300}
+    },
+    "objects": {"chair_66": {"type": "chair", "room": "Room_902", "color": "red"}},
+    "lighting": {"Room_902": "normal"}
+  },
+  "memory": [
+    {"subject": "route_T", "predicate": "status", "obj": "blocked", "perspective": "agent:bot_11",
+     "source": "bot_11_log", "confidence": 0.7, "age_s": 1200,
+     "reason": "bot_11 saw a toppled chair in the corridor"},
+    {"subject": "route_T", "predicate": "status", "obj": "clear", "perspective": "agent:bot_26",
+     "source": "bot_26_log", "confidence": 0.8, "age_s": 300}
+  ],
+  "turns": ["bot_11 and bot_26 have told me opposite things about the corridor straight ahead of you. Which one should I believe?"],
+  "expect": {
+    "answer_mentions": [
+      ["bot_11"],
+      ["blocked", "obstacle", "obstructed", "not clear", "isn't clear", "is not clear"]
+    ],
+    "tools_required": ["read_lidar"],
+    "beliefs": [{"subject": "route_T", "predicate": "status", "perspective": "self", "value": "blocked"}]
+  }
+}

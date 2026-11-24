@@ -1,0 +1,26 @@
+{
+  "id": "IX4_construction_lifted",
+  "type": "A",
+  "description": "The baseline map still marks the corridor on the robot's right (route_Q to Room_331) as blocked for construction, but it is now clear. Over two turns a good agent checks the right LiDAR, says the map is out of date, and then actually drives through and reports arriving in Room_331.",
+  "world": {
+    "robot": {"room": "Room_330", "facing": {"right": "route_Q", "back": "route_R"}},
+    "routes": {
+      "route_Q": {"from": "Room_330", "to": "Room_331", "length_cm": 800},
+      "route_R": {"from": "Room_330", "to": "Room_329", "length_cm": 400}
+    },
+    "objects": {"box_58": {"type": "box", "room": "Room_331", "color": "red"}},
+    "lighting": {"Room_330": "normal", "Room_331": "normal"}
+  },
+  "memory": [
+    {"subject": "route_Q", "predicate": "status", "obj": "blocked", "perspective": "map",
+     "source": "Default_Map", "confidence": 1.0, "age_s": 1209600}
+  ],
+  "turns": [
+    "The old floor plan says the corridor to your right is shut for construction. Is that still the case?",
+    "Good, then please go through it to Room_331."
+  ],
+  "expect": {
+    "answer_mentions": [["Room_331"]],
+    "tools_required": ["read_lidar", "move"]
+  }
+}

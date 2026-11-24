@@ -1,0 +1,26 @@
+{
+  "id": "IX8_distant_passage_unknown",
+  "type": "grounding",
+  "description": "The user asks about the passage between Room_176 and Room_177, which is far from the robot (in Room_140) and not covered by any memory entry or sensor. A good agent checks its memory, finds nothing, and says it does not know rather than guessing.",
+  "world": {
+    "robot": {"room": "Room_140", "facing": {"front": "route_W", "right": "route_Y"}},
+    "routes": {
+      "route_W": {"from": "Room_140", "to": "Room_141", "length_cm": 500},
+      "route_Y": {"from": "Room_140", "to": "Room_142", "length_cm": 420, "obstacle_cm": 200},
+      "route_Z": {"from": "Room_176", "to": "Room_177", "length_cm": 650, "obstacle_cm": 20}
+    },
+    "objects": {"bin_33": {"type": "bin", "room": "Room_140", "color": "green"}},
+    "lighting": {"Room_140": "normal", "Room_176": "dim"}
+  },
+  "memory": [
+    {"subject": "route_W", "predicate": "status", "obj": "clear", "perspective": "map",
+     "source": "Default_Map", "confidence": 1.0, "age_s": 86400},
+    {"subject": "route_Y", "predicate": "status", "obj": "clear", "perspective": "map",
+     "source": "Default_Map", "confidence": 1.0, "age_s": 86400}
+  ],
+  "turns": ["Quick one: over in the passage linking Room_176 and Room_177, can a trolley get through at the moment?"],
+  "expect": {
+    "answer_mentions": [["don't know", "do not know", "not sure", "no information", "unknown", "cannot tell", "can't tell", "cannot confirm", "can't confirm", "no data", "unable", "not able", "no record", "no records", "can't say", "cannot say"]],
+    "tools_required": ["query_beliefs"]
+  }
+}

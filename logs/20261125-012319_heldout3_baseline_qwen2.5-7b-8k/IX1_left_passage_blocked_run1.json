@@ -1,0 +1,50 @@
+{
+  "scenario": "IX1_left_passage_blocked",
+  "set": "heldout3",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "I need someone to get to Room_413 shortly. Is the passage on your left-hand side passable at the moment?",
+      "answer": "Yes, the passage on your left-hand side is passable at the moment. The route leading to your destination, route_K, is currently clear according to the perspective map from the Default_Map source with a high confidence level of 1.0.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Yes, the passage on your left-hand side is passable at the moment. The route leading to your destination, route_K, is currently clear according to the perspective map from the Default_Map source with a high confidence level of 1.0."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstacle', 'obstructed', 'not passable', 'impassable', 'not clear', \"isn't clear\", 'is not clear']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "did not execute move",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_K.status [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

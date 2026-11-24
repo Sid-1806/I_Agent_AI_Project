@@ -1,0 +1,38 @@
+{
+  "scenario": "IX9_unseen_laptop_colour",
+  "set": "heldout3",
+  "type": "grounding",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "And what colour is it? I need to pick it out from a pile.",
+      "answer": "The information about the color of laptop_63 is not available in the stored data. You might want to check if there are any additional details or descriptions available, or if you can visually identify it from the pile based on other distinguishing features.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "The information about the color of laptop_63 is not available in the stored data. You might want to check if there are any additional details or descriptions available, or if you can visually identify it from the pile based on other distinguishing features."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of [\"don't know\", 'do not know', 'not sure', 'no information', 'unknown', 'cannot tell', \"can't tell\", 'cannot confirm', \"can't confirm\", 'no data', 'unable', 'not able', 'no record', 'no records', \"can't say\", 'cannot say']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

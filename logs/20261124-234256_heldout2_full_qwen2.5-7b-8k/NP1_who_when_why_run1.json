@@ -1,0 +1,132 @@
+{
+  "scenario": "NP1_who_when_why",
+  "set": "heldout2",
+  "type": "provenance",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Who reported that door_03 is locked, when was that, and why was it locked?",
+      "answer": "The belief that door_03 is locked was reported by robot agent:bot_10. According to the log, bot_10 locked door_03 during an evening security patrol, and this report has a confidence of 0.9, based on the age of 7200 seconds (2 hours) since the event. The current status of door_03 is 'locked', and this belief has a weighted confidence of 0.45, which is the product of the confidence and the inverse of the age.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "entity": "door_03",
+            "property": "locked"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "entity": "door_03",
+                  "property": "status",
+                  "perspective": "agent:bot_10",
+                  "old_value": null,
+                  "new_value": "locked",
+                  "old_confidence": null,
+                  "new_confidence": 0.9,
+                  "source": "bot_10_log",
+                  "reason": "bot_10 locked door_03 during the evening security patrol",
+                  "age_s": 7200
+                }
+              ],
+              "note": "door_03 has no property 'locked'; showing all of its history. Its properties: status."
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The belief that door_03 is locked was reported by robot agent:bot_10. According to the log, bot_10 locked door_03 during an evening security patrol, and this report has a confidence of 0.9, based on the age of 7200 seconds (2 hours) since the event. The current property status of door_03 is 'locked', but this is the most recent record I have for it."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs(entity=\"door_03\") (and get_pose if the question is about your route or location)."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "property": "locked",
+            "entity": "door_03"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "door_03",
+                  "property": "status",
+                  "value": "locked",
+                  "perspective": "agent:bot_10",
+                  "source": "bot_10_log",
+                  "confidence": 0.9,
+                  "weighted_confidence": 0.45,
+                  "age_s": 7200
+                }
+              ],
+              "note": "No 'locked' beliefs about door_03; showing everything known about door_03."
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "The belief that door_03 is locked was reported by robot agent:bot_10. According to the log, bot_10 locked door_03 during an evening security patrol, and this report has a confidence of 0.9, based on the age of 7200 seconds (2 hours) since the event. The current status of door_03 is 'locked', and this belief has a weighted confidence of 0.45, which is the product of the confidence and the inverse of the age."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "door_03",
+      "predicate": "status",
+      "obj": "locked",
+      "perspective": "agent:bot_10",
+      "source": "bot_10_log",
+      "confidence": 0.9,
+      "timestamp": 992800.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_10', 'bot 10']",
+      "passed": true,
+      "detail": "found ['bot_10']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['2 h', '2 hours', 'two hours', '7200', '120 min']",
+      "passed": true,
+      "detail": "found ['2 hours', '7200']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['patrol', 'security']",
+      "passed": true,
+      "detail": "found ['patrol', 'security']"
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": true,
+  "system": "v4.1",
+  "carried_over": {
+    "from": "logs/20261124-223612_heldout2_full_qwen2.5-7b-8k/NP1_who_when_why_run1.json",
+    "why": "no v4.1 change would have fired at any draft; identical prompts at T=0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "scenario": "IX2_noisy_rear_scan",
+  "set": "heldout3",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Before I send the cleaning cart through, be straight with me: is the corridor behind you clear right now? Heads up, the rear scanner has been twitchy all day.",
+      "answer": "Based on the information available, the corridor (route_M) appears clear according to the perspective map, with a high confidence level of 1.0. However, there is a report of it being blocked with a confidence of 0.6 from agent bot_22. Given the twitchy behavior of the rear scanner, it might be wise to send the cleaning cart cautiously or consider a manual inspection to ensure safety.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Based on the information available, the corridor (route_M) appears clear according to the perspective map, with a high confidence level of 1.0. However, there is a report of it being blocked with a confidence of 0.6 from agent bot_22. Given the twitchy behavior of the rear scanner, it might be wise to send the cleaning cart cautiously or consider a manual inspection to ensure safety."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['clear', 'free', 'open', 'unobstructed', 'passable', 'no obstacle', 'nothing in the way']",
+      "passed": true,
+      "detail": "found ['clear']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar at least 2x",
+      "passed": false,
+      "detail": "called 0x"
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

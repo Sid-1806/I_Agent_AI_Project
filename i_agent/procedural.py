@@ -61,10 +61,12 @@ class OpenAICompatibleLLM:
             raise RuntimeError(f"{cfg['key_env']} is not set. Put it in a .env file (see .env.example).")
         self.temperature = temperature
         self._openai = openai
-        self.client = openai.OpenAI(base_url=cfg["base_url"], api_key=key, max_retries=4)
+        self.client = openai.OpenAI(base_url=cfg["base_url"], api_key=key, max_retries=4, timeout=180)
 
     def complete(self, messages: list[dict], tools: Optional[list[dict]]) -> dict:
-        kwargs: dict[str, Any] = {"model": self.model, "messages": messages, "temperature": self.temperature}
+        # max_tokens stops a runaway reply (IX7 once generated until timeout); no saved reply is over ~300 tokens
+        kwargs: dict[str, Any] = {"model": self.model, "messages": messages, "temperature": self.temperature,
+                                  "max_tokens": 1024}
         if tools:
             kwargs.update(tools=tools, tool_choice="auto")
         try:
@@ -151,6 +153,8 @@ class Agent:
             if not reply["tool_calls"]:
                 candidate = (reply["content"] or "").strip()
                 self.messages.append({"role": "assistant", "content": candidate})
+                if self.self_check:
+                    self._record_stated_user_belief(trace, step)
                 problems = self.check_answer(candidate, trace) if self.self_check else []
                 if problems and self_checks < self.max_self_checks:
                     self_checks += 1
@@ -197,6 +201,32 @@ class Agent:
         return AgentResult(question=question, answer=answer, trace=list(trace),
                            belief_changes=store.diff(v_before, v_after))
 
+    def _record_stated_user_belief(self, trace: list[dict], step: int) -> None:
+        """(v4.1) Record what the user said they believe when the model has not, before its answer is checked.
+
+        The 7B model often writes "I have recorded the user's belief" without calling the tool, even
+        after the self-check gives it the exact call. When the user's own words name the entity and a
+        room or colour, the call is fully determined by those words, so the system makes it. The step
+        is logged with "auto": true. Ambiguous statements are still left to the model and the self-check.
+        """
+        if any(s["type"] == "tool_call" and s["name"] == "record_user_belief" and s["result"].get("ok")
+               for s in self.history + trace):
+            return
+        stated = [q for q in self.user_turns if _USER_STATES.search(q)]
+        if not stated:
+            return
+        m = re.fullmatch(r"record_user_belief\((.*)\)", _user_belief_call(stated[0]), re.DOTALL)
+        args = dict(re.findall(r'(\w+)="([^"]*)"', m.group(1))) if m else {}
+        if not args or any(v.startswith("<") for v in args.values()):
+            return
+        result = json.loads(self.tools.execute("record_user_belief", json.dumps(args)))
+        trace.append({"step": step, "type": "tool_call", "name": "record_user_belief", "arguments": args,
+                      "result": result, "auto": True})
+        if result.get("ok"):
+            self.messages.append({"role": "user", "content": (
+                f"[Memory] The user's stated belief was recorded in memory as the user's view: "
+                f"{args['entity']} {args['property']} = {args['value']}. Report it as what the user believes.")})
+
     def _required_params(self) -> dict[str, set[str]]:
         return {t["function"]["name"]: set(t["function"]["parameters"].get("required", []))
                 for t in self.tools.schemas}
@@ -229,8 +259,20 @@ class Agent:
             problems.append(f"The user told you what they believe (\"{stated[0]}\"), but you have not called the "
                             f"record_user_belief tool. Writing that you recorded it does not record it. Do not "
                             f"answer yet; make this tool call now: {_user_belief_call(stated[0])}")
+        problems += _distorted_colour_problems(answer, trace)
+        for route, direction, views in _disputed_unscanned_routes(trace, self.tools.env.robot.get("facing") or {}):
+            problems.append(f"Records disagree about {route}'s status ({views}), and {route} lies {direction} of you, "
+                            f"so a live reading can settle it. Do not pick a report by age or confidence alone; "
+                            f"make this tool call now: read_lidar(direction=\"{direction}\"), then say which report "
+                            f"the reading supports.")
         observed = _observed_entities(trace)
         unseen = sorted({e for e in _ENTITY_ID.findall(answer.lower()) if e not in observed})
+        here = self.tools.env.robot["room"]
+        for room in sorted({n for m in _EMPTY_ROOM_CLAIM.finditer(answer) for n in m.groups() if n}):
+            if f"room_{room}" not in observed and f"Room_{room}" != here and not _SAYS_UNKNOWN.search(answer):
+                problems.append(f"You said what is or is not in Room {room}, but the camera sees only the room you "
+                                f"are in ({here}) and no memory record or sensor reading mentions Room {room}. "
+                                f"Do not claim it is empty; say plainly that you do not know what is in Room {room}.")
         if unseen and not _SAYS_UNKNOWN.search(answer):
             problems.append(f"No memory record or sensor reading mentions {', '.join(unseen)}. The camera sees "
                             f"only the room you are in ({self.tools.env.robot['room']}), so an object it does not "
@@ -409,6 +451,10 @@ def _says(text: str, term: str) -> bool:
 _USER_STATES = re.compile(r"\bI (left|put|placed|dropped|moved|think|believe|thought|saw|remember|"
                           r"painted|parked|stored)\b[^.?!]{0,60}", re.IGNORECASE)
 _ENTITY_ID = re.compile(r"\b[a-z]+_\d+\b")
+# (v4.1) "no objects in Room 309", "Room 309 is empty": a claim about a room's contents
+_EMPTY_ROOM_CLAIM = re.compile(r"\b(?:no|not any|zero)\s+(?:other\s+)?(?:objects?|items?|things)\b[^.]{0,60}?"
+                               r"\broom[ _](\d+)|\broom[ _](\d+)\b[^.]{0,30}?\b(?:is|appears|seems)\s+"
+                               r"(?:currently\s+|to be\s+)?empty\b", re.IGNORECASE)
 _SAYS_UNKNOWN = re.compile(r"\b(don't know|do not know|no (memory )?records?|no information|unknown|not (able|found)|"
                            r"unable|cannot (determine|provide)|can't (determine|provide)|no data|don't have|"
                            r"do not have|no (sensor )?readings?)\b", re.IGNORECASE)
@@ -429,6 +475,63 @@ def _content_words(text: str) -> list[str]:
     """Words of a logged reason that say something (not ids, numbers or filler)."""
     return [w for w in re.findall(r"[a-z]+", text.lower()) if len(w) > 3 and w not in _STOPWORDS
             and not re.fullmatch(r"(bot|room|route|box|crate|cup)", w)]
+
+
+_MENTIONS_LIGHT = re.compile(r"\b(light|lights|lighting|lit|illuminat\w*)\b", re.IGNORECASE)
+
+
+def _distorted_colour_problems(answer: str, trace: list[dict]) -> list[str]:
+    """(v4.1) An answer about an object the camera saw under yellow or dim light must say that the light
+    distorts its colour and give the other recorded colours, not pass the perceived colour off as fact."""
+    others: dict[str, dict[str, str]] = {}        # object -> {colour: who recorded it}
+    for s in trace:
+        if s["type"] == "tool_call" and s["name"] == "query_beliefs" and s["result"].get("ok"):
+            for b in (s["result"].get("data") or {}).get("beliefs", []):
+                if b.get("property") == "color" and b.get("perspective") != "user":
+                    others.setdefault(b["entity"], {})[str(b["value"]).lower()] = (
+                        b["perspective"].split(":")[-1] if b["perspective"].startswith("agent:") else b["source"])
+    problems = []
+    for s in trace:
+        if not (s["type"] == "tool_call" and s["name"] == "read_camera" and s["result"].get("ok")):
+            continue
+        payload = (s["result"].get("data") or {}).get("payload") or {}
+        light = payload.get("ambient_light", "normal")
+        if light == "normal":
+            continue
+        for d in payload.get("detections", []):
+            oid, seen = d.get("object_id", ""), str(d.get("perceived_color", "")).lower()
+            if not oid or not seen or not (_says(answer, oid) or _says(answer, seen)):
+                continue
+            missing = [f"{who} recorded {c}" for c, who in others.get(oid, {}).items()
+                       if c != seen and not _says(answer, c)]
+            if _MENTIONS_LIGHT.search(answer) and not missing:
+                continue
+            problems.append(f"Your camera saw {oid} as {seen} under {light} light, which distorts colours, so {seen} "
+                            f"may not be its true colour. Do not present {seen} as a fact: say that the {light} light "
+                            f"distorts the colour" + (f", and give the other record ({'; '.join(missing)})"
+                                                      if missing else "") + ".")
+            break
+    return problems
+
+
+def _disputed_unscanned_routes(trace: list[dict], facing: dict) -> list[tuple[str, str, str]]:
+    """(v4.1) Routes the robot faces whose status records (other than the user's) disagree, with no
+    LiDAR reading of them yet: (route, direction, "who says what")."""
+    views: dict[str, dict[str, str]] = {}
+    for s in trace:
+        if s["type"] == "tool_call" and s["name"] == "query_beliefs" and s["result"].get("ok"):
+            for b in (s["result"].get("data") or {}).get("beliefs", []):
+                if b.get("property") == "status" and b.get("perspective") != "user":
+                    who = b["perspective"].split(":")[-1] if b["perspective"].startswith("agent:") else b["source"]
+                    views.setdefault(b["entity"], {})[who] = str(b["value"])
+    scanned = {((s["result"].get("data") or {}).get("payload") or {}).get("route") for s in trace
+               if s["type"] == "tool_call" and s["name"] == "read_lidar" and s["result"].get("ok")}
+    out = []
+    for direction, route in facing.items():
+        v = views.get(route, {})
+        if len(set(v.values())) > 1 and route not in scanned:
+            out.append((route, direction, ", ".join(f"{who} says {val}" for who, val in v.items())))
+    return out
 
 
 def _user_belief_call(statement: str) -> str:

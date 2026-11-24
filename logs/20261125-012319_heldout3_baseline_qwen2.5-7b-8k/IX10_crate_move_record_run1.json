@@ -1,0 +1,50 @@
+{
+  "scenario": "IX10_crate_move_record",
+  "set": "heldout3",
+  "type": "provenance",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Who put it on record that crate_88 is in Room_505, roughly how long ago was that, and what was the reason?",
+      "answer": "The record that crate_88 is in Room_505 was put on by agent bot_31 through its log (bot_31_log). The exact time when this was recorded is not specified in the available data, but it was likely recent given the high confidence level of 0.9. The reason for the recording is not detailed in the provided information, but it could be part of routine inventory checks or environmental monitoring.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "The record that crate_88 is in Room_505 was put on by agent bot_31 through its log (bot_31_log). The exact time when this was recorded is not specified in the available data, but it was likely recent given the high confidence level of 0.9. The reason for the recording is not detailed in the provided information, but it could be part of routine inventory checks or environmental monitoring."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_31']",
+      "passed": true,
+      "detail": "found ['bot_31']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['2 hours', 'two hours', '7200', '7200 seconds', '120 minutes', '2 h', '2h']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['fire exit', 'exit']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

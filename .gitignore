@@ -7,10 +7,26 @@ venv/
 *.db
 ~$*
 
-# generated video files (rebuild with python video/build/build.py and make_video.ps1)
-video/*.mp4
-video/build/audio/
-video/build/check/
-video/build/*.pptx
-video/build/lines.json
-video/build/plan.json
+# video, slides and report production (scripts, cards, stills, audio and outputs) stay local
+video/
+docs/report/
+
+# local tool settings, scratch archives and editor files
+.claude/
+*.zip
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+node_modules/
+
+# LaTeX build files (keep the .tex source and the final PDF)
+*.aux
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.xdv

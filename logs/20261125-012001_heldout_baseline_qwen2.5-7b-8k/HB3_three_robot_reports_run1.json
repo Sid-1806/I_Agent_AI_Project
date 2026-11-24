@@ -1,0 +1,80 @@
+{
+  "scenario": "HB3_three_robot_reports",
+  "set": "heldout",
+  "type": "B",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "What colour is crate_11 according to your records? Which report do you trust most, and why?",
+      "answer": "According to the records, crate_11 has been reported to be red (by bot_02), yellow (by bot_05), and orange (by bot_07). Among these, the report from bot_02 is the most trusted, as it has the highest confidence level of 0.9 compared to 0.85 for both bot_05 and bot_07.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "According to the records, crate_11 has been reported to be red (by bot_02), yellow (by bot_05), and orange (by bot_07). Among these, the report from bot_02 is the most trusted, as it has the highest confidence level of 0.9 compared to 0.85 for both bot_05 and bot_07."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['orange']",
+      "passed": true,
+      "detail": "found ['orange']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['yellow']",
+      "passed": true,
+      "detail": "found ['yellow']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['red']",
+      "passed": true,
+      "detail": "found ['red']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_07', 'bot 07']",
+      "passed": true,
+      "detail": "found ['bot_07']"
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_11.color [agent:bot_02] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "crate_11.color [agent:bot_05] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "memory",
+      "name": "crate_11.color [agent:bot_07] state",
+      "passed": false,
+      "detail": "belief missing"
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

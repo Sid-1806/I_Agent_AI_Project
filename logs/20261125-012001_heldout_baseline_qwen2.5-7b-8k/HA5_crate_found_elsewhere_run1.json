@@ -1,0 +1,44 @@
+{
+  "scenario": "HA5_crate_found_elsewhere",
+  "set": "heldout",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Where is crate_03 right now?",
+      "answer": "Crate_03 is currently located in Room_301, according to the perspective map from the default source with a confidence level of 0.9.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Crate_03 is currently located in Room_301, according to the perspective map from the default source with a confidence level of 0.9."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['302']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_03.located_at [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

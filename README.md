@@ -176,8 +176,12 @@ froze them predates every result on them.
   number: **27/33 correct answers (82%), 25/33 all checks**, with NA4, NP1 and NP2 failing.
   Those failures were then used to build **v3**, so v3 results on held-out set 2 are no longer a
   clean test; they are reported separately and labelled as such.
+- **Held-out set 3** (`scenarios/heldout3/`, frozen 24 Nov) was written by a separate AI agent that
+  was given only `scenarios/TEMPLATE.md` (the guide to writing scenarios without reading the code),
+  validated for format only, and frozen before any run. Its first pass on v4 failed IX6 and timed out
+  on IX7; those failures were then used for v4.1, so v4.1 results on it are reported as seen.
 
-Caveat: the system and both held-out sets were written with the same AI coding assistant, so the
+Caveat: the system and held-out sets 1 and 2 were written with the same AI coding assistant, so the
 tests are not fully independent. In particular, two more rounds of dev-set fixes were made after
 held-out set 2 was frozen, by an author who knew its contents (though not its results). Scenarios written by teammates who have not read the code would be
 a stronger test.
@@ -199,6 +203,15 @@ self-check gives the exact `record_user_belief` call built from the user's words
 `qwen2.5:7b-8k` (same weights, 8192-token context; see "Models and limits").
 **v4** (18 Nov) replaces the fixed ×0.3 map downgrade with weighted confidence (see "Key design
 decisions"), at the course instructor's suggestion. It was not tuned on any scenario's results.
+**v4.1** (24 Nov) fixes the causes of every v4 failure, each with a general rule and a unit test:
+the system records a belief the user states when the user's words fully determine it (B2, HB2: the
+model kept writing "I have recorded it" without calling the tool); the self-check sends back an
+answer that says what is in a room nothing has seen (H2), one that reports a colour seen under
+yellow or dim light without the lighting and the other recorded colours (IX6), and one that answers
+while robots disagree about a route the robot faces without a LiDAR reading of it (IX7). Replies are
+capped at 1024 tokens. Saved v4 runs on which none of these changes would have fired at any step are
+carried over unchanged (identical prompts at temperature 0); the others are run again
+(`rerun_affected.py`, which marks each carried-over log with its source).
 
 ### Repeats and temperature
 

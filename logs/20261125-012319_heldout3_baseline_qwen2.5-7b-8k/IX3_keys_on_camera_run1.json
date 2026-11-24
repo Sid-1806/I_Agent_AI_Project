@@ -1,0 +1,44 @@
+{
+  "scenario": "IX3_keys_on_camera",
+  "set": "heldout3",
+  "type": "A",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Somebody's lost keys_31 again. Where are they right now?",
+      "answer": "Based on the latest information, keys_31 are located in Room_207 (confidence 0.85). This information was recorded by agent bot_09.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Based on the latest information, keys_31 are located in Room_207 (confidence 0.85). This information was recorded by agent bot_09."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['Room_604', 'this room', 'here', 'with me', 'in front of me', 'near me']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "keys_31.located_at [self] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

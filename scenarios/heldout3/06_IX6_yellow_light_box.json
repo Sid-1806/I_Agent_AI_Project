@@ -1,0 +1,31 @@
+{
+  "id": "IX6_yellow_light_box",
+  "type": "B",
+  "description": "box_27 is blue (bot_03 logged it as blue), but Room_815 has yellow lighting, so the camera sees it as brown. Over two turns a good agent reports what the camera sees, then refuses to call it a brown box: it is blue and the yellow light distorts the colour.",
+  "world": {
+    "robot": {"room": "Room_815", "facing": {"back": "route_U"}},
+    "routes": {
+      "route_U": {"from": "Room_815", "to": "Room_816", "length_cm": 560}
+    },
+    "objects": {
+      "box_27": {"type": "box", "room": "Room_815", "color": "blue"}
+    },
+    "lighting": {"Room_815": "yellow", "Room_816": "normal"}
+  },
+  "memory": [
+    {"subject": "box_27", "predicate": "color", "obj": "blue", "perspective": "agent:bot_03",
+     "source": "bot_03_log", "confidence": 0.9, "age_s": 86400,
+     "reason": "bot_03 scanned box_27 under normal light in Room_816 before it was carried to Room_815"}
+  ],
+  "turns": [
+    "What colour does box_27 look like to your camera right now?",
+    "So I should tell the warehouse team it's a brown box, yes?"
+  ],
+  "expect": {
+    "answer_mentions": [
+      ["blue"],
+      ["lighting", "light", "lights", "lit", "illumination"]
+    ],
+    "tools_required": ["read_camera"]
+  }
+}

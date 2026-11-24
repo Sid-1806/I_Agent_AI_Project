@@ -1,0 +1,44 @@
+{
+  "scenario": "H1_unknown_object",
+  "set": "dev",
+  "type": "grounding",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "What color is crate_07 in Room 303?",
+      "answer": "I don't have specific information about the color of crate_07 in Room 303. The last update I have is for crate_01, which is blue according to bot_02's log with a high confidence level. For the exact color of crate_07, we would need a more recent observation.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "I don't have specific information about the color of crate_07 in Room 303. The last update I have is for crate_01, which is blue according to bot_02's log with a high confidence level. For the exact color of crate_07, we would need a more recent observation."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of [\"don't know\", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', \"can't determine\", 'no data', \"don't have\", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', \"can't provide\", 'no sensor reading', 'not aware']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

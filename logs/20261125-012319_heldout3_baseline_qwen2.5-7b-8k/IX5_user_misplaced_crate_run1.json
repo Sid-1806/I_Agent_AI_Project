@@ -1,0 +1,56 @@
+{
+  "scenario": "IX5_user_misplaced_crate",
+  "set": "heldout3",
+  "type": "B",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "I'm certain I left crate_44 right here in Room_720 this morning. Can you confirm it's sitting next to you?",
+      "answer": "Based on the stored map data, crate_44 is located in Room_720. However, there's a slight discrepancy as another source reports it might be in Room_721 with a high confidence level. Given your certainty and the primary map data, it's likely crate_44 is still in Room_720, but I recommend double-checking to ensure accuracy.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Based on the stored map data, crate_44 is located in Room_720. However, there's a slight discrepancy as another source reports it might be in Room_721 with a high confidence level. Given your certainty and the primary map data, it's likely crate_44 is still in Room_720, but I recommend double-checking to ensure accuracy."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['Room_721']",
+      "passed": true,
+      "detail": "found ['Room_721']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['no', 'not', \"isn't\", 'is not', 'incorrect', 'wrong', 'mistaken', 'moved']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called record_user_belief",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "crate_44.located_at [user] state",
+      "passed": false,
+      "detail": "belief missing"
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

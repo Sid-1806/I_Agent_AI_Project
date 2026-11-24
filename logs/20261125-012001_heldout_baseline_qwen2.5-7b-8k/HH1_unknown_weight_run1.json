@@ -1,0 +1,44 @@
+{
+  "scenario": "HH1_unknown_weight",
+  "set": "heldout",
+  "type": "grounding",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "How heavy is box_01?",
+      "answer": "Based on the available information, we do not have any data about the weight of box_01. The stored knowledge only includes its location in Room_101 and its color, which is blue. To determine the weight, we would need additional sensors or measurements.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "Based on the available information, we do not have any data about the weight of box_01. The stored knowledge only includes its location in Room_101 and its color, which is blue. To determine the weight, we would need additional sensors or measurements."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of [\"don't know\", 'do not know', 'no record', 'no records', 'no information', 'unknown', 'cannot determine', \"can't determine\", 'no data', \"don't have\", 'do not have', 'not able', 'unable', 'no memory record', 'cannot provide', \"can't provide\", 'no sensor reading', 'not aware']",
+      "passed": true,
+      "detail": "found ['do not have']"
+    },
+    {
+      "kind": "tools",
+      "name": "called one of ['query_beliefs', 'get_provenance']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "grounding",
+      "name": "no invented facts",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

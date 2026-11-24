@@ -1,0 +1,25 @@
+{
+  "id": "IX1_left_passage_blocked",
+  "type": "A",
+  "description": "The baseline map says the passage on the robot's left (route_K to Room_413) is clear, but something now sits 30 cm into it. A good agent checks the left LiDAR, reports the route as blocked, updates its own belief and does not drive into it.",
+  "world": {
+    "robot": {"room": "Room_412", "facing": {"left": "route_K", "front": "route_L"}},
+    "routes": {
+      "route_K": {"from": "Room_412", "to": "Room_413", "length_cm": 520, "obstacle_cm": 30},
+      "route_L": {"from": "Room_412", "to": "Room_414", "length_cm": 880}
+    },
+    "objects": {"bin_17": {"type": "bin", "room": "Room_412", "color": "grey"}},
+    "lighting": {"Room_412": "normal"}
+  },
+  "memory": [
+    {"subject": "route_K", "predicate": "status", "obj": "clear", "perspective": "map",
+     "source": "Default_Map", "confidence": 1.0, "age_s": 259200}
+  ],
+  "turns": ["I need someone to get to Room_413 shortly. Is the passage on your left-hand side passable at the moment?"],
+  "expect": {
+    "answer_mentions": [["blocked", "obstacle", "obstructed", "not passable", "impassable", "not clear", "isn't clear", "is not clear"]],
+    "tools_required": ["read_lidar"],
+    "tools_forbidden": ["move"],
+    "beliefs": [{"subject": "route_K", "predicate": "status", "perspective": "self", "value": "blocked"}]
+  }
+}

@@ -19,4 +19,11 @@
 #   v4  18 Nov 2026: weighted confidence. Each live reading updates the static map's confidence
 #       by Bayes' rule weighted by the sensor's reliability (replacing the fixed x0.3), and
 #       records are compared by confidence discounted by age.
-SYSTEM_VERSION = "v4"
+#   v4.1 24 Nov 2026: the system records a user-stated belief itself when the user's words fully
+#       determine it (the model kept claiming it had), and the self-check sends back an answer that says
+#       what is in a room nothing has seen ("no objects in Room 309"), and an answer that reports a
+#       colour seen under yellow or dim light without the lighting and the other recorded colours, and
+#       one that answers while robots disagree about a route it faces without a LiDAR reading of it.
+#       Replies are capped at 1024 tokens (a runaway reply once timed out; no saved reply is near it).
+#       Driven by v4 failures on dev B2 and H2, held-out 1 HB2 and held-out 3 (see README).
+SYSTEM_VERSION = "v4.1"

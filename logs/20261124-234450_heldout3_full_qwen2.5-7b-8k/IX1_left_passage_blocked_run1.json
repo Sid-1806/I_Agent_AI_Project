@@ -1,0 +1,263 @@
+{
+  "scenario": "IX1_left_passage_blocked",
+  "set": "heldout3",
+  "type": "A",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "I need someone to get to Room_413 shortly. Is the passage on your left-hand side passable at the moment?",
+      "answer": "The passage on my left-hand side is currently blocked, as confirmed by the live lidar reading. The static map previously indicated that the route was clear with a confidence of 0.839, but this has been updated to 0.215 based on the recent readings. Given this information, the passage is not passable at the moment. I do not have specific information about Room_413, so I cannot confirm if it is accessible from here.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "left"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_left",
+              "t": 1000001.0,
+              "payload": {
+                "direction": "left",
+                "route": "route_K",
+                "distance_cm": 30,
+                "status": "blocked"
+              },
+              "confidence_updates": [
+                {
+                  "entity": "route_K",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "clear",
+                  "old_confidence": 1.0,
+                  "new_confidence": 0.839,
+                  "summary": "The static map said route_K.status = clear (confidence 1.0). This lidar_left reading contradicts it, so the map's confidence is now 0.839."
+                }
+              ],
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 0.839,
+                    "age_s": 259201
+                  }
+                ],
+                "advice": "Single reading: read once more to confirm before updating your belief."
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The passage on my left-hand side is currently blocked, as detected by the lidar sensor. The static map previously indicated that the route was clear, but this single reading contradicts it. I recommend reading the lidar again to confirm before updating my belief."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_left reading gave route_K.status = blocked, but memory has map says clear. A single reading can be noise. Do not answer yet; your next reply must be this tool call: read_lidar(direction=\"left\"). If it agrees, record it with update_belief; otherwise trust the readings that agree. You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs(entity=\"room_413\") (and get_pose if the question is about your route or location)."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {
+            "entity": "room_413"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [],
+              "note": "No matching beliefs in memory. You have no record of this.",
+              "known_entities": [
+                "route_K"
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "draft",
+          "text": "I have no specific record of Room_413 in my memory. However, the lidar sensor reading suggests that the passage on my left-hand side is currently blocked. I recommend reading the lidar again to confirm before updating my belief."
+        },
+        {
+          "step": 4,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_left reading gave route_K.status = blocked, but memory has map says clear. A single reading can be noise. Do not answer yet; your next reply must be this tool call: read_lidar(direction=\"left\"). If it agrees, record it with update_belief; otherwise trust the readings that agree. No memory record or sensor reading mentions room_413. The camera sees only the room you are in (Room_412), so an object it does not list is not in view. Do not give it properties seen on other objects; say plainly that you do not know. Your readings lowered the static map's confidence in route_K.status = clear to 0.839. Keep the rest of your answer, and add that the map said clear and that its confidence is now 0.839."
+        },
+        {
+          "step": 5,
+          "type": "draft",
+          "text": "The static map previously indicated that route_K.status = clear with a confidence of 0.839, but a single lidar reading suggests the passage on my left-hand side is currently blocked. I recommend reading the lidar again to confirm before updating my belief. Based on the current readings, the passage may not be passable at the moment. I do not have specific information about Room_413, so I cannot confirm if it is accessible from here."
+        },
+        {
+          "step": 5,
+          "type": "self_check",
+          "text": "Unconfirmed conflict: one lidar_left reading gave route_K.status = blocked, but memory has map says clear. A single reading can be noise. Do not answer yet; your next reply must be this tool call: read_lidar(direction=\"left\"). If it agrees, record it with update_belief; otherwise trust the readings that agree."
+        },
+        {
+          "step": 6,
+          "type": "tool_call",
+          "name": "read_lidar",
+          "arguments": {
+            "direction": "left"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "lidar_left",
+              "t": 1000002.0,
+              "payload": {
+                "direction": "left",
+                "route": "route_K",
+                "distance_cm": 30,
+                "status": "blocked"
+              },
+              "confidence_updates": [
+                {
+                  "entity": "route_K",
+                  "property": "status",
+                  "perspective": "map",
+                  "value": "clear",
+                  "old_confidence": 0.839,
+                  "new_confidence": 0.215,
+                  "summary": "The static map said route_K.status = clear (confidence 0.839). This lidar_left reading contradicts it, so the map's confidence is now 0.215."
+                }
+              ],
+              "memory_check": {
+                "conflicts": [
+                  {
+                    "perspective": "map",
+                    "stored_value": "clear",
+                    "source": "Default_Map",
+                    "confidence": 0.215,
+                    "age_s": 259202
+                  }
+                ],
+                "advice": "Confirmed by consecutive readings. Record it now: update_belief(entity=\"route_K\", property=\"status\", value=\"blocked\", source=\"lidar_left\", confidence=1.0, reason=\"two consecutive lidar_left readings\")"
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 7,
+          "type": "draft",
+          "text": "The passage on my left-hand side is currently blocked, as confirmed by two consecutive lidar readings. The static map's confidence in the route being clear has been updated to 0.215. Given this information, the passage is not passable at the moment."
+        },
+        {
+          "step": 7,
+          "type": "self_check",
+          "text": "Unresolved conflict: lidar_left observed route_K.status = blocked, but memory has map says clear. Do not answer yet. Your next reply must be this tool call: update_belief(entity=\"route_K\", property=\"status\", value=\"blocked\", source=\"lidar_left\", confidence=1.0, reason=\"live lidar_left reading\")"
+        },
+        {
+          "step": 8,
+          "type": "tool_call",
+          "name": "update_belief",
+          "arguments": {
+            "reason": "live lidar_left reading",
+            "entity": "route_K",
+            "property": "status",
+            "value": "blocked",
+            "source": "lidar_left",
+            "confidence": 1
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "written": {
+                "entity": "route_K",
+                "property": "status",
+                "value": "blocked",
+                "perspective": "self",
+                "source": "lidar_left",
+                "confidence": 1.0
+              },
+              "replaced": null
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 9,
+          "type": "draft",
+          "text": "The passage on my left-hand side is currently blocked. Based on the live lidar reading, the route is not passable at the moment. I have updated my belief accordingly. Given this information, it would not be advisable to attempt to go to Room_413 via this passage."
+        },
+        {
+          "step": 9,
+          "type": "self_check",
+          "text": "No memory record or sensor reading mentions room_413. The camera sees only the room you are in (Room_412), so an object it does not list is not in view. Do not give it properties seen on other objects; say plainly that you do not know. Your readings lowered the static map's confidence in route_K.status = clear to 0.215. Keep the rest of your answer, and add that the map said clear and that its confidence is now 0.215."
+        },
+        {
+          "step": 10,
+          "type": "answer",
+          "text": "The passage on my left-hand side is currently blocked, as confirmed by the live lidar reading. The static map previously indicated that the route was clear with a confidence of 0.839, but this has been updated to 0.215 based on the recent readings. Given this information, the passage is not passable at the moment. I do not have specific information about Room_413, so I cannot confirm if it is accessible from here."
+        }
+      ],
+      "belief_changes": [
+        "~ route_K.status [map]: clear (1.0) -> clear (0.215, Default_Map)",
+        "+ route_K.status [self] = blocked (conf 1.0, lidar_left)"
+      ]
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "route_K",
+      "predicate": "status",
+      "obj": "clear",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 0.215,
+      "timestamp": 740800.0
+    },
+    {
+      "subject": "route_K",
+      "predicate": "status",
+      "obj": "blocked",
+      "perspective": "self",
+      "source": "lidar_left",
+      "confidence": 1.0,
+      "timestamp": 1000002.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blocked', 'obstacle', 'obstructed', 'not passable', 'impassable', 'not clear', \"isn't clear\", 'is not clear']",
+      "passed": true,
+      "detail": "found ['blocked', 'not passable']"
+    },
+    {
+      "kind": "tools",
+      "name": "called read_lidar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "did not execute move",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "kind": "memory",
+      "name": "route_K.status [self] state",
+      "passed": true,
+      "detail": "= blocked (conf 1.0)"
+    }
+  ],
+  "passed": true,
+  "system": "v4.1",
+  "carried_over": {
+    "from": "logs/20261124-230004_heldout3_full_qwen2.5-7b-8k/IX1_left_passage_blocked_run1.json",
+    "why": "no v4.1 change would have fired at any draft; identical prompts at T=0"
+  }
+}

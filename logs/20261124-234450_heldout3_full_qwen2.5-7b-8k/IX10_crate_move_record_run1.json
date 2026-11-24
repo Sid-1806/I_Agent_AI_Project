@@ -1,0 +1,198 @@
+{
+  "scenario": "IX10_crate_move_record",
+  "set": "heldout3",
+  "type": "provenance",
+  "mode": "full",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "Who put it on record that crate_88 is in Room_505, roughly how long ago was that, and what was the reason?",
+      "answer": "I have checked my memory and current pose. The records for crate_88.located_at show that it was last recorded as being in Room_505 by bot_31_log, 2 hours ago, with a weighted confidence of 0.45. However, the map records it as being in Room_500, 7 days ago, with a higher weighted confidence of 0.5. Given the higher weighted confidence, I trust the map's record more.\n\nThe belief that crate_88 is in Room_505 was recorded by bot_31_log, roughly 2 hours ago, with the reason \"bot_31 moved crate_88 to Room_505 to clear the fire exit.\" However, the map's record of crate_88 being in Room_500 is more reliable based on its higher weighted confidence. Therefore, I believe crate_88 is currently in Room_500.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "tool_call",
+          "name": "get_provenance",
+          "arguments": {
+            "entity": "crate_88",
+            "property": "located_at"
+          },
+          "result": {
+            "ok": true,
+            "data": {
+              "history": [
+                {
+                  "entity": "crate_88",
+                  "property": "located_at",
+                  "perspective": "map",
+                  "old_value": null,
+                  "new_value": "Room_500",
+                  "old_confidence": null,
+                  "new_confidence": 1.0,
+                  "source": "Default_Map",
+                  "reason": "initial load",
+                  "age_s": 604800
+                },
+                {
+                  "entity": "crate_88",
+                  "property": "located_at",
+                  "perspective": "agent:bot_31",
+                  "old_value": null,
+                  "new_value": "Room_505",
+                  "old_confidence": null,
+                  "new_confidence": 0.9,
+                  "source": "bot_31_log",
+                  "reason": "bot_31 moved crate_88 to Room_505 to clear the fire exit",
+                  "age_s": 7200
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 2,
+          "type": "draft",
+          "text": "The belief that crate_88 is located in Room_505 was first recorded on the map, with a reason of \"initial load\", roughly 7 days ago. More recently, this belief was updated by bot_31, which logged moving the crate to Room_505 to clear the fire exit, about 2 hours ago. The more recent update from bot_31 has a higher confidence of 0.9 compared to the map's initial confidence of 1.0, as it is a more direct observation."
+        },
+        {
+          "step": 2,
+          "type": "self_check",
+          "text": "You have not checked memory yet: no query_beliefs call appears in this conversation, and writing that you checked does not check it. Do not answer yet; make this tool call now: query_beliefs() (and get_pose if the question is about your route or location). Your records disagree about crate_88.located_at: Room_505 from bot_31_log (2 h ago); Room_500 from Default_Map (7 days ago). Your answer leaves out Room_500 from Default_Map. Report every record with its source and age, then say which one you trust more and why."
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "query_beliefs",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "beliefs": [
+                {
+                  "entity": "crate_88",
+                  "property": "located_at",
+                  "value": "Room_505",
+                  "perspective": "agent:bot_31",
+                  "source": "bot_31_log",
+                  "confidence": 0.9,
+                  "weighted_confidence": 0.45,
+                  "age_s": 7200
+                },
+                {
+                  "entity": "crate_88",
+                  "property": "located_at",
+                  "value": "Room_500",
+                  "perspective": "map",
+                  "source": "Default_Map",
+                  "confidence": 1.0,
+                  "weighted_confidence": 0.5,
+                  "age_s": 604800
+                }
+              ],
+              "disagreements": [
+                {
+                  "entity": "crate_88",
+                  "property": "located_at",
+                  "newest_first": [
+                    {
+                      "value": "Room_505",
+                      "perspective": "agent:bot_31",
+                      "source": "bot_31_log",
+                      "recorded": "2 h ago",
+                      "weighted_confidence": 0.45
+                    },
+                    {
+                      "value": "Room_500",
+                      "perspective": "map",
+                      "source": "Default_Map",
+                      "recorded": "7 days ago",
+                      "weighted_confidence": 0.5
+                    }
+                  ],
+                  "newest": "Room_505 from bot_31_log (2 h ago)",
+                  "most_trusted": "Room_500 from Default_Map (weighted confidence 0.5)"
+                }
+              ]
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 3,
+          "type": "tool_call",
+          "name": "get_pose",
+          "arguments": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "sensor": "odometry",
+              "t": 1000000.0,
+              "payload": {
+                "room": "Room_410",
+                "facing": {
+                  "back": "route_E"
+                }
+              }
+            },
+            "error": null
+          }
+        },
+        {
+          "step": 4,
+          "type": "answer",
+          "text": "I have checked my memory and current pose. The records for crate_88.located_at show that it was last recorded as being in Room_505 by bot_31_log, 2 hours ago, with a weighted confidence of 0.45. However, the map records it as being in Room_500, 7 days ago, with a higher weighted confidence of 0.5. Given the higher weighted confidence, I trust the map's record more.\n\nThe belief that crate_88 is in Room_505 was recorded by bot_31_log, roughly 2 hours ago, with the reason \"bot_31 moved crate_88 to Room_505 to clear the fire exit.\" However, the map's record of crate_88 being in Room_500 is more reliable based on its higher weighted confidence. Therefore, I believe crate_88 is currently in Room_500."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": [
+    {
+      "subject": "crate_88",
+      "predicate": "located_at",
+      "obj": "Room_505",
+      "perspective": "agent:bot_31",
+      "source": "bot_31_log",
+      "confidence": 0.9,
+      "timestamp": 992800.0
+    },
+    {
+      "subject": "crate_88",
+      "predicate": "located_at",
+      "obj": "Room_500",
+      "perspective": "map",
+      "source": "Default_Map",
+      "confidence": 1.0,
+      "timestamp": 395200.0
+    }
+  ],
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['bot_31']",
+      "passed": true,
+      "detail": "found ['bot_31']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['2 hours', 'two hours', '7200', '7200 seconds', '120 minutes', '2 h', '2h']",
+      "passed": true,
+      "detail": "found ['2 hours']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['fire exit', 'exit']",
+      "passed": true,
+      "detail": "found ['fire exit', 'exit']"
+    },
+    {
+      "kind": "tools",
+      "name": "called get_provenance",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": true,
+  "system": "v4.1"
+}

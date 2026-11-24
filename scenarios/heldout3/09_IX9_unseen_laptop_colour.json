@@ -1,0 +1,29 @@
+{
+  "id": "IX9_unseen_laptop_colour",
+  "type": "grounding",
+  "description": "bot_04 reported where laptop_63 is (Room_260) but never its colour, and the robot is in dim Room_255 where the laptop is out of camera view. Over two turns a good agent answers the location from bot_04's report, then admits it does not know the colour instead of inventing one.",
+  "world": {
+    "robot": {"room": "Room_255", "facing": {"right": "route_D"}},
+    "routes": {
+      "route_D": {"from": "Room_255", "to": "Room_260", "length_cm": 900}
+    },
+    "objects": {
+      "laptop_63": {"type": "laptop", "room": "Room_260", "color": "silver"},
+      "chair_70": {"type": "chair", "room": "Room_255", "color": "red"}
+    },
+    "lighting": {"Room_255": "dim", "Room_260": "normal"}
+  },
+  "memory": [
+    {"subject": "laptop_63", "predicate": "located_at", "obj": "Room_260", "perspective": "agent:bot_04",
+     "source": "bot_04_log", "confidence": 0.8, "age_s": 1800,
+     "reason": "bot_04 dropped laptop_63 off in Room_260"}
+  ],
+  "turns": [
+    "Where has laptop_63 ended up?",
+    "And what colour is it? I need to pick it out from a pile."
+  ],
+  "expect": {
+    "answer_mentions": [["don't know", "do not know", "not sure", "no information", "unknown", "cannot tell", "can't tell", "cannot confirm", "can't confirm", "no data", "unable", "not able", "no record", "no records", "can't say", "cannot say"]],
+    "grounded_vocab": ["silver", "black", "grey", "gray", "white", "red", "blue", "green", "yellow", "brown", "orange", "pink", "purple", "beige", "maroon", "olive"]
+  }
+}

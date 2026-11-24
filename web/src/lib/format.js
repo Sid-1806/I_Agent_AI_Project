@@ -10,7 +10,7 @@ export function scenarioTitle(id = "") {
   return { code, name: name.charAt(0).toUpperCase() + name.slice(1) };
 }
 
-export const SET_LABEL = { dev: "Dev set", heldout: "Held-out 1", heldout2: "Held-out 2" };
+export const SET_LABEL = { dev: "Dev set", heldout: "Held-out 1", heldout2: "Held-out 2", heldout3: "Held-out 3" };
 
 export const COLOURS = {
   red: "#e5484d", blue: "#3e7bfa", green: "#46a758", brown: "#8d5a33", yellow: "#f5d90a", orange: "#f76b15",

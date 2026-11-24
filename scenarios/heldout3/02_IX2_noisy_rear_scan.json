@@ -1,0 +1,28 @@
+{
+  "id": "IX2_noisy_rear_scan",
+  "type": "A",
+  "description": "bot_22 logged two days ago that the corridor behind the robot (route_M) was blocked by a pallet; it has since been cleared. The rear LiDAR's first reading is a spurious 11 cm, then it settles at the full route length. A good agent re-reads the LiDAR rather than trusting one glitchy reading plus the stale report, and says the corridor is clear.",
+  "world": {
+    "robot": {"room": "Room_518", "facing": {"back": "route_M", "front": "route_N"}},
+    "routes": {
+      "route_M": {"from": "Room_518", "to": "Room_519", "length_cm": 450},
+      "route_N": {"from": "Room_518", "to": "Room_517", "length_cm": 610}
+    },
+    "objects": {"chair_41": {"type": "chair", "room": "Room_518", "color": "black"}},
+    "lighting": {"Room_518": "normal"},
+    "lidar_script": {"route_M": [11, 447, 450]}
+  },
+  "memory": [
+    {"subject": "route_M", "predicate": "status", "obj": "clear", "perspective": "map",
+     "source": "Default_Map", "confidence": 1.0, "age_s": 604800},
+    {"subject": "route_M", "predicate": "status", "obj": "blocked", "perspective": "agent:bot_22",
+     "source": "bot_22_log", "confidence": 0.6, "age_s": 172800,
+     "reason": "bot_22 saw a pallet left in the corridor"}
+  ],
+  "turns": ["Before I send the cleaning cart through, be straight with me: is the corridor behind you clear right now? Heads up, the rear scanner has been twitchy all day."],
+  "expect": {
+    "answer_mentions": [["clear", "free", "open", "unobstructed", "passable", "no obstacle", "nothing in the way"]],
+    "tools_required": ["read_lidar"],
+    "tool_min_counts": {"read_lidar": 2}
+  }
+}

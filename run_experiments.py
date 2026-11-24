@@ -1,5 +1,6 @@
 """Run the full experiment matrix in priority order, then build the results report.
 
+    python run_experiments.py --plan v4         # the v4 system (weighted confidence): about 5-6 hours
     python run_experiments.py --plan v2         # the v2 system (18 Oct): about 5-6 hours
     python run_experiments.py                   # the v1 plan (mid-semester), about 5 hours
     python run_experiments.py --quick           # v1, 1 run per level at T=0 (about 2 hours)
@@ -53,6 +54,22 @@ V2 = [
     ("heldout2", "full", 2, 0.7),
 ]
 
+# v4 system (weighted confidence). First one full pass over all 36 scenarios, then two more full
+# passes (3 runs each in total), then one run of each lower level per set. Held-out set 2 was used
+# to build v3, so v4 results on it are reported as seen, not as a clean test.
+V4 = [
+    ("dev", "full", 1, 0.0),
+    ("heldout", "full", 1, 0.0),
+    ("heldout2", "full", 1, 0.0),
+    ("dev", "full", 2, 0.0),
+    ("heldout", "full", 2, 0.0),
+    ("heldout2", "full", 2, 0.0),
+] + [(s, lv, 1, 0.0) for s in ("dev", "heldout", "heldout2") for lv in ("baseline", "sensors", "plain", "checks")]
+
+# Shorter v4 plan (about 1.5 hours): one full-system pass over all four sets, including held-out
+# set 3 (written without reading the code), plus the no-tools baseline on each set.
+V4FAST = [(s, "full", 1, 0.0) for s in ("dev", "heldout", "heldout2", "heldout3")] +          [(s, "baseline", 1, 0.0) for s in ("dev", "heldout", "heldout2", "heldout3")]
+
 # At temperature 0 repeated runs are nearly identical, so one run per level is enough there;
 # the repeats that measure spread are the temperature-0.7 ones.
 QUICK = [
@@ -80,13 +97,14 @@ def main() -> None:
     ap.add_argument("--provider", default="ollama")
     ap.add_argument("--model", default="qwen2.5:7b-8k")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--plan", choices=["v1", "v2"], default="v1", help="which experiment plan to run")
+    ap.add_argument("--plan", choices=["v1", "v2", "v4", "v4fast"], default="v4", help="which experiment plan to run")
     ap.add_argument("--quick", action="store_true", help="v1 plan: 1 run per level at T=0, 2 held-out repeats at T=0.7")
     ap.add_argument("--skip-done", action="store_true", help="skip combinations that already have a summary")
     args = ap.parse_args()
 
-    matrix = V2 if args.plan == "v2" else (QUICK if args.quick else MATRIX)
-    since = "20261018-200000" if args.plan == "v2" else ""
+    matrix = {"v2": V2, "v4": V4, "v4fast": V4FAST}.get(args.plan) or (QUICK if args.quick else MATRIX)
+    since = {"v2": "20261018-200000", "v4": "20261124-000000", "v4fast": "20261124-000000"}.get(args.plan, "")
+    keep_awake(not args.dry_run)
     for i, (set_name, level, runs, temp) in enumerate(matrix, 1):
         if args.skip_done and already_done(set_name, level, temp, args.model, since):
             print(f"[{i}/{len(matrix)}] skip {set_name} {level} T={temp} (already done)", flush=True)
@@ -98,7 +116,16 @@ def main() -> None:
             subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL)
     if not args.dry_run:
         subprocess.run([sys.executable, "report.py"], check=False)
+    keep_awake(False)
     print(f"done {time.strftime('%H:%M')}", flush=True)
+
+
+def keep_awake(on: bool) -> None:
+    """On Windows, stop the computer idle-sleeping while the runs go (a closed lid still sleeps)."""
+    if sys.platform == "win32":
+        import ctypes
+        ES_CONTINUOUS, ES_SYSTEM_REQUIRED = 0x80000000, 0x00000001
+        ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | (ES_SYSTEM_REQUIRED if on else 0))
 
 
 if __name__ == "__main__":

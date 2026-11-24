@@ -1,0 +1,44 @@
+{
+  "scenario": "IX6_yellow_light_box",
+  "set": "heldout3",
+  "type": "B",
+  "mode": "baseline",
+  "model": "qwen2.5:7b-8k",
+  "turns": [
+    {
+      "question": "So I should tell the warehouse team it's a brown box, yes?",
+      "answer": "No, based on the recent data, box_27 is recorded as blue with high confidence. You should inform the warehouse team that box_27 is blue, not brown.",
+      "trace": [
+        {
+          "step": 1,
+          "type": "answer",
+          "text": "No, based on the recent data, box_27 is recorded as blue with high confidence. You should inform the warehouse team that box_27 is blue, not brown."
+        }
+      ],
+      "belief_changes": []
+    }
+  ],
+  "final_beliefs": null,
+  "checks": [
+    {
+      "kind": "answer",
+      "name": "mentions one of ['blue']",
+      "passed": true,
+      "detail": "found ['blue']"
+    },
+    {
+      "kind": "answer",
+      "name": "mentions one of ['lighting', 'light', 'lights', 'lit', 'illumination']",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "kind": "tools",
+      "name": "called read_camera",
+      "passed": false,
+      "detail": ""
+    }
+  ],
+  "passed": false,
+  "system": "v4.1"
+}

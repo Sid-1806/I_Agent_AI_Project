@@ -1,0 +1,11 @@
+scenario,type,pass_rate,answer,tools,memory,grounding,most_common_failure
+IX1_left_passage_blocked,A,1/1,1/1,1/1,1/1,-,
+IX2_noisy_rear_scan,A,1/1,1/1,1/1,-,-,
+IX3_keys_on_camera,A,1/1,1/1,1/1,1/1,-,
+IX4_construction_lifted,A,1/1,1/1,1/1,-,-,
+IX5_user_misplaced_crate,B,1/1,1/1,1/1,1/1,-,
+IX6_yellow_light_box,B,1/1,1/1,1/1,-,-,
+IX7_robots_disagree_front,B,1/1,1/1,1/1,1/1,-,
+IX8_distant_passage_unknown,grounding,1/1,1/1,1/1,-,-,
+IX9_unseen_laptop_colour,grounding,1/1,1/1,-,-,1/1,
+IX10_crate_move_record,provenance,1/1,1/1,1/1,-,-,

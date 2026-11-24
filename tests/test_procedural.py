@@ -289,7 +289,9 @@ def test_evidence_from_earlier_turns_counts_and_user_beliefs_are_required():
     ])
     agent = Agent(world.tools, llm)
     first = agent.ask("I left box_01 in Room 101 before lunch. Can you check whether it is still there?")
-    assert "record_user_belief tool" in [s for s in first.trace if s["type"] == "self_check"][0]["text"]
+    # v4.1: the stated belief is recorded by the system; the self-check then asks for it to be reported
+    assert any(s["type"] == "tool_call" and s.get("auto") for s in first.trace)
+    assert "does not mention it" in [s for s in first.trace if s["type"] == "self_check"][0]["text"]
     second = agent.ask("Where do I think box_01 is, and where is it actually?")
     assert not any(s["type"] == "self_check" for s in second.trace)
     assert "Room_205" in second.answer
@@ -614,3 +616,69 @@ def test_claiming_a_refused_update_is_explained():
     trace = [{"type": "tool_call", "name": "update_belief", "arguments": {}, "result": refused}]
     problems = agent.check_answer("I have updated my memory to say box_01 is red.", trace)
     assert any("update_belief was refused" in p and "unchanged" in p for p in problems)
+
+
+def test_user_stated_belief_is_recorded_when_the_model_only_claims_it():
+    """v4.1: B2's model said "I have recorded the user's belief" six times without calling the tool."""
+    scenario = load_scenario("B2")
+    world = build_world(scenario)
+    claim = "I have recorded the user's belief that box_01 is in Room 101. bot_02 reported box_01 in Room 205."
+    agent = Agent(world.tools, ScriptedLLM([[("query_beliefs", {"entity": "box_01"})], [("read_camera", {})]]
+                                           + [claim] * 8))
+    result = agent.ask(scenario["turns"][0])
+    auto = [s for s in result.trace if s["type"] == "tool_call" and s.get("auto")]
+    assert [s["name"] for s in auto] == ["record_user_belief"] and auto[0]["result"]["ok"]
+    assert auto[0]["arguments"]["value"] == "Room_101"
+    assert any("box_01.located_at [user]" in line for line in result.belief_changes)
+
+
+def test_answer_about_a_room_nothing_has_seen_is_sent_back():
+    """v4.1: H2's answer said Room 309 was empty although the camera sees only Room 101."""
+    world = build_world(load_scenario("H2"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["What objects are in Room 309 right now?"]
+    trace = [{"type": "tool_call", "name": "query_beliefs", "arguments": {},
+              "result": json.loads(world.tools.execute("query_beliefs", {}))},
+             {"type": "tool_call", "name": "read_camera", "arguments": {},
+              "result": json.loads(world.tools.execute("read_camera", {}))}]
+    assert any("Room 309" in p for p in agent.check_answer("There are no objects in Room 309 right now.", trace))
+    assert not any("Room 309" in p for p in agent.check_answer(
+        "I do not know what is in Room 309: my camera sees only Room 101.", trace))
+
+
+def test_naming_a_destination_room_is_not_an_empty_room_claim():
+    world = build_world(load_scenario("H2"))
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["Can you get to Room 220 along route_M?"]
+    trace = [{"type": "tool_call", "name": "query_beliefs", "arguments": {},
+              "result": json.loads(world.tools.execute("query_beliefs", {}))}]
+    assert not any("Room 220" in p for p in agent.check_answer("Yes, you can get to Room 220 along route_M.", trace))
+
+
+def test_colour_seen_under_yellow_light_needs_the_lighting_and_other_records():
+    """v4.1: an answer that passes the camera's distorted colour off as fact is sent back."""
+    world = build_world(load_scenario("B1"))   # box_01 is blue, yellow light, bot_02 recorded blue
+    agent = Agent(world.tools, ScriptedLLM([]))
+    agent.user_turns = ["What colour is box_01?"]
+    trace = [{"type": "tool_call", "name": "query_beliefs", "arguments": {},
+              "result": json.loads(world.tools.execute("query_beliefs", {"entity": "box_01"}))},
+             {"type": "tool_call", "name": "read_camera", "arguments": {},
+              "result": json.loads(world.tools.execute("read_camera", {}))}]
+    bad = agent.check_answer("box_01 is brown, according to my camera.", trace)
+    assert any("distorts" in p and "blue" in p for p in bad)
+    good = agent.check_answer("My camera sees box_01 as brown, but the yellow light distorts colours; "
+                              "bot_02 recorded it as blue.", trace)
+    assert not any("distorts" in p for p in good)
+
+
+def test_disputed_route_needs_a_live_reading():
+    """v4.1: when robots' reports disagree about a route the robot faces, the LiDAR settles it."""
+    from i_agent.procedural import _disputed_unscanned_routes
+    q = {"type": "tool_call", "name": "query_beliefs", "result": {"ok": True, "data": {"beliefs": [
+        {"entity": "route_T", "property": "status", "value": "clear", "perspective": "agent:bot_26", "source": "b"},
+        {"entity": "route_T", "property": "status", "value": "blocked", "perspective": "agent:bot_11", "source": "b"}]}}}
+    assert _disputed_unscanned_routes([q], {"front": "route_T"})[0][:2] == ("route_T", "front")
+    scan = {"type": "tool_call", "name": "read_lidar",
+            "result": {"ok": True, "data": {"payload": {"route": "route_T", "status": "blocked"}}}}
+    assert _disputed_unscanned_routes([q, scan], {"front": "route_T"}) == []
+    assert _disputed_unscanned_routes([q], {"left": "route_V"}) == []

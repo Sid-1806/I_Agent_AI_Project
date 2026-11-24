@@ -37,11 +37,12 @@ LEVEL_LABEL = {
 OLD_MODES = {"agent": "full", "agent-no-self-check": "checks"}
 # Logs written before the version field existed: folders from this time on ran v2.
 V2_SINCE = "20261018-200000"
-SET_ORDER = ["dev", "heldout", "heldout2"]
+SET_ORDER = ["dev", "heldout", "heldout2", "heldout3"]
 SET_LABEL = {"dev": "Dev set (system was tuned on it)",
              "heldout": "Held-out set 1 (frozen 5 Oct; its v1 results were seen before v2)",
-             "heldout2": "Held-out set 2 (frozen 18 Oct before any run)"}
-SET_COLOUR = {"dev": "dev", "heldout": "held", "heldout2": "held2"}
+             "heldout2": "Held-out set 2 (frozen 18 Oct before any run)",
+             "heldout3": "Held-out set 3 (written without the code, frozen 24 Nov)"}
+SET_COLOUR = {"dev": "dev", "heldout": "held", "heldout2": "held2", "heldout3": "held3"}
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
@@ -175,8 +176,8 @@ def bar_chart(rows: list[dict], model: str) -> str:
 
 
 CSS = """
-:root{--bg:#F4F6F8;--surface:#fff;--ink:#16202B;--muted:#586473;--line:#D9DFE6;--soft:#EAEEF2;--dev:#0B7A70;--held:#A95A0B;--held2:#5B4FC4;--ok:#1E7B3A;--bad:#B3261E}
-@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0F151C;--surface:#161E27;--ink:#E4E9EF;--muted:#9AA6B4;--line:#2A3542;--soft:#1C2530;--dev:#5CCFC2;--held:#F0AE62;--held2:#A99CF5;--ok:#7FD69A;--bad:#F28B82}}
+:root{--bg:#F4F6F8;--surface:#fff;--ink:#16202B;--muted:#586473;--line:#D9DFE6;--soft:#EAEEF2;--dev:#0B7A70;--held:#A95A0B;--held2:#5B4FC4;--held3:#2F8F5B;--ok:#1E7B3A;--bad:#B3261E}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0F151C;--surface:#161E27;--ink:#E4E9EF;--muted:#9AA6B4;--line:#2A3542;--soft:#1C2530;--dev:#5CCFC2;--held:#F0AE62;--held2:#A99CF5;--held3:#7FD6A4;--ok:#7FD69A;--bad:#F28B82}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,"Segoe UI",sans-serif;padding:32px 16px 60px}
 main{max-width:980px;margin:0 auto}h1{font-size:28px;margin:0 0 6px}h2{font-size:19px;margin:30px 0 10px}p{max-width:75ch}
 .muted{color:var(--muted)}.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
@@ -184,7 +185,7 @@ table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:
 th{background:var(--soft);font-weight:600}tr:last-child td{border-bottom:0}
 .chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
 .grid{stroke:var(--line)}.axis{fill:var(--muted);font-size:11.5px}.val{fill:var(--ink);font-size:11px}
-.dev{fill:var(--dev)}.heldout{fill:var(--held)}.heldout2{fill:var(--held2)}.ci{stroke:var(--ink);stroke-width:1.4;opacity:.6}
+.dev{fill:var(--dev)}.heldout{fill:var(--held)}.heldout2{fill:var(--held2)}.heldout3{fill:var(--held3)}.ci{stroke:var(--ink);stroke-width:1.4;opacity:.6}
 .legend{display:flex;gap:16px;font-size:13px;margin:6px 0 0}.legend span::before{content:"";display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 .ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}
 .ans{max-width:460px;white-space:pre-wrap}

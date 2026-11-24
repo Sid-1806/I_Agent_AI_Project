@@ -1,0 +1,31 @@
+{
+  "id": "IX10_crate_move_record",
+  "type": "provenance",
+  "description": "Memory holds an old map entry placing crate_88 in Room_500 and a newer bot_31 log entry placing it in Room_505, recorded two hours ago because bot_31 moved it to clear the fire exit. A good agent uses provenance to say who recorded the Room_505 belief, when, and why.",
+  "world": {
+    "robot": {"room": "Room_410", "facing": {"back": "route_E"}},
+    "routes": {
+      "route_E": {"from": "Room_410", "to": "Room_505", "length_cm": 1200}
+    },
+    "objects": {
+      "crate_88": {"type": "crate", "room": "Room_505", "color": "brown"}
+    },
+    "lighting": {"Room_410": "normal", "Room_505": "normal"}
+  },
+  "memory": [
+    {"subject": "crate_88", "predicate": "located_at", "obj": "Room_500", "perspective": "map",
+     "source": "Default_Map", "confidence": 1.0, "age_s": 604800},
+    {"subject": "crate_88", "predicate": "located_at", "obj": "Room_505", "perspective": "agent:bot_31",
+     "source": "bot_31_log", "confidence": 0.9, "age_s": 7200,
+     "reason": "bot_31 moved crate_88 to Room_505 to clear the fire exit"}
+  ],
+  "turns": ["Who put it on record that crate_88 is in Room_505, roughly how long ago was that, and what was the reason?"],
+  "expect": {
+    "answer_mentions": [
+      ["bot_31"],
+      ["2 hours", "two hours", "7200", "7200 seconds", "120 minutes", "2 h", "2h"],
+      ["fire exit", "exit"]
+    ],
+    "tools_required": ["get_provenance"]
+  }
+}
