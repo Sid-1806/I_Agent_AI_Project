@@ -1,7 +1,7 @@
 # I, Agent: Architecture Verification Report
 
 Team Null Pointers: Siddh (memory layer), Rudraksh (procedural layer), Udit (world and evaluation).
-System version v4 (`SYSTEM_VERSION` in `i_agent/__init__.py`), model qwen2.5:7b with an 8k context, run locally with Ollama.
+System version v4.1 (`SYSTEM_VERSION` in `i_agent/__init__.py`), model qwen2.5:7b with an 8k context, run locally with Ollama.
 
 This report explains the structural prompts the agent works under, traces how information passes
 through the three layers, and sets out how the system keeps the language model from stating facts
@@ -147,7 +147,15 @@ back (up to 6 times, within 16 steps) if, among others:
 - the map's confidence was lowered this turn and the answer does not say so;
 - the user's stated belief was not recorded, or was recorded but not reported back;
 - a why/who/when question was answered without the provenance log, or without the logged reason;
-- it announces an action instead of taking it, or does not answer a yes/no question directly.
+- it announces an action instead of taking it, or does not answer a yes/no question directly;
+- (v4.1) robots disagree about a route the robot faces and no LiDAR reading of it was taken;
+- (v4.1) it reports a colour seen under yellow or dim light without the lighting and the other
+  recorded colours;
+- (v4.1) it says what is in a room that nothing has seen ("no objects in Room 309").
+
+(v4.1) When the user's own words fully determine their belief ("I left box_01 in Room 101"), the
+system records it as the user's view itself, logged as an automatic step: the 7B model repeatedly
+wrote "I have recorded it" without calling the tool. Replies are capped at 1024 tokens.
 
 Every rule is general: none names a scenario, entity or expected answer. Each was added after a
 failure observed in a log, and each has a unit test on a development scenario.
@@ -161,21 +169,36 @@ tool result and user message). A run passes only if all pass. Required phrases a
 
 ## 6. Verification evidence
 
-- **103 unit tests** (`python -m pytest`, no LLM needed) cover the memory layer, every tool safeguard,
+- **109 unit tests** (`python -m pytest`, no LLM needed) cover the memory layer, every tool safeguard,
   every self-check rule, the scenario files, and an exact replay of a logged run.
-- **36 scenarios** in three sets. 15 development scenarios were used to build the system. Two held-out
+- **46 scenarios** in four sets. 15 development scenarios were used to build the system. Three held-out
   sets were written and frozen (SHA-256 hashes in `FROZEN.md`, checked by a test) before the agent
-  ran on them: set 1 (10 scenarios, 5 Oct) and set 2 (11 scenarios, 18 Oct).
+  ran on them: set 1 (10 scenarios, 5 Oct), set 2 (11 scenarios, 18 Oct) and set 3 (10 scenarios,
+  24 Nov), which a separate AI agent wrote from `scenarios/TEMPLATE.md` alone, without the code.
 - **Clean generalisation result** (held-out set 2 on system v2, before any change was made because of
   it): the full system answered **27 of 33** runs correctly (82%) against **5 of 11** (45%) for the same
   model with its memory pasted into the prompt and no tools; answers that were also backed by real
   tool calls and memory went from **0%** to **76%**.
 - **Ablation** (each level adds one part of the architecture, same model): see `results/results.md`
   for every level and set, with 95% Wilson intervals.
-- **System v4** (this report's system): <!--V4_RESULTS-->results pending<!--/V4_RESULTS-->
+- **Final system (v4.1)**, one run per scenario at temperature 0:
 
-Held-out set 2's failures were used to build v3, and held-out set 1's to build v2, so later results on
-those sets are reported as seen, not as clean tests.
+  | Set | Full system: all checks | Text-only baseline: correct answer |
+  |---|---|---|
+  | Dev | 15/15 | 5/15 |
+  | Held-out 1 | 10/10 | 5/10 |
+  | Held-out 2 | 11/11 | 5/11 |
+  | Held-out 3 | 10/10 | 3/10 |
+  | **Total** | **46/46** | **18/46** |
+
+  The first v4 pass scored 13/15, 9/10 and 11/11 on the first three sets, with IX6 failing and IX7
+  stalling on set 3. Each cause was fixed by a general rule (Section 5.2); saved runs on which no
+  change would have fired were carried over (identical prompts at temperature 0) and the other 12
+  were run again (`rerun_affected.py`).
+
+Held-out set 2's failures were used to build v3, held-out set 1's to build v2, and held-out sets 1
+and 3's v4 failures to build v4.1, so later results on those sets are reported as seen, not as clean
+tests. The clean generalisation number is held-out set 2 on v2.
 
 ## 7. Limitations
 
@@ -183,9 +206,9 @@ those sets are reported as seen, not as clean tests.
   stay clumsy even when they pass (for example, reporting the three colours in B1 but saying it trusts
   the distorted camera reading more).
 - The world is simulated and discrete (rooms and routes); sensor noise is scripted.
-- The scenarios and the system were written by the same team, so the held-out sets are not fully
-  independent. Scenarios written by someone who has not read the code (`scenarios/TEMPLATE.md`)
-  would be a stronger test.
+- The system and held-out sets 1 and 2 were written by the same team, so those sets are not fully
+  independent. Held-out set 3 was written without the code, but by an AI agent rather than a person.
+- Each final result is a single run at temperature 0: it shows reproducible behaviour, not variability.
 - Keyword-based answer checks can misjudge paraphrases; `results/review.html` lets a person check
   the automatic verdicts by hand.
 - Confidence reliabilities and half-lives are set by hand, not calibrated on real sensors.

@@ -30,3 +30,32 @@ node_modules/
 *.bbl
 *.blg
 *.xdv
+
+# Internal documentation
+HANDOFF.md
+I_Agent_AI_Project_Proposal.docx
+*.pptx
+prep-*.html
+project-explained.html
+project-handbook.html
+team-workload.html
+speaker_notes.md
+
+# Raw experiment logs: only the final results (v4.1, the v4 passes they carry over from, the
+# text-only baselines) and the A1/B1 replay log shown in the video are kept
+logs/*
+!logs/20261124-214502_dev_full_qwen2.5-7b-8k/
+!logs/20261124-221252_heldout_full_qwen2.5-7b-8k/
+!logs/20261124-223612_heldout2_full_qwen2.5-7b-8k/
+!logs/20261124-230004_heldout3_full_qwen2.5-7b-8k/
+!logs/20261124-232701_dev_full_qwen2.5-7b-8k/
+!logs/20261124-233736_heldout_full_qwen2.5-7b-8k/
+!logs/20261124-234256_heldout2_full_qwen2.5-7b-8k/
+!logs/20261124-234450_heldout3_full_qwen2.5-7b-8k/
+!logs/20261125-000936_dev_baseline_qwen2.5-7b-8k/
+!logs/20261125-012001_heldout_baseline_qwen2.5-7b-8k/
+!logs/20261125-012139_heldout2_baseline_qwen2.5-7b-8k/
+!logs/20261125-012319_heldout3_baseline_qwen2.5-7b-8k/
+!logs/dev_iterations/
+logs/dev_iterations/*
+!logs/dev_iterations/20261118-145103_dev_full_qwen2.5-7b-8k/

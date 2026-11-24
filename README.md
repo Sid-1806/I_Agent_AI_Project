@@ -1,352 +1,246 @@
 # I, Agent
 
-A three-layer epistemic architecture for grounded LLM agents (AI course project).
+**A three-layer architecture for grounded language-model agents**  
+CS F407 — Artificial Intelligence | BITS Pilani, K. K. Birla Goa Campus
 
-Team: **Siddh** (memory layer), **Rudraksh** (LLM layer), **Udit** (world layer and evaluation).
+I, Agent combines structured memory, language-model reasoning, and a simulated environment to investigate how an agent can reconcile prior beliefs with new observations. The system records where information originated, distinguishes different observers' perspectives, and checks actions and answers against available evidence.
 
-An LLM agent that checks its beliefs against a structured memory and live (simulated) sensors,
-knows where every belief came from, and keeps the user's, its own, and other robots' viewpoints separate.
+## Architecture
 
+```text
+                 User question
+                       |
+                       v
+       +--------------------------------+
+       | Procedural layer               |
+       | LLM controller and tool calls  |
+       | i_agent/procedural.py, tools.py|
+       +--------------------------------+
+                  /             \
+                 v               v
+   +--------------------+   +---------------------+
+   | Declarative memory |   | Sensorimotor layer  |
+   | NetworkX graph     |   | Simulated world      |
+   | SQLite provenance  |   | LiDAR, camera, motion|
+   | declarative.py     |   | sensorimotor.py      |
+   +--------------------+   +---------------------+
+                 \               /
+                  v             v
+             Grounded response
 ```
-DECLARATIVE   declarative.py              (Siddh)     belief graph (NetworkX) + provenance log (SQLite)
-      ▲
-      │  query_beliefs · update_belief · record_user_belief · get_provenance
-      ▼
-PROCEDURAL    procedural.py, tools.py     (Rudraksh)  LLM in a ReAct loop with tool calling
-      ▲
-      │  read_lidar · read_camera · get_pose · move
-      ▼
-SENSORIMOTOR  sensorimotor.py             (Udit)      mock world: routes, objects, lighting
-```
 
-The LLM can reach the other two layers only through tools, so every fact in an answer can be
-traced to a specific tool result in the log.
+- **Declarative memory:** Stores beliefs as graph edges with values, confidence, source and perspective (`self`, `map`, `user`, or `agent:<id>`). SQLite records changes and their provenance. Snapshots and diffs expose how memory changes over a run.
+- **Procedural reasoning:** Uses a tool-calling ReAct loop with an OpenAI-compatible model provider. The controller queries memory, invokes simulated sensors, checks proposed memory updates, and produces answers based on retrieved evidence.
+- **Sensorimotor simulation:** Models routes, obstacles, objects, lighting and sensor observations. LiDAR, camera and motion tools provide observations that may agree or conflict with stored information.
 
-## Setup
+The current code declares **system version v4.1** (`i_agent/__init__.py`). Its confidence model updates static-map beliefs using sensor reliability and compares records using age-discounted confidence. User beliefs and reports from other robots remain distinct from the agent's own observations. **The final system passes every check on all 46 test scenarios** (see [Results](#results)).
+
+Reports: the course report `I_Agent_Final_Project_Report_Updated.pdf` and the architecture verification report `docs/Architecture_Verification_Report.pdf` (source in `.md` next to it).
+
+## Requirements
+
+- Python 3.10+ and `pip`
+- An LLM provider: [Ollama](https://ollama.com/) for local inference, or a Groq API key
+- Node.js and npm only if you need to rebuild the React frontend
+
+Install Python dependencies from the project root:
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate          # Windows; on macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-copy .env.example .env          # then put your Groq key in .env (free at console.groq.com)
 ```
 
-## Run
+Activate the environment:
+
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+```
 
 ```bash
-python -m pytest                          # 81 offline tests, no API key needed
-python run_scenario.py --list             # dev and held-out scenarios
-python run_scenario.py A1                 # Scenario A live, with the full trace (the demo)
-python run_scenario.py B1                 # Scenario B: user thinks red, camera sees brown, log says blue
-python run_scenario.py A1 --level plain   # the same scenario with the safeguards switched off
-python run_scenario.py A1 --chat          # then ask your own questions
-python evaluate.py                        # dev set, full system, 5 runs -> logs/<time>_dev_full_<model>/
-python evaluate.py --set heldout2         # held-out set 2 (frozen 18 Oct); --set heldout for set 1
-python evaluate.py --level plain          # an ablation level (see "Evaluation")
-python run_experiments.py --plan v2       # the whole matrix of sets x levels (5-6 hours locally)
-python report.py                          # results/results.html, results.md, review.html
-python server.py                          # the web UI on http://localhost:8000 (see "Web UI")
+# macOS / Linux
+source .venv/bin/activate
 ```
 
-## Web UI
+Then install dependencies:
 
-`python server.py` serves a React app (built into `web/dist`) on http://localhost:8000, with two
-screens:
+```bash
+pip install -r requirements.txt
+```
 
-- **Talk to the agent.** Pick a world (any scenario), type a question or click one of the
-  scenario's own questions, and watch all three layers as the agent works:
-  - *World* (sensorimotor): the mock environment's ground truth as a map (rooms, roads, obstacles,
-    lighting, objects in their true colour, the robot and its planned route), with a robot card
-    showing the last LiDAR reading, what the camera saw, and any memory-check warning.
-  - *Agent* (procedural): every LLM step as it streams in, including drafts rejected by the self-check.
-  - *Memory* (declarative): the belief graph and the SQLite provenance log, with changed rows marked.
-  The safeguards switch (all / tool checks only / none) shows live what they add. The timeline at
-  the bottom steps through the run (arrow keys, space to play).
-- **Replay a test log.** Any logged evaluation run, rebuilt step by step without calling the LLM,
-  with its automatic checks.
+### Option A: Ollama (local)
 
-A backend is needed because the agent is Python (NetworkX, SQLite, the mock world and the LLM loop);
-`server.py` only wraps the existing classes and streams each step to the page. To change the frontend: `cd web && npm install && npm run dev` (port 5173,
-with `server.py` running), then `npm run build`.
+Start Ollama, then create the project's 8K-context model:
 
-## Models and limits
+```bash
+ollama pull qwen2.5:7b
+ollama create qwen2.5:7b-8k -f ollama/Modelfile
+```
 
-- **Groq (default):** `openai/gpt-oss-20b`, open-weight, fast. Groq no longer serves Llama 3.
-  The free tier allows about **200k tokens per model per day**, and one scenario run uses 6–12k
-  tokens. So one key covers roughly one full pass of the suite per day. Use Groq for the live demo.
-- **Ollama (local, unlimited):** `qwen2.5:7b`, or the spec's Llama: `ollama pull llama3.1:8b`.
-  **Create the 8k-context variant once:** `ollama create qwen2.5:7b-8k -f ollama/Modelfile`, and use
-  `--provider ollama --model qwen2.5:7b-8k`. Ollama's default context is 4096 tokens and it silently
-  drops the start of longer conversations, including the system prompt; about one run in ten of the
-  multi-turn scenarios was longer than that (all results before 19 Oct used the 4096 default).
-  Slower (about 1–2 minutes per scenario) but free and offline. Use it for the full test suite.
-- To spread Groq usage, each teammate can use their own key and run a subset:
-  `python evaluate.py --only A1 A2 A3`.
+Run the browser-based application:
 
-## Code map
+```bash
+python server.py --provider ollama --model qwen2.5:7b-8k
+```
 
-| File | Owner | What it does |
-|---|---|---|
-| `i_agent/schemas.py` | team | Data contracts: `Belief`, `ProvenanceRecord`, `SensorReading`, `ToolResult` |
-| `i_agent/declarative.py` | Siddh | Belief graph, provenance log, weighted confidence, snapshots and diffs |
-| `i_agent/tools.py` | Rudraksh | Tool schemas the LLM sees, and safe execution |
-| `i_agent/procedural.py` | Rudraksh | ReAct loop, LLM client, retries, no-tools baseline |
-| `i_agent/prompts/system.md` | Rudraksh | The epistemic rules given to the LLM |
-| `i_agent/sensorimotor.py` | Udit | Mock environment: LiDAR, camera with lighting, motion |
-| `i_agent/scenario.py` | Udit | Builds the three layers from a scenario file |
-| `i_agent/evaluation.py` | Udit | Automatic checks: answer, tools, memory, grounding |
-| `i_agent/prompts/system_sensors.md` | Rudraksh | Prompt for the "sensors" ablation level (no memory tools) |
-| `scenarios/dev/*.json` | all | The 15 development scenarios (the project's data) |
-| `scenarios/heldout/*.json` | all | Held-out set 1: 10 scenarios, frozen 5 Oct before any run (`FROZEN.md`) |
-| `scenarios/heldout2/*.json` | all | Held-out set 2: 11 scenarios, frozen 18 Oct before any run (`FROZEN.md`) |
-| `run_scenario.py` | Udit | Demo script with the printed trace; `--level` switches parts off |
-| `evaluate.py` | Udit | Test suite runner: `--set`, `--level`, `--temperature`, `--rescore` |
-| `run_experiments.py` | Udit | Runs every set x level combination in priority order |
-| `report.py` | Udit | Pools all runs into tables, an ablation chart and a hand-review sheet |
-| `server.py` | team | Web UI backend (FastAPI): sessions, streamed agent steps, log replay |
-| `i_agent/replay.py` | team | Snapshots of all three layers after each step; rebuilds logged runs step by step |
-| `web/` | team | React frontend (Vite); `web/dist` is the built app that `server.py` serves |
+Open **http://localhost:8000**.
 
-## Key design decisions
+### Option B: Groq API
 
-- **Perspectives.** Every belief carries a perspective: `self`, `map`, `user` or `agent:<id>`.
-  They sit side by side in the graph (edge key `predicate|perspective`), so "what the user thinks",
-  "what I see" and "what the records say" never overwrite one another.
-- **Weighted confidence** (in `declarative.py`, v4; replaces the earlier fixed ×0.3).
-  - *Evidence.* Every live reading updates the static map's belief about the same fact by Bayes'
-    rule in log-odds, weighted by the sensor's reliability r (LiDAR 0.95, camera 0.95 or 0.82 in dim
-    or yellow light, bumper and odometry 0.99): odds × r/(1−r) if the reading agrees, ÷ if it
-    contradicts, kept within 0.01–0.99. For a map that says "clear" (0.99), one "blocked" reading
-    gives 0.84 and a second gives 0.21; a spike followed by a "clear" reading returns it to 0.99.
-    Each change is logged with the sensor, its reliability and the old and new confidence.
-  - *Age.* Records are compared by confidence × 0.5^(age / half-life): 30 min for the robot's own
-    sensor-based beliefs, 2 h for other robots' reports, 7 days for the map. `query_beliefs` returns
-    this as `weighted_confidence`, and disagreements name the most trusted record. bot_02's
-    1-hour-old 0.9 counts as 0.64 against bot_03's 10-minute-old 0.85 at 0.80.
-  - Only the map is ever updated automatically. User and other-robot beliefs are other minds' views
-    and are kept as they are; the user's beliefs do not decay, since they are a record of what the
-    user thinks, not evidence about the world.
-  - In dim or yellow light, a camera that does not see an object counts as unconfirmed until a second
-    look agrees, as a single LiDAR reading does.
-- **Provenance.** Every write goes to SQLite with old value, new value, source, confidence, time and reason.
-- **Epistemic state as a sequence of graphs.** The graph is snapshotted before and after each turn;
-  `diff()` shows exactly what the agent changed.
-- **Simulated clock.** All times come from `SimClock`, so runs are reproducible.
+Copy `.env.example` to `.env` and set `GROQ_API_KEY` to your own key. Do not commit `.env` or credentials.
+
+```bash
+python server.py --provider groq --model openai/gpt-oss-20b
+```
+
+The command-line scenario and evaluation tools also accept `--provider` and `--model` arguments.
+
+## Running scenarios
+
+```bash
+python run_scenario.py --list
+python run_scenario.py A1 --provider ollama --model qwen2.5:7b-8k
+python run_scenario.py B1 --provider ollama --model qwen2.5:7b-8k
+python run_scenario.py A1 --level plain --provider ollama --model qwen2.5:7b-8k
+```
+
+Two central scenarios are:
+
+- **Scenario A — conflicting route information:** The stored map describes a clear route, while the LiDAR sensor detects an obstruction. The agent must consider live evidence and update or qualify its stored belief.
+- **Scenario B — different perspectives:** The user, camera and other stored reports may give different descriptions of an object. The agent must retain each perspective and avoid treating them as the same observation.
+
+Scenario definitions are in `scenarios/dev/` (15), `scenarios/heldout/` (10), `scenarios/heldout2/` (11) and `scenarios/heldout3/` (10). Each held-out set was frozen before any run on it: `FROZEN.md` in each folder lists every file's SHA-256, and a test fails if one changes. Held-out set 3 was written by a separate AI agent that was given only `scenarios/TEMPLATE.md` (how to write a scenario without reading the code), never the code itself. To add a set, follow `TEMPLATE.md` and freeze it with `python scenarios/freeze.py <set>`.
+
+## Web interface
+
+`server.py` hosts the Python backend and serves the React application from `web/dist` when that directory exists. The interface provides:
+
+- A live session view with the simulated world, tool calls, memory graph, provenance records and a timeline of agent steps.
+- A replay view for saved JSON evaluation logs, when those logs are present locally.
+
+To rebuild the frontend:
+
+```bash
+cd web
+npm install
+npm run build
+```
+
+Then restart `python server.py` from the project root. For frontend development, use `npm run dev` in `web/` while the backend is running.
 
 ## Evaluation
 
-Each scenario file has an `expect` block. `evaluation.py` checks four things per run:
+The evaluation framework checks the agent's output and intermediate behavior along four dimensions:
 
-| Check | Question it answers |
+| Check | Description |
 |---|---|
-| answer | Does the final answer say the right things? |
-| tools | Did the agent consult the layers it needed, instead of answering from nowhere? |
-| memory | Is the belief graph in the correct state afterwards? |
-| grounding | Is every colour/value in the answer present in some tool result or user message? |
+| Answer | Required information is present in the final response |
+| Tools | Required evidence-gathering tools were invoked |
+| Memory | The final belief state meets scenario expectations |
+| Grounding | Answered facts are supported by available evidence |
 
-### Ablation levels: what does each part add?
+Five ablation configurations are supported:
 
-Each level adds one part of the architecture to the one before it, using the same model and prompt rules:
-
-| Level | What the agent has |
+| Level | Configuration |
 |---|---|
-| `baseline` | No tools. Starting memory pasted into the prompt as text. |
-| `sensors` | Sensor tools only, memory as text. A plain tool-using agent with no memory layer: the **fair baseline**. |
-| `plain` | All 8 tools including the memory layer (graph, provenance, weighted confidence), but no safeguards. |
-| `checks` | + tool-layer checks: memory check on sensor readings, grounded writes, disagreement summary, safe moves. |
-| `full` | + the answer self-check. The complete system. |
+| `baseline` | No tools; initial memory is included as text |
+| `sensors` | Sensor tools with initial memory supplied as text |
+| `plain` | All sensor and memory tools, without extra safeguards |
+| `checks` | Tool-level consistency and safety checks, without answer self-check |
+| `full` | Tool-level checks and answer self-check |
 
-Argument repair and parsing of text-written tool calls are on at every level: they fix formatting, not reasoning.
+Example commands:
 
-Levels without memory tools (`baseline`, `sensors`) cannot pass the tool or memory checks by design,
-so **compare levels on the "correct answer" rate** (every answer check passed). `report.py` reports both.
+```bash
+python -m pytest
+python evaluate.py --set dev --level full --runs 1 --provider ollama --model qwen2.5:7b-8k
+python evaluate.py --set heldout2 --level sensors --runs 1 --provider ollama --model qwen2.5:7b-8k
+python evaluate.py --set heldout3 --level baseline --runs 1 --provider ollama --model qwen2.5:7b-8k
+python run_experiments.py --plan v4fast   # full system + baseline on all four sets (about 1.5 h)
+python report.py
+```
 
-### Dev set vs held-out sets
+After a code change, `python rerun_affected.py <log folders>` replays each saved run's trace through the
+changed checks: runs on which no change would have fired are carried over (identical prompts at
+temperature 0, marked `carried_over` with the source file) and only the others are run again.
 
-All safeguards were added after watching failures on the **dev** scenarios, so dev results are
-optimistic. Held-out scenarios are written separately and frozen before the agent ever runs on them:
-their SHA-256 hashes are in `FROZEN.md`, a test fails if any file changes, and the git commit that
-froze them predates every result on them.
+Results and visualizations can be generated in `results/`; raw per-run JSON records, if retained, are stored in `logs/`. The `report.py` script aggregates experimental records across configurations and versions.
 
-- **Held-out set 1** (`scenarios/heldout/`, frozen 5 Oct) was run on the mid-semester system (v1).
-  Its results were known while v2 was built, so under v2 it is no longer a clean test. It is still
-  run and reported, separately.
-- **Held-out set 2** (`scenarios/heldout2/`, frozen 18 Oct) was written and frozen after the v2
-  dev fixes had started but before any run on it. Its **v2** result is the clean generalisation
-  number: **27/33 correct answers (82%), 25/33 all checks**, with NA4, NP1 and NP2 failing.
-  Those failures were then used to build **v3**, so v3 results on held-out set 2 are no longer a
-  clean test; they are reported separately and labelled as such.
-- **Held-out set 3** (`scenarios/heldout3/`, frozen 24 Nov) was written by a separate AI agent that
-  was given only `scenarios/TEMPLATE.md` (the guide to writing scenarios without reading the code),
-  validated for format only, and frozen before any run. Its first pass on v4 failed IX6 and timed out
-  on IX7; those failures were then used for v4.1, so v4.1 results on it are reported as seen.
+### Interpreting results
 
-Caveat: the system and held-out sets 1 and 2 were written with the same AI coding assistant, so the
-tests are not fully independent. In particular, two more rounds of dev-set fixes were made after
-held-out set 2 was frozen, by an author who knew its contents (though not its results). Scenarios written by teammates who have not read the code would be
-a stronger test.
+For comparisons with tool-free baselines, use **correct-answer rate** rather than overall pass rate: the latter includes tool and memory checks that a tool-free baseline cannot satisfy by design.
 
-### System versions
+## Results
 
-Every log records the system version (`SYSTEM_VERSION` in `i_agent/__init__.py`), and `report.py`
-never pools results across versions. **v1** is the mid-semester system (6 Oct). **v2** (18 Oct) adds
-the safeguards marked *(v2)* in "Explaining your part" below; each was added after a dev-set failure.
-**v3** (19 Oct) fixes the causes of the remaining failures on every set, including held-out set 2:
-self-check messages give the exact tool call to make (the small model kept announcing
-`update_belief` instead of calling it), a question about "your route" requires a scan of the
-planned route from memory, an answer that says "another robot" must name it and its age,
-`get_provenance` with a wrong property shows the entity's whole history, and a LiDAR scan in a
-direction with no route names the routes that exist, `record_user_belief` only stores values the
-user actually said (the model had stored another robot's report as the user's belief), and the
-self-check gives the exact `record_user_belief` call built from the user's words. Each fix is general
-(no scenario ids or answers are hard-coded) and has a unit test on a dev scenario. v3 results use
-`qwen2.5:7b-8k` (same weights, 8192-token context; see "Models and limits").
-**v4** (18 Nov) replaces the fixed ×0.3 map downgrade with weighted confidence (see "Key design
-decisions"), at the course instructor's suggestion. It was not tuned on any scenario's results.
-**v4.1** (24 Nov) fixes the causes of every v4 failure, each with a general rule and a unit test:
-the system records a belief the user states when the user's words fully determine it (B2, HB2: the
-model kept writing "I have recorded it" without calling the tool); the self-check sends back an
-answer that says what is in a room nothing has seen (H2), one that reports a colour seen under
-yellow or dim light without the lighting and the other recorded colours (IX6), and one that answers
-while robots disagree about a route the robot faces without a LiDAR reading of it (IX7). Replies are
-capped at 1024 tokens. Saved v4 runs on which none of these changes would have fired at any step are
-carried over unchanged (identical prompts at temperature 0); the others are run again
-(`rerun_affected.py`, which marks each carried-over log with its source).
+Final system **v4.1**, `qwen2.5:7b-8k` via Ollama (Q4_K_M) on a laptop RTX 3050 (4 GB), temperature 0,
+one run per scenario. The full table with 95% Wilson intervals is in `results/results.md` (`python report.py`).
 
-### Repeats and temperature
+| Set | Scenarios | Full system: all checks | Text-only baseline: correct answer |
+|---|---|---|---|
+| Development | 15 | **15/15** | 5/15 |
+| Held-out 1 | 10 | **10/10** | 5/10 |
+| Held-out 2 | 11 | **11/11** | 5/11 |
+| Held-out 3 (written without the code) | 10 | **10/10** | 3/10 |
+| **Total** | **46** | **46/46** | 18/46 (39%) |
 
-At temperature 0 the local model is nearly deterministic: repeated runs often give word-for-word
-identical answers, so they measure reproducibility rather than spread. `run_experiments.py`
-therefore also repeats the full system at temperature 0.7. Results show 95% confidence intervals
-(Wilson) over the pooled runs.
+The baseline's typical failure is the one the project targets: asked whether its route is clear, it
+trusts the day-old map and says yes.
 
-### Checking the checks
+**Clean generalisation result.** On held-out set 2 with system v2, measured before any change was made
+because of it, the full system answered 27/33 correctly (82%) against 5/11 (45%) for the text-only
+baseline, and answers that also passed the tool and memory checks went from 0% to 76% (25/33).
 
-Keyword checks can misjudge paraphrases. `results/review.html` lists answers next to their
-automatic verdict so a person can mark agree / disagree; report the agreement rate alongside results.
+**From v4 to v4.1.** The first v4 pass scored 13/15, 9/10 and 11/11 on the first three sets; on held-out
+set 3, IX6 failed and IX7 stalled. Each cause was fixed with a general rule and a unit test: the system
+records a belief the user states unambiguously (the model kept claiming it had), and the self-check
+sends back answers that say what is in a room nothing has seen, report a colour seen under yellow or
+dim light as fact, or pick between two robots' reports about a route without scanning it. Replies are
+capped at 1024 tokens. Because these fixes followed failures on held-out sets 1 and 3, the v4.1 results
+on those sets are reported as seen, not as clean tests.
 
-## Scenarios
-
-| Id | Tests |
+| Log folder (`logs/`) | Contents |
 |---|---|
-| A1_route_blocked | Spec Scenario A: map clear, LiDAR blocked at 12 cm |
-| A2_route_reopened | Map blocked, LiDAR clear |
-| A3_noisy_lidar | One spurious reading; agent must re-read before updating |
-| A4_object_missing | Map says the box is here; camera does not see it |
-| A5_stale_belief | Own belief is two hours old; must re-check |
-| B1_three_colors | Spec Scenario B: user red / camera brown / log blue |
-| B2_false_belief | User's false belief about where the box is (Sally-Anne) |
-| B3_conflicting_reports | Two robots disagree about the colour |
-| H1_unknown_object | Asked about something unknown; must say it does not know |
-| P1_provenance | Must cite where and when a belief came from |
-| A6_scan_before_driving | Asked to drive; must scan first and refuse to drive into the obstacle |
-| A7_report_vs_camera | Another robot's report says the box is here; the camera does not see it |
-| B4_user_insists | User says "I painted it red, store that"; camera and log say blue |
-| H2_unknown_room | Asked what is in a room no sensor or record covers |
-| P2_why_downgraded | Two turns: finds the route blocked, then explains from the log why the map lost confidence |
+| `20261124-232701_dev_full_qwen2.5-7b-8k/` | development set, v4.1 (3 run again, 12 carried over) |
+| `20261124-233736_heldout_full_qwen2.5-7b-8k/` | held-out 1, v4.1 (2 run again, 8 carried over) |
+| `20261124-234256_heldout2_full_qwen2.5-7b-8k/` | held-out 2, v4.1 (1 run again, 10 carried over) |
+| `20261124-234450_heldout3_full_qwen2.5-7b-8k/` | held-out 3, v4.1 (5 run again, 5 carried over) |
+| `20261125-*_baseline_qwen2.5-7b-8k/` | text-only baseline on each set |
+| `20261124-{214502,221252,223612,230004}_*` | the original v4 passes the carried-over runs come from |
+| `dev_iterations/20261118-145103_dev_full_qwen2.5-7b-8k/` | the A1 and B1 runs shown in the video and the replay view |
 
-Held-out set 1 (`scenarios/heldout/`): HA1 route to the right blocked · HA2 route to the left reopened ·
-HA3 noisy scan to the left · HA4 crate missing in a dim room · HA5 crate found in a different room
-than the map says · HB1 white / dark green / green cup under dim light · HB2 keys moved (false belief) ·
-HB3 three robots disagree · HH1 unknown property (weight) · HP1 provenance including the reason.
+Replay any of them in the web interface: `http://localhost:8000/#replay=<log file path>&step=1`.
 
-Held-out set 2 (`scenarios/heldout2/`): NA1 route behind the robot blocked · NA2 asked to go along a
-route the map says is blocked but is clear · NA3 a spurious "clear" reading on a blocked route ·
-NA4 another robot's report vs the camera in dim light · NB1 user insists a white cup is green ·
-NB2 laptop moved (false belief) · NB3 two robots disagree about a location · NH1 a report that does not
-exist · NH2 colour of an object in another room · NP1 who, when and why a door was locked ·
-NP2 two turns: route blocked, then why the map entry changed.
+## Main files
 
-## Explaining your part (for the evaluation)
+| Path | Purpose |
+|---|---|
+| `i_agent/declarative.py` | Belief graph, confidence updates, provenance and snapshots |
+| `i_agent/procedural.py` | LLM orchestration and reasoning loop |
+| `i_agent/tools.py` | Tool definitions, validation and execution |
+| `i_agent/sensorimotor.py` | Simulated environment and sensor behavior |
+| `i_agent/scenario.py` | Scenario loading and world construction |
+| `i_agent/evaluation.py` | Automated scenario checks and ablation configuration |
+| `i_agent/replay.py` | Step-by-step reconstruction of recorded runs |
+| `run_scenario.py` | Command-line scenario runner |
+| `evaluate.py` | Evaluation runner |
+| `run_experiments.py` | Experiment matrix runner |
+| `rerun_affected.py` | Brings saved runs up to a new system version, rerunning only the runs a change affects |
+| `report.py` | Evaluation summaries and visualizations |
+| `server.py` | FastAPI backend and frontend server |
+| `web/` | React application |
+| `scenarios/` | Development and held-out scenario definitions; `TEMPLATE.md` guide, `freeze.py` |
+| `docs/` | Architecture verification report |
+| `tests/` | Automated tests |
 
-**Siddh (memory, `declarative.py`).** Beliefs are edges in a NetworkX MultiDiGraph keyed by
-`predicate|perspective`, so the map's, the user's and other robots' views of the same fact coexist.
-Every write goes through `_write()`, which also inserts a provenance row into SQLite.
-`update_with_evidence()` weighs each live sensor reading against the static map (Bayes' rule in
-log-odds, by the sensor's reliability) and `weighted_confidence()` discounts a record by its age when
-records are compared (see "Weighted confidence" above). User and other-robot beliefs are never
-changed automatically, because they are other minds' views.
-`snapshot()` and `diff()` store the epistemic state as a sequence of graphs.
+## Team
 
-**Rudraksh (LLM, `procedural.py`, `tools.py`, `prompts/system.md`).** A hand-written ReAct loop over the
-OpenAI-compatible API (Groq or Ollama). Tools are the only path to the other layers. Safeguards, each added
-after a failure we actually observed in the logs:
-1. **Memory check on every sensor reading.** Sensor results carry a `memory_check` listing the stored
-   beliefs the reading contradicts, so the conflict cannot be overlooked.
-2. **Grounded writes.** `update_belief` refuses any value that never appeared in a tool result. We saw a
-   model invent "the map says red" and write it into memory; now that is impossible. *(v2)* It also
-   refuses a `self` belief whose source is not one of the robot's own sensors (B3: the model copied
-   bot_03's report into its own belief), a belief about an entity no sensor or memory record mentions
-   (H1), and a sensor-sourced value that sensor never reported (the model wrote "blue, source camera"
-   when the camera had seen nothing).
-3. *(v2)* **Safe moves.** `move` is refused unless a LiDAR scan of that route in the current turn said
-   clear (A6: the model tried to drive before scanning).
-4. **Answer self-check** (`check_answer`), which sends a draft answer back to the LLM (up to 6 times, within 16 steps; 4 and 12 before v4) if:
-   - it never called `query_beliefs` (the message names the exact call to make),
-   - it claims "I updated my belief" without calling `update_belief`,
-   - it announces an action ("I will check…") without doing it,
-   - a sensor-vs-memory conflict is still unresolved,
-   - it relies on the static map for something a sensor could check right now,
-   - it gives properties to an entity no tool returned (e.g. calling `crate_07` blue because `box_01` is),
-   - the user stated a belief ("I left the box in…") that was never recorded,
-   - *(v2)* records about a named entity disagree and the answer leaves one out (B3),
-   - *(v2)* memory holds records about a named entity that the agent never looked at (B1),
-   - *(v2)* it names a colour that no tool result or user message contains,
-   - *(v2)* it claims a belief was downgraded when nothing was (B4),
-   - *(v2)* it does not mention the user belief it just recorded (B4),
-   - *(v2)* the user asks why / who / when and `get_provenance` was not called this turn (P2).
-5. **Small-model tolerance.** Plain parameter names (`entity`, `property`, `value`), alias mapping,
-   tool calls written as text are parsed and executed *(v2: also JSON blocks and Python-style calls such
-   as `query_beliefs(entity="box_01")`)*, and malformed calls are retried with the API's error message.
-
-`python evaluate.py --level checks` switches item 4 off, and `--level plain` switches items 1–4 off,
-which measures how much they contribute.
-
-**Udit (world and evaluation, `sensorimotor.py`, `scenario.py`, `evaluation.py`).** `MockEnv` holds the
-ground truth (obstacles, objects, lighting) and exposes it only through sensors. Yellow light shifts
-perceived colours, and a LiDAR script can inject noise. Scenario JSON files are the data. `evaluation.py`
-scores each run on four axes (answer, tools, memory, grounding). `evaluate.py` repeats each scenario,
-writes JSON logs, and runs the no-tools baseline and the no-self-check ablation.
-
-## Results so far (26 Sep 2026, `qwen2.5:7b` via Ollama, 1 run per scenario)
-
-| | Agent (three layers) | Baseline (same model, memory as text, no tools) |
+| Member | Student ID | Primary contribution |
 |---|---|---|
-| Runs passing every check | **9/10** | 0/10 (cannot pass tool or memory checks by design) |
-| Correct final answer | **9/10** | 5/10 |
-| Scenario A (map says clear, LiDAR says blocked) | Detects the obstacle, updates memory, downgrades the map | "Yes, my route is clear." |
+| Siddh Jain | 2024ADPS0837G | Declarative memory, belief graph, confidence and provenance |
+| Rudraksh Kumar | 2024ADPS0820G | Procedural LLM controller, tools and answer safeguards |
+| Udit Chaudhary | 2024A7PS0618G | Simulated environment, scenarios, evaluation and experimental analysis |
 
-The only agent failure is B3. It trusts the newer record correctly, but leaves out the older conflicting one.
-Logs: `logs/20260926-154149_agent_qwen2.5-7b/` and `logs/20260926-150521_baseline_qwen2.5-7b/`.
+## Limitations
 
-Still to do: 5 runs per scenario, the `--no-self-check` ablation, and the same suite on Groq's `openai/gpt-oss-20b`.
+The environment and sensors are simulated rather than physical. LLM responses depend on model behavior, and keyword-based automatic checks can accept or reject responses incorrectly (`results/review.html` supports a manual audit). Each final result is a single run at temperature 0, so it shows reproducible behaviour rather than variability. Held-out evaluation is most informative when the tested scenarios have not influenced subsequent development. The repository therefore separates system versions in its evaluation records.
 
-## Notes on the evaluation
-
-- **The baseline scores 0 by design on the tools and memory checks**, since it has no tools. Compare it
-  with the agent on the *answer* column only. That is where the baseline gives the wrong answer on
-  Scenario A: it trusts the map and says the route is clear.
-- **Changes made after seeing results (both to H1 only):**
-  1. It first required `query_beliefs` specifically. It now accepts either memory tool
-     (`query_beliefs` or `get_provenance`), because the test's intent is "consulted memory before answering".
-  2. Its list of "I don't know" phrases missed a correct answer ("I have no memory record ... cannot
-     provide any information"), so a few phrasings were added. The saved logs were re-checked with
-     `python evaluate.py --rescore <folder>`.
-
-  Every other expectation is unchanged from when it was written.
-- **Changes on 18 Oct (v2), all from dev-set results:** answer checks now accept a plain inflection
-  of a phrase ("not detect" matches "not detected", "hour" matches "hours"; "red" still never
-  matches "reduced"), because correct answers in A7 were marked wrong. H2 also accepts "cannot
-  confirm". `tools_forbidden` counts only calls the tool layer executed, since a refused call has no
-  effect. These apply to every set; held-out files themselves were never edited.
-- **Checker fix (19 Oct).** The inflection tolerance above was also applied to forbidden phrases, so
-  a correct answer ("I will not proceed until the path is cleared") failed `answer_excludes: "path
-  is clear"`. Forbidden phrases now match exactly; saved logs were re-scored with `--rescore`.
-- **Tightened checks (5 Oct).** A2–A5 accepted words that also match wrong answers ("clear" inside
-  "not clear", or bare "no" / "not"). They now require specific phrases and reject negations; all saved
-  logs were re-scored with `--rescore`.
-- **Sample size.** Results so far are 1 run per scenario on `qwen2.5:7b`. LLM output varies between runs,
-  so report pass rates over 5 runs (`python evaluate.py --provider ollama --model qwen2.5:7b`) before
-  drawing conclusions.
-- **Development history.** `logs/dev_iterations/` keeps the earlier runs, from before each safeguard was
-  added. They show which failures each safeguard fixed, which is useful for the report.
+This README documents the implementation and how to reproduce its operation; the course report contains the full project analysis and required generative-AI disclosure.

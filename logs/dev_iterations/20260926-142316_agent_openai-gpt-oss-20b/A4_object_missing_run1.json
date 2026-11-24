@@ -1,7 +1,0 @@
-{
-  "scenario": "A4_object_missing",
-  "mode": "agent",
-  "error": "ToolCallFormatError: Error code: 400 - {'error': {'message': 'Tool choice is none, but model called a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '{\"name\": \"read_camera\", \"arguments\": {\"camera_id\":\"front\"}}'}}",
-  "checks": [],
-  "passed": false
-}
