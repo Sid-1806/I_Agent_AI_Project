@@ -6,3 +6,15 @@ __pycache__/
 venv/
 *.db
 ~$*
+# Internal documentation
+HANDOFF.md
+I_Agent_AI_Project_Proposal.docx
+*.pptx
+prep-*.html
+project-explained.html
+project-handbook.html
+team-workload.html
+speaker_notes.md
+
+# Raw experiment logs (only if removing logs)
+logs/
