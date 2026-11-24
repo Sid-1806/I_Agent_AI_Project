@@ -6,3 +6,11 @@ __pycache__/
 venv/
 *.db
 ~$*
+
+# generated video files (rebuild with python video/build/build.py and make_video.ps1)
+video/*.mp4
+video/build/audio/
+video/build/check/
+video/build/*.pptx
+video/build/lines.json
+video/build/plan.json
