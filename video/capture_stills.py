@@ -26,6 +26,7 @@ SHOTS = [
     ("12_b1_answer", f"{UI}#replay={LOG}B1_three_colors_run1.json&step=35"),
     ("13_results", (HERE / "cards" / "3_results.html").as_uri()),
     ("14_team", (HERE / "cards" / "4_team.html").as_uri()),
+    ("15_next", (HERE / "cards" / "5_next.html").as_uri()),
 ]
 
 OUT.mkdir(exist_ok=True)
